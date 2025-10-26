@@ -1,8 +1,10 @@
 from enum import Enum
 import logging
+from mimetypes import init
 import numpy as np
 
 from constants import (
+    ENTANGLEMENT_DECOHERENCE_CONSTANT,
     ENTANGLEMENT_GENERATION_COUNT,
     ENTANGLEMENT_GENERATION_SCALE,
     ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY,
@@ -15,6 +17,23 @@ rng = np.random.default_rng()
 class Event(Enum):
     ENTANGLEMENT_GENERATION = 1
     REQUEST_ARRIVED = 2
+
+
+class Entanglement:
+    def __init__(self, creationTime, creationFidelity):
+        self.creationTime = creationTime
+        self.creationFidelity = creationFidelity
+
+    creationFidelity: float
+    creationTime: float
+
+    def current_fidelity(self, current_time):
+        timeAlive = current_time - self.creationTime
+        return (
+            np.exp(-(timeAlive) / ENTANGLEMENT_DECOHERENCE_CONSTANT)
+            * (self.creationFidelity - 0.25)
+            + 0.25
+        )
 
 
 class Node:
@@ -50,7 +69,6 @@ class Node:
             return None
 
 
-
 class Time:
     entanglement_time = 0
     entanglement_count = 0
@@ -80,7 +98,7 @@ class Time:
 
 
 def main():
-    logging.basicConfig(filename='myapp.log',filemode='w', level=logging.INFO)
+    logging.basicConfig(filename="myapp.log", filemode="w", level=logging.INFO)
     logger.info("Starting")
 
     node_a = Node()
@@ -93,9 +111,8 @@ def main():
         ENTANGLEMENT_GENERATION_SCALE * 100, ENTANGLEMENT_GENERATION_COUNT * 100
     )
 
-    logger.info("First entanglement: "+ str(entanglement_samples[0]))
-    logger.info("First request: "+ str(request_samples[0]))
-
+    logger.info("First entanglement: " + str(entanglement_samples[0]))
+    logger.info("First request: " + str(request_samples[0]))
 
     while time.entanglement_count < len(
         entanglement_samples
@@ -105,11 +122,22 @@ def main():
             request_samples[time.request_count],
         )
 
-        logger.info("Current Time is: " + str(time.current_time()) + " Last Event was: " + str(time.last_event()))
+        logger.info(
+            "Current Time is: "
+            + str(time.current_time())
+            + " Last Event was: "
+            + str(time.last_event())
+        )
         if time.last_event() == Event.ENTANGLEMENT_GENERATION:
             node_a.generate_entanglement()
 
-        logger.info("Node A: good-memory = " + str(node_a.good_memory) + ", bad-memory = " + str(node_a.bad_memory))
+        logger.info(
+            "Node A: good-memory = "
+            + str(node_a.good_memory)
+            + ", bad-memory = "
+            + str(node_a.bad_memory)
+        )
+
 
 if __name__ == "__main__":
     main()
