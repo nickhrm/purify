@@ -1,5 +1,6 @@
 from __future__ import annotations
 from enum import Enum
+from http import server
 import logging
 import numpy as np
 
@@ -73,9 +74,9 @@ class Entanglement:
 
 
 class Qubit: 
-    def __init__(self, time: Time, creation_time: float,) -> None:
+    def __init__(self, time: Time) -> None:
         self._time = time
-        self.creationTime: float = creation_time
+        self.creationTime: float = time.get_current_time()
 
     def get_current_fidelity(self) -> float | None:
         if self is None:
@@ -111,7 +112,6 @@ class Node:
         if entanglement is None:
             return
 
-        # Vergleich über aktuelle Fidelity, ohne Zeit-Parameter herumzureichen
         if (self.good_memory is None or
             self.good_memory.get_current_fidelity() < entanglement.get_current_fidelity()):
             logger.info("Updated good-memory. Old value: " + str(self.good_memory.get_current_fidelity() if self.good_memory is not None else None) + ", new value: " + str(entanglement.get_current_fidelity())) 
@@ -139,7 +139,15 @@ class Node:
             return None
         
     def serve_request(self):
+        self.queue = Qubit(self.time,)
         if self.good_memory is not None:
+            tf = self.queue.teleportation_fidelity(self.good_memory.get_current_fidelity())
+            logger.info("Served request with fidelity %s", tf)
+            self.good_memory = None
+            if self.bad_memory is not None:
+                self.good_memory = self.bad_memory
+                self.bad_memory = None
+
             
 
 
@@ -197,7 +205,7 @@ def main() -> None:
         filename="myapp.log",
         filemode="w",
         level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
+        format="%(levelname)s - %(message)s",
     )
     logger.info("Starting simulation")
 
