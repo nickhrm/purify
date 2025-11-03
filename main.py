@@ -1,7 +1,11 @@
 from __future__ import annotations
 from enum import Enum
-from http import server
 import logging
+from math import log
+from os import error
+from platform import win32_is_iot
+from bernouli_util import bernouli_with_probability
+from csv_utils import write_results_csv
 import numpy as np
 
 from constants import (
@@ -19,6 +23,18 @@ rng = np.random.default_rng()
 class Event(Enum):
     ENTANGLEMENT_GENERATION = 1
     REQUEST_ARRIVED = 2
+
+
+class Strategy(Enum):
+    ALWAYS_REPLACE = 1
+    ALWAYS_PROT_1 = 2
+    ALWAYS_PROT_2 = 3
+    ALWAYS_PROT_3 = 4
+    ALWAYS_PROT_1_WITH_PROBABILITY = 5
+    ALWAYS_PROT_2_WITH_PROBABILITY = 6
+    ALWAYS_PROT_3_WITH_PROBABILITY = 7
+    CHOOSE_RANDOM_ACTION_UNIFORMLY = 8
+    GPS = 9
 
 
 class Time:
@@ -55,7 +71,9 @@ class Entanglement:
     Hält eine Referenz auf 'Time', damit get_current_fidelity() keine Zeit-Parameter braucht.
     """
 
-    def __init__(self, time: Time, creation_time: float, creation_fidelity: float) -> None:
+    def __init__(
+        self, time: Time, creation_time: float, creation_fidelity: float
+    ) -> None:
         self._time = time
         self.creationTime: float = creation_time
         self.creationFidelity: float = creation_fidelity
@@ -73,7 +91,7 @@ class Entanglement:
         )
 
 
-class Qubit: 
+class Qubit:
     def __init__(self, time: Time) -> None:
         self._time = time
         self.creationTime: float = time.get_current_time()
@@ -98,7 +116,9 @@ class Qubit:
 
         FT = (a - b) ** 2
         return float(np.clip(FT, 0.0, 1.0))
-            
+
+    def get_waiting_time(self):
+        return self._time.get_current_time() - self.creationTime
 
 class Node:
     def __init__(self, time: Time) -> None:
@@ -107,19 +127,80 @@ class Node:
         self.bad_memory: Entanglement | None = None
         self.queue: Qubit | None = None
 
-    def generate_entanglement(self) -> None:
+    "is called, when event entanglement_generation happend"
+
+    def handle_entanglement_generated_event(self):
         entanglement = self._generate_entanglement()
+
         if entanglement is None:
             return
+        
+        if self.good_memory is None:
+            self.good_memory = entanglement
+        
 
-        if (self.good_memory is None or
-            self.good_memory.get_current_fidelity() < entanglement.get_current_fidelity()):
-            logger.info("Updated good-memory. Old value: " + str(self.good_memory.get_current_fidelity() if self.good_memory is not None else None) + ", new value: " + str(entanglement.get_current_fidelity())) 
+        strat: Strategy = Strategy.ALWAYS_PROT_1
+
+        match strat:
+            case Strategy.ALWAYS_REPLACE:
+                self.strategy_always_replace(entanglement)
+            case Strategy.ALWAYS_PROT_1:
+                self.strategy_always_prot_1(entanglement)
+
+    def strategy_always_prot_1(self, new_entanglement: Entanglement):
+        f_bd = new_entanglement.get_current_fidelity()
+        f = self.good_memory.get_current_fidelity()
+        la = (1 - f_bd) / 3
+        fidelity_after_pumping = ((7 * la - 3) * f - la) / (
+            (8 * la - 2) * f - 2 * la - 1
+        )
+
+        success_probability = (2 / 3)*(1 - 4 * la) * f + (1 / 3) * (1 + 2 * la)
+
+        new_entanglement = Entanglement(self.time, self.time.get_current_time(), fidelity_after_pumping)
+
+        if bernouli_with_probability(success_probability):
+            self.good_memory = new_entanglement
+            self.bad_memory = None
+            logger.info("purification was successfull")
+        else:
+            self.good_memory = None
+            self.bad_memory = None
+            logger.info("Purification failed")
+
+    def strategy_always_replace(self, entanglement) -> None:
+        if (
+            self.good_memory is None
+            or self.good_memory.get_current_fidelity()
+            < entanglement.get_current_fidelity()
+        ):
+            logger.info(
+                "Updated good-memory. Old value: "
+                + str(
+                    self.good_memory.get_current_fidelity()
+                    if self.good_memory is not None
+                    else None
+                )
+                + ", new value: "
+                + str(entanglement.get_current_fidelity())
+            )
             self.good_memory = entanglement
         else:
-            if (self.bad_memory is None or
-                self.bad_memory.get_current_fidelity() < entanglement.get_current_fidelity()):
-                logger.info("Updated bad-memory. Old value: " + str(self.bad_memory.get_current_fidelity() if self.bad_memory is not None else None) + ", new value: " + str(entanglement.get_current_fidelity())) 
+            if (
+                self.bad_memory is None
+                or self.bad_memory.get_current_fidelity()
+                < entanglement.get_current_fidelity()
+            ):
+                logger.info(
+                    "Updated bad-memory. Old value: "
+                    + str(
+                        self.bad_memory.get_current_fidelity()
+                        if self.bad_memory is not None
+                        else None
+                    )
+                    + ", new value: "
+                    + str(entanglement.get_current_fidelity())
+                )
                 self.bad_memory = entanglement
 
     def _generate_entanglement(self) -> Entanglement | None:
@@ -137,19 +218,24 @@ class Node:
         else:
             logger.info("Entanglement Generation Failed")
             return None
-        
+
     def serve_request(self):
-        self.queue = Qubit(self.time,)
+        self.queue = Qubit(
+            self.time,
+        )
         if self.good_memory is not None:
-            tf = self.queue.teleportation_fidelity(self.good_memory.get_current_fidelity())
-            logger.info("Served request with fidelity %s", tf)
+            tf = self.queue.teleportation_fidelity(
+                self.good_memory.get_current_fidelity()
+            )
+            logger.info("Served request with fidelity %s and waiting time %s", tf, self.queue.get_waiting_time())
+            write_results_csv(tf, self.time.get_current_time())
             self.good_memory = None
             if self.bad_memory is not None:
                 self.good_memory = self.bad_memory
                 self.bad_memory = None
-
-            
-
+        else:
+            logger.info("Serving request failed")
+        
 
 class Simulation:
     def __init__(self) -> None:
@@ -166,8 +252,9 @@ class Simulation:
 
     def step(self) -> bool:
         """Eine Simulationsiteration. Gibt False zurück, wenn Samples verbraucht sind."""
-        if (self.time.entanglement_count >= len(self.entanglement_samples) or
-            self.time.request_count >= len(self.request_samples)):
+        if self.time.entanglement_count >= len(
+            self.entanglement_samples
+        ) or self.time.request_count >= len(self.request_samples):
             return False
 
         self.time.update(
@@ -182,15 +269,22 @@ class Simulation:
         )
 
         if self.time.last_event() == Event.ENTANGLEMENT_GENERATION:
-            self.node_a.generate_entanglement()
+            self.node_a.handle_entanglement_generated_event()
 
         if self.time.last_event() == Event.REQUEST_ARRIVED:
             self.node_a.serve_request()
 
-
         # Logging
-        gm = self.node_a.good_memory.get_current_fidelity() if self.node_a.good_memory else None
-        bm = self.node_a.bad_memory.get_current_fidelity() if self.node_a.bad_memory else None
+        gm = (
+            self.node_a.good_memory.get_current_fidelity()
+            if self.node_a.good_memory is not None
+            else None
+        )
+        bm = (
+            self.node_a.bad_memory.get_current_fidelity()
+            if self.node_a.bad_memory is not None
+            else None
+        )
         logger.info("Node A: good-memory=%s, bad-memory=%s", gm, bm)
 
         return True
