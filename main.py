@@ -1,13 +1,17 @@
 from __future__ import annotations
-from enum import Enum
+
+import argparse
 import logging
+from enum import Enum
 from math import log
 from os import error
 from platform import win32_is_iot
-from bernouli_util import bernouli_with_probability
-from csv_utils import write_results_csv
+import string
+
+from clifford_util import Cliford
 import numpy as np
 
+from bernouli_util import bernouli_with_probability
 from constants import (
     ENTANGLEMENT_DECOHERENCE_CONSTANT,
     ENTANGLEMENT_GENERATION_COUNT,
@@ -15,6 +19,8 @@ from constants import (
     ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY,
     ENTANGLEMENT_INITIAL_FIDELITY,
 )
+from csv_utils import write_results_csv
+from plot_util import create_boxplot
 
 logger = logging.getLogger(__name__)
 rng = np.random.default_rng()
@@ -120,44 +126,59 @@ class Qubit:
     def get_waiting_time(self):
         return self._time.get_current_time() - self.creationTime
 
+
 class Node:
-    def __init__(self, time: Time) -> None:
+    def __init__(self, time: Time, strategy: Strategy) -> None:
         self.time = time
         self.good_memory: Entanglement | None = None
         self.bad_memory: Entanglement | None = None
         self.queue: Qubit | None = None
+        self.strategy: Strategy = strategy
 
     "is called, when event entanglement_generation happend"
 
     def handle_entanglement_generated_event(self):
         entanglement = self._generate_entanglement()
 
+        # generation was not successful
         if entanglement is None:
             return
-        
+
+        # good memory was empty. Just place new entanglement in good memory
         if self.good_memory is None:
             self.good_memory = entanglement
-        
+            return
 
-        strat: Strategy = Strategy.ALWAYS_PROT_1
-
-        match strat:
+        match self.strategy:
             case Strategy.ALWAYS_REPLACE:
                 self.strategy_always_replace(entanglement)
-            case Strategy.ALWAYS_PROT_1:
-                self.strategy_always_prot_1(entanglement)
+            case (
+                Strategy.ALWAYS_PROT_1 | Strategy.ALWAYS_PROT_2 | Strategy.ALWAYS_PROT_3
+            ):
+                self.strategy_always_prot_x(entanglement, self.strategy)
 
-    def strategy_always_prot_1(self, new_entanglement: Entanglement):
+    def strategy_always_prot_x(
+        self, new_entanglement: Entanglement, strategy: Strategy
+    ):
         f_bd = new_entanglement.get_current_fidelity()
         f = self.good_memory.get_current_fidelity()
-        la = (1 - f_bd) / 3
-        fidelity_after_pumping = ((7 * la - 3) * f - la) / (
-            (8 * la - 2) * f - 2 * la - 1
+        fidelity_after_pumping = 0
+        success_probability = 0
+
+        match strategy:
+            case Strategy.ALWAYS_PROT_1:
+                fidelity_after_pumping = Cliford.prot_1_jump_function(f, f_bd)
+                success_probability = Cliford.prot_1_success_probability(f, f_bd)
+            case Strategy.ALWAYS_PROT_2:
+                fidelity_after_pumping = Cliford.prot_2_jump_function(f, f_bd)
+                success_probability = Cliford.prot_2_success_probability(f, f_bd)
+            case Strategy.ALWAYS_PROT_3:
+                fidelity_after_pumping = Cliford.prot_3_jump_function(f, f_bd)
+                success_probability = Cliford.prot_3_success_probability(f, f_bd)
+
+        new_entanglement = Entanglement(
+            self.time, self.time.get_current_time(), fidelity_after_pumping
         )
-
-        success_probability = (2 / 3)*(1 - 4 * la) * f + (1 / 3) * (1 + 2 * la)
-
-        new_entanglement = Entanglement(self.time, self.time.get_current_time(), fidelity_after_pumping)
 
         if bernouli_with_probability(success_probability):
             self.good_memory = new_entanglement
@@ -227,21 +248,25 @@ class Node:
             tf = self.queue.teleportation_fidelity(
                 self.good_memory.get_current_fidelity()
             )
-            logger.info("Served request with fidelity %s and waiting time %s", tf, self.queue.get_waiting_time())
-            write_results_csv(tf, self.time.get_current_time())
+            logger.info(
+                "Served request with fidelity %s and waiting time %s",
+                tf,
+                self.queue.get_waiting_time(),
+            )
+            write_results_csv(tf, self.queue.get_waiting_time(), self.strategy.name)
             self.good_memory = None
             if self.bad_memory is not None:
                 self.good_memory = self.bad_memory
                 self.bad_memory = None
         else:
             logger.info("Serving request failed")
-        
+
 
 class Simulation:
-    def __init__(self) -> None:
+    def __init__(self, strategy: Strategy) -> None:
         self.time = Time()
-        self.node_a = Node(self.time)
-
+        self.node_a = Node(self.time, strategy)
+        self.strategy = strategy
         # Samples (hier aus Exponentialverteilungen)
         self.entanglement_samples = rng.exponential(
             ENTANGLEMENT_GENERATION_SCALE, ENTANGLEMENT_GENERATION_COUNT
@@ -295,6 +320,16 @@ class Simulation:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--strategy",
+        type=int,
+        choices=range(1, len(Strategy) + 1),
+        required=True,
+    )
+    args = parser.parse_args()
+    strategy = Strategy(args.strategy)
+
     logging.basicConfig(
         filename="myapp.log",
         filemode="w",
@@ -303,8 +338,9 @@ def main() -> None:
     )
     logger.info("Starting simulation")
 
-    sim = Simulation()
+    sim = Simulation(strategy)
     sim.run()
+    create_boxplot()
 
 
 if __name__ == "__main__":

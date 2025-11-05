@@ -1,12 +1,14 @@
 import csv
 from pathlib import Path
+import string
 
-def write_results_csv(fidelity, time) -> None:
+
+def write_results_csv(fidelity, time, file_name: string) -> None:
     """
     Hängt einen Datensatz (fidelity, time) an result.csv an.
     Schreibt den Header nur einmal, wenn die Datei neu ist/leer ist.
     """
-    path = Path("result.csv")
+    path = Path(f"results/{file_name}.csv")
     file_exists = path.exists()
     file_empty = (path.stat().st_size == 0) if file_exists else True
 

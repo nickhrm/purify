@@ -9,10 +9,10 @@ k = 1  # beliebig änderbar
 
 # Funktionen definieren
 def q(x):
-    return k * (1 - 0.8)
+    return k * (1 - 0.51)
 
 def w(x):
-    return (1 - k / 2) * (1 - 0.8)
+    return (1 - k / 2) * (1 - 0.51)
 
 def h(x):
     numerator = (6 * w(x) + 4 * q(x) - 3) * x - q(x)
@@ -25,7 +25,7 @@ def r(x):
     return numerator / denominator
 
 # Definitionsbereich
-x = np.linspace(0, 1.5, 400)
+x = np.linspace(0, 1, 400)
 
 # Funktionen auswerten
 h_vals = h(x)
@@ -41,4 +41,4 @@ plt.ylabel("Funktionswert")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig("noiseplot.png")
+plt.savefig("jump_function_plot.png")
