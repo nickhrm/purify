@@ -2,7 +2,10 @@ import logging
 
 import numpy as np
 
-from purify.my_constants import ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY, ENTANGLEMENT_INITIAL_FIDELITY
+from purify.my_constants import (
+    ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY,
+    ENTANGLEMENT_INITIAL_FIDELITY,
+)
 from purify.entanglement import Entanglement
 from purify.my_enums import Strategy
 from purify.my_time import Time
@@ -124,7 +127,15 @@ class Node:
         if generation_successful:
             creation_time = self.time.get_current_time()
             logger.info("Entanglement Generation Successful")
-            return Entanglement(self.time, creation_time, ENTANGLEMENT_INITIAL_FIDELITY)
+            llambda = (1 - ENTANGLEMENT_INITIAL_FIDELITY) / 3
+            return Entanglement(
+                self.time,
+                creation_time,
+                ENTANGLEMENT_INITIAL_FIDELITY,
+                llambda,
+                llambda,
+                llambda,
+            )
         else:
             logger.info("Entanglement Generation Failed")
             return None
@@ -149,4 +160,3 @@ class Node:
                 self.bad_memory = None
         else:
             logger.info("Serving request failed")
-
