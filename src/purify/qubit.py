@@ -1,18 +1,6 @@
-from __future__ import annotations
-
-import argparse
-import logging
 import numpy as np
-from constants import ENTANGLEMENT_DECOHERENCE_CONSTANT
-from my_enums import Strategy
-from my_time import Time
-from my_simulation import Simulation
-from utils.plot_util import create_boxplot
-
-logger = logging.getLogger(__name__)
-rng = np.random.default_rng()
-
-
+from purify.my_constants import ENTANGLEMENT_DECOHERENCE_CONSTANT
+from purify.my_time import Time
 
 
 class Qubit:
@@ -44,31 +32,3 @@ class Qubit:
     def get_waiting_time(self):
         return self._time.get_current_time() - self.creationTime
 
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--strategy",
-        type=int,
-        choices=range(1, len(Strategy) + 1),
-        required=True,
-    )
-    args = parser.parse_args()
-    strategy = Strategy(args.strategy)
-
-    logging.basicConfig(
-        filename="myapp.log",
-        filemode="w",
-        level=logging.INFO,
-        format="%(levelname)s - %(message)s",
-    )
-    logger.info("Starting simulation")
-
-    sim = Simulation(strategy)
-    sim.run()
-    create_boxplot()
-
-
-if __name__ == "__main__":
-    main()

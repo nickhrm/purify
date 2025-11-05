@@ -1,6 +1,6 @@
 
 
-from my_enums import Event
+from purify.my_enums import Event
 
 
 class Time:

@@ -1,9 +1,9 @@
 import logging
 import numpy as np
-from constants import ENTANGLEMENT_GENERATION_COUNT, ENTANGLEMENT_GENERATION_SCALE
-from main import Strategy, Time
-from my_enums import Event
-from node import Node
+from purify.my_constants import ENTANGLEMENT_GENERATION_COUNT, ENTANGLEMENT_GENERATION_SCALE
+from purify.my_enums import Event, Strategy
+from purify.node import Node
+from purify.my_time import Time
 
 
 logger = logging.getLogger(__name__)

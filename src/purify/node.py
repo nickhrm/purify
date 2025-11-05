@@ -2,14 +2,14 @@ import logging
 
 import numpy as np
 
-from constants import ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY, ENTANGLEMENT_INITIAL_FIDELITY
-from entanglement import Entanglement
-from main import Qubit
-from my_enums import Strategy
-from my_time import Time
-from utils.bernouli_util import bernouli_with_probability
-from utils.clifford_util import Cliford
-from utils.csv_utils import write_results_csv
+from purify.my_constants import ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY, ENTANGLEMENT_INITIAL_FIDELITY
+from purify.entanglement import Entanglement
+from purify.my_enums import Strategy
+from purify.my_time import Time
+from purify.utils.bernouli_util import bernouli_with_probability
+from purify.utils.clifford_util import Cliford
+from purify.utils.csv_utils import write_results_csv
+from purify.qubit import Qubit
 
 
 logger = logging.getLogger(__name__)

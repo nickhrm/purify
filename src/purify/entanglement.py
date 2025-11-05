@@ -1,7 +1,7 @@
 import logging
 import numpy as np
-from constants import ENTANGLEMENT_DECOHERENCE_CONSTANT
-from main import Time
+from purify.my_constants import ENTANGLEMENT_DECOHERENCE_CONSTANT
+from purify.my_time import Time
 
 logger = logging.getLogger(__name__)
 

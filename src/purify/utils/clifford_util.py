@@ -1,7 +1,10 @@
-from entanglement import Entanglement
+from purify.entanglement import Entanglement
 
 
 class Cliford:
+
+    #will return a new Entanglement in the future
+
     def prot_1_jump_function(e_w: Entanglement, e_bd: Entanglement):
         oben = (
             4 * e_bd.get_current_lambda_1()
