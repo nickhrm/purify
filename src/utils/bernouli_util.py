@@ -1,5 +1,8 @@
 
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 rng = np.random.default_rng()
