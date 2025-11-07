@@ -1,4 +1,4 @@
 # purify
 
 
-Excecute with "uv run main --strategy X" 
+Excecute with "uv run main" 

@@ -17,7 +17,7 @@ class Time:
         if self.entanglement_time > self.request_time:
             return Event.ENTANGLEMENT_GENERATION
         else:
-            return Event.REQUEST_ARRIVED
+            return Event.REQUEST_ARRIVAL
 
     def update(self, entanglement_dif: float, request_dif: float) -> None:
         new_entanglement_time = self.entanglement_time + entanglement_dif

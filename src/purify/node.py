@@ -5,12 +5,11 @@ import numpy as np
 from purify.entanglement import Entanglement
 from purify.my_constants import (
     ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY,
-    ENTANGLEMENT_INITIAL_FIDELITY,
 )
 from purify.my_enums import Strategy
 from purify.my_time import Time
 from purify.qubit import Qubit
-from purify.utils.bernouli_util import bernouli_with_probability
+from purify.utils.bernouli_util import bernouli_with_probability_is_successfull
 from purify.utils.clifford_util import Cliford
 from purify.utils.csv_utils import write_results_csv
 
@@ -19,17 +18,18 @@ rng = np.random.default_rng()
 
 
 class Node:
-    def __init__(self, time: Time, strategy: Strategy) -> None:
+    def __init__(self, time: Time, strategy: Strategy, decoherence_time: float) -> None:
         self.time = time
         self.good_memory: Entanglement | None = None
         self.bad_memory: Entanglement | None = None
         self.queue: Qubit | None = None
         self.strategy: Strategy = strategy
+        self.decoherence_time: float = decoherence_time
 
     "is called, when event entanglement_generation happend"
 
-    def handle_entanglement_generated_event(self):
-        entanglement = self._generate_entanglement()
+    def handle_entanglement_generation(self):
+        entanglement = self.__generate_entanglement()
 
         # generation was not successful
         if entanglement is None:
@@ -54,6 +54,13 @@ class Node:
         fidelity_after_pumping = 0
         success_probability = 0
 
+        logger.info(
+            "pump with 1G-Fidelity: %s and 1B-Fidelity: %s, using strategy %s",
+            self.good_memory.get_current_fidelity(),
+            new_entanglement.get_current_fidelity(),
+            strategy.name,
+        )
+
         match strategy:
             case Strategy.ALWAYS_PROT_1:
                 fidelity_after_pumping = Cliford.prot_1_jump_function(
@@ -77,18 +84,10 @@ class Node:
                     self.good_memory, new_entanglement
                 )
 
-        llambda = (1 - fidelity_after_pumping) / 3
-        new_entanglement = Entanglement(
-            self.time,
-            self.time.get_current_time(),
-            fidelity_after_pumping,
-            llambda,
-            llambda,
-            llambda,
-        )
-
-        if bernouli_with_probability(success_probability):
-            self.good_memory = new_entanglement
+        if bernouli_with_probability_is_successfull(success_probability):
+            self.good_memory = Entanglement.from_fidelity(
+                self.time, fidelity_after_pumping, self.decoherence_time
+            )
             self.bad_memory = None
             logger.info("purification was successfull")
         else:
@@ -131,49 +130,46 @@ class Node:
                 )
                 self.bad_memory = entanglement
 
-    def _generate_entanglement(self) -> Entanglement | None:
-        generation_successful = rng.choice(
-            [True, False],
-            p=[
-                ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY,
-                1 - ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY,
-            ],
+    def __generate_entanglement(self) -> Entanglement | None:
+        generation_successful = bernouli_with_probability_is_successfull(
+            ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY
         )
         if generation_successful:
-            creation_time = self.time.get_current_time()
             logger.info("Entanglement Generation Successful")
-            llambda = (1 - ENTANGLEMENT_INITIAL_FIDELITY) / 3
-            return Entanglement(
-                self.time,
-                creation_time,
-                ENTANGLEMENT_INITIAL_FIDELITY,
-                llambda,
-                llambda,
-                llambda,
-            )
+            return Entanglement.from_default_lambdas(self.time, self.decoherence_time)
         else:
             logger.info("Entanglement Generation Failed")
             return None
 
-    def serve_request(self):
-        self.queue = Qubit(
-            self.time,
-        )
+    def handle_request_arrival(self):
+        self.queue = Qubit(self.time, self.decoherence_time)
         if self.good_memory is not None:
-            tf = self.queue.teleportation_fidelity(
+            teleportation_fidelity = self.queue.teleportation_fidelity(
                 self.good_memory.get_current_fidelity()
             )
             logger.info(
                 "Served request with fidelity %s and waiting time %s",
-                tf,
+                teleportation_fidelity,
                 self.queue.get_waiting_time(),
             )
-            write_results_csv(tf, self.queue.get_waiting_time(), self.strategy.name)
+            write_results_csv(
+                teleportation_fidelity,
+                self.queue.get_waiting_time(),
+                f"{self.strategy.name}_{self.decoherence_time}",
+            )
+
+            # discard link in good_memory
             self.good_memory = None
+            # put bad_memory entanglement in good_memory
             if self.bad_memory is not None:
                 self.good_memory = self.bad_memory
                 self.bad_memory = None
         else:
+            write_results_csv(
+                0,
+                self.queue.get_waiting_time(),
+                f"{self.strategy.name}_{self.decoherence_time}",
+            )
             logger.info("Serving request failed")
 
-    
+        self.queue = None

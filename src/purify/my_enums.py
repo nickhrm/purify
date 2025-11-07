@@ -4,7 +4,7 @@ from enum import Enum
 
 class Event(Enum):
     ENTANGLEMENT_GENERATION = 1
-    REQUEST_ARRIVED = 2
+    REQUEST_ARRIVAL = 2
 
 
 class Strategy(Enum):

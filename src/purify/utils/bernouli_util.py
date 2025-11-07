@@ -1,5 +1,6 @@
 
 import logging
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -7,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 rng = np.random.default_rng()
 
-def bernouli_with_probability(probability: float) -> bool:
+def bernouli_with_probability_is_successfull(probability: float) -> bool:
         if probability > 1:
             raise Exception("Probability must be smaller than 1")
         success: bool = rng.choice(
