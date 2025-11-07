@@ -20,15 +20,20 @@ dev = [
 
 [project.scripts]
 purify = "purify:main"
+plot = "plot:main"
 
 
 [build-system]
 requires = ["uv_build>=0.8.11,<0.9.0"]
 build-backend = "uv_build"
 
-# [tool.ruff.lint]
-# # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
-# # Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
-# # McCabe complexity (`C901`) by default.
-# select = ["ALL"]
-# ignore = []   
+
+[tool.ruff.lint]
+# Wähle die wichtigsten Regel-Sets aus. Ein guter Start:
+select = [
+    "E",  # pycodestyle errors
+    "F",  # Pyflakes (logische Fehler wie unbenutzte Variablen)
+    "W",  # pycodestyle warnings
+    "I",  # isort (Import-Sortierung)
+    "UP", # pyupgrade (modernisiert deinen Code)
+]

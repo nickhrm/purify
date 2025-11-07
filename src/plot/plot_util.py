@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-def create_boxplot(): 
+def create_boxplot():
     # Ordner mit Ergebnissen
     results_dir = "results"
 

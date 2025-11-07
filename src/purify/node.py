@@ -2,18 +2,17 @@ import logging
 
 import numpy as np
 
+from purify.entanglement import Entanglement
 from purify.my_constants import (
     ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY,
     ENTANGLEMENT_INITIAL_FIDELITY,
 )
-from purify.entanglement import Entanglement
 from purify.my_enums import Strategy
 from purify.my_time import Time
+from purify.qubit import Qubit
 from purify.utils.bernouli_util import bernouli_with_probability
 from purify.utils.clifford_util import Cliford
 from purify.utils.csv_utils import write_results_csv
-from purify.qubit import Qubit
-
 
 logger = logging.getLogger(__name__)
 rng = np.random.default_rng()
@@ -52,24 +51,40 @@ class Node:
     def strategy_always_prot_x(
         self, new_entanglement: Entanglement, strategy: Strategy
     ):
-        f_bd = new_entanglement.get_current_fidelity()
-        f = self.good_memory.get_current_fidelity()
         fidelity_after_pumping = 0
         success_probability = 0
 
         match strategy:
             case Strategy.ALWAYS_PROT_1:
-                fidelity_after_pumping = Cliford.prot_1_jump_function(f, f_bd)
-                success_probability = Cliford.prot_1_success_probability(f, f_bd)
+                fidelity_after_pumping = Cliford.prot_1_jump_function(
+                    self.good_memory, new_entanglement
+                )
+                success_probability = Cliford.prot_1_success_probability(
+                    self.good_memory, new_entanglement
+                )
             case Strategy.ALWAYS_PROT_2:
-                fidelity_after_pumping = Cliford.prot_2_jump_function(f, f_bd)
-                success_probability = Cliford.prot_2_success_probability(f, f_bd)
+                fidelity_after_pumping = Cliford.prot_2_jump_function(
+                    self.good_memory, new_entanglement
+                )
+                success_probability = Cliford.prot_2_success_probability(
+                    self.good_memory, new_entanglement
+                )
             case Strategy.ALWAYS_PROT_3:
-                fidelity_after_pumping = Cliford.prot_3_jump_function(f, f_bd)
-                success_probability = Cliford.prot_3_success_probability(f, f_bd)
+                fidelity_after_pumping = Cliford.prot_3_jump_function(
+                    self.good_memory, new_entanglement
+                )
+                success_probability = Cliford.prot_3_success_probability(
+                    self.good_memory, new_entanglement
+                )
 
+        llambda = (1 - fidelity_after_pumping) / 3
         new_entanglement = Entanglement(
-            self.time, self.time.get_current_time(), fidelity_after_pumping
+            self.time,
+            self.time.get_current_time(),
+            fidelity_after_pumping,
+            llambda,
+            llambda,
+            llambda,
         )
 
         if bernouli_with_probability(success_probability):
@@ -160,3 +175,5 @@ class Node:
                 self.bad_memory = None
         else:
             logger.info("Serving request failed")
+
+    

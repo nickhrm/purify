@@ -1,14 +1,21 @@
 import csv
 from pathlib import Path
-import string
+# 'string' ist das Modul, 'str' ist der Typ
+# import string # <- Wird nicht gebraucht
 
-
-def write_results_csv(fidelity, time, file_name: string) -> None:
+def write_results_csv(fidelity, time, file_name: str) -> None: # <- Typ ist 'str'
     """
     Hängt einen Datensatz (fidelity, time) an result.csv an.
     Schreibt den Header nur einmal, wenn die Datei neu ist/leer ist.
     """
+    # 1. Relativer Pfad: KEIN Schrägstrich am Anfang
     path = Path(f"results/{file_name}.csv")
+
+    # 2. WICHTIG: Erstelle den Ordner, falls er nicht existiert
+    #    path.parent ist der "results"-Teil
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    # 3. Prüfe Existenz/Größe der Datei
     file_exists = path.exists()
     file_empty = (path.stat().st_size == 0) if file_exists else True
 

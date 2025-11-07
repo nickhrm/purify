@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import argparse
 import logging
+
 import numpy as np
+
 from purify.my_enums import Strategy
 from purify.my_simulation import Simulation
-from purify.utils.plot_util import create_boxplot
+from plot.plot_util import create_boxplot
 
 logger = logging.getLogger(__name__)
 rng = np.random.default_rng()

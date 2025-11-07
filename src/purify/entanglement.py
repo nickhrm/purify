@@ -1,5 +1,7 @@
 import logging
+
 import numpy as np
+
 from purify.my_constants import ENTANGLEMENT_DECOHERENCE_CONSTANT
 from purify.my_time import Time
 
@@ -9,7 +11,8 @@ logger = logging.getLogger(__name__)
 class Entanglement:
     """
     Repräsentiert ein erzeugtes Verschränkungs-Paar.
-    Hält eine Referenz auf 'Time', damit get_current_fidelity() keine Zeit-Parameter braucht.
+    Hält eine Referenz auf 'Time', damit get_current_fidelity() keine Zeit-Parameter
+    braucht.
     """
 
     def __init__(
@@ -40,12 +43,11 @@ class Entanglement:
             + 0.25
         )
 
-    def get_current_lambda_1(self):
+    def get_current_lambda_1(self) -> float:
         return self.lambda_1
 
-    def get_current_lambda_2(self):
+    def get_current_lambda_2(self) -> float:
         return self.lambda_2
-    
-    def get_current_lambda_3(self):
+
+    def get_current_lambda_3(self) -> float:
         return self.lambda_3
-    
