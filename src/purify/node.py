@@ -54,6 +54,9 @@ class Node:
         fidelity_after_pumping = 0
         success_probability = 0
 
+        if self.good_memory is None:
+            raise Exception("Cannot pump without Entanglement")
+
         logger.info(
             "pump with 1G-Fidelity: %s and 1B-Fidelity: %s, using strategy %s",
             self.good_memory.get_current_fidelity(),
@@ -144,7 +147,7 @@ class Node:
     def handle_request_arrival(self):
         self.queue = Qubit(self.time, self.decoherence_time)
         if self.good_memory is not None:
-            teleportation_fidelity = self.queue.teleportation_fidelity(
+            teleportation_fidelity: float = self.queue.teleportation_fidelity(
                 self.good_memory.get_current_fidelity()
             )
             logger.info(

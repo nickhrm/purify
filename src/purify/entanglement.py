@@ -29,7 +29,7 @@ class Entanglement:
         creation_lambda_3: float,
         decoherence_time: float
     ):
-        self._time: float = time
+        self._time: Time = time
         self.creationTime: float = creation_time
         self.creationFidelity: float = creation_fidelity
         self.creation_lambda_1: float = creation_lambda_1
@@ -37,7 +37,7 @@ class Entanglement:
         self.creation_lambda_3: float = creation_lambda_3
         self.decoherence_time: float = decoherence_time
 
-    def get_current_fidelity(self) -> float | None:
+    def get_current_fidelity(self) -> float:
         return self.__depolarization_noise(self.creationFidelity)
     
     def get_current_lambda_1(self) -> float:
@@ -50,9 +50,7 @@ class Entanglement:
         return self.__depolarization_noise(self.creation_lambda_3)
 
 
-    def __depolarization_noise(self, start_val):
-        if self is None:
-            return None
+    def __depolarization_noise(self, start_val) -> float:
         current_time = self._time.get_current_time()
         time_alive = current_time - self.creationTime
         return (
