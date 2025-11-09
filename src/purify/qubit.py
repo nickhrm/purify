@@ -10,9 +10,7 @@ class Qubit:
         self.decoherence_time: float = decoherence_time
 
 
-    def get_current_fidelity(self) -> float | None:
-        if self is None:
-            return None
+    def get_current_fidelity(self) -> float:
         current_time = self._time.get_current_time()
         time_alive = current_time - self.creationTime
         return (np.exp(-time_alive / self.decoherence_time) + 2.0) / 3.0

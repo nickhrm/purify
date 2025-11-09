@@ -1,4 +1,3 @@
-from plot.box_plot import create_boxplot
 from plot.curve_plot import create_decoherence_plot
 
 

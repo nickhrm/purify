@@ -57,21 +57,32 @@ class Simulation:
             self.node_a.handle_request_arrival()
 
         # Logging
-        gm = (
-            self.node_a.good_memory.get_current_fidelity()
-            if self.node_a.good_memory is not None
-            else None
-        )
-        bm = (
-            self.node_a.bad_memory.get_current_fidelity()
-            if self.node_a.bad_memory is not None
-            else None
-        )
-        logger.info(
-            "Node A: good-memory=%s, bad-memory=%s",
-            round(gm, 2) if gm is not None else None,
-            round(bm, 2) if bm is not None else None,
-        )
+        if self.node_a.good_memory is not None:
+            e = self.node_a.good_memory
+            logger.info(
+                "Good Memory = F:%s, lambda_1: %s, lambda_2: %s ,lambda_3: %s,",
+                e.get_current_fidelity(),
+                e.get_current_lambda_1(),
+                e.get_current_lambda_2(),
+                e.get_current_lambda_3(),
+            )
+
+        else:
+            logger.info("Good Memory = None")
+
+        if self.node_a.bad_memory is not None:
+            e = self.node_a.bad_memory
+            logger.info(
+                "Bad Memory = F:%s, lambda_1: %s, lambda_2: %s ,lambda_3: %s,",
+                e.get_current_fidelity(),
+                e.get_current_lambda_1(),
+                e.get_current_lambda_2(),
+                e.get_current_lambda_3(),
+            )
+
+        else:
+            logger.info("Bad Memory = None")
+
 
         return True
 

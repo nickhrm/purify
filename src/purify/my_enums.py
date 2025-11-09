@@ -17,4 +17,6 @@ class Strategy(Enum):
     ALWAYS_PROT_3_WITH_PROBABILITY = 7
     CHOOSE_RANDOM_ACTION_UNIFORMLY = 8
     GPS = 9
+    ALWAYS_PMD = 10
+
 

@@ -39,7 +39,7 @@ class Entanglement:
 
     def get_current_fidelity(self) -> float:
         return self.__depolarization_noise(self.creationFidelity)
-    
+
     def get_current_lambda_1(self) -> float:
         return self.__depolarization_noise(self.creation_lambda_1)
 

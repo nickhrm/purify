@@ -10,7 +10,7 @@ from purify.my_enums import Strategy
 from purify.my_time import Time
 from purify.qubit import Qubit
 from purify.utils.bernouli_util import bernouli_with_probability_is_successfull
-from purify.utils.clifford_util import Cliford
+from purify.utils.clifford_util import Purification
 from purify.utils.csv_utils import write_results_csv
 
 logger = logging.getLogger(__name__)
@@ -28,8 +28,8 @@ class Node:
 
     "is called, when event entanglement_generation happend"
 
-    def handle_entanglement_generation(self):
-        entanglement = self.__generate_entanglement()
+    def handle_entanglement_generation(self) -> None:
+        entanglement: Entanglement | None = self.__generate_entanglement()
 
         # generation was not successful
         if entanglement is None:
@@ -44,13 +44,16 @@ class Node:
             case Strategy.ALWAYS_REPLACE:
                 self.strategy_always_replace(entanglement)
             case (
-                Strategy.ALWAYS_PROT_1 | Strategy.ALWAYS_PROT_2 | Strategy.ALWAYS_PROT_3
+                Strategy.ALWAYS_PROT_1
+                | Strategy.ALWAYS_PROT_2
+                | Strategy.ALWAYS_PROT_3
+                | Strategy.ALWAYS_PMD
             ):
                 self.strategy_always_prot_x(entanglement, self.strategy)
 
     def strategy_always_prot_x(
         self, new_entanglement: Entanglement, strategy: Strategy
-    ):
+    ) -> None:
         fidelity_after_pumping = 0
         success_probability = 0
 
@@ -66,24 +69,33 @@ class Node:
 
         match strategy:
             case Strategy.ALWAYS_PROT_1:
-                fidelity_after_pumping = Cliford.prot_1_jump_function(
+                fidelity_after_pumping = Purification.prot_1_jump_function(
                     self.good_memory, new_entanglement
                 )
-                success_probability = Cliford.prot_1_success_probability(
+                success_probability = Purification.prot_1_success_probability(
                     self.good_memory, new_entanglement
                 )
             case Strategy.ALWAYS_PROT_2:
-                fidelity_after_pumping = Cliford.prot_2_jump_function(
+                fidelity_after_pumping = Purification.prot_2_jump_function(
                     self.good_memory, new_entanglement
                 )
-                success_probability = Cliford.prot_2_success_probability(
+                success_probability: float = Purification.prot_2_success_probability(
                     self.good_memory, new_entanglement
                 )
             case Strategy.ALWAYS_PROT_3:
-                fidelity_after_pumping = Cliford.prot_3_jump_function(
+                fidelity_after_pumping: float = Purification.prot_3_jump_function(
                     self.good_memory, new_entanglement
                 )
-                success_probability = Cliford.prot_3_success_probability(
+                success_probability = Purification.prot_3_success_probability(
+                    self.good_memory, new_entanglement
+                )
+
+            case Strategy.ALWAYS_PMD:
+                fidelity_after_pumping = Purification.pmd_jump_function(
+                    self.good_memory, new_entanglement
+                )
+
+                success_probability = Purification.pmd_success_probability(
                     self.good_memory, new_entanglement
                 )
 
@@ -158,7 +170,8 @@ class Node:
             write_results_csv(
                 teleportation_fidelity,
                 self.queue.get_waiting_time(),
-                f"{self.strategy.name}_{self.decoherence_time}",
+                self.strategy.name,
+                self.decoherence_time
             )
 
             # discard link in good_memory
@@ -171,7 +184,8 @@ class Node:
             write_results_csv(
                 0,
                 self.queue.get_waiting_time(),
-                f"{self.strategy.name}_{self.decoherence_time}",
+                self.strategy.name,
+                self.decoherence_time
             )
             logger.info("Serving request failed")
 

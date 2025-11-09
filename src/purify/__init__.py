@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import argparse
 import logging
 
 import numpy as np
 
-from plot.box_plot import create_boxplot
 from plot.curve_plot import create_decoherence_plot
 from purify.my_enums import Strategy
 from purify.my_simulation import Simulation
@@ -34,13 +32,16 @@ def main() -> None:
     logger.info("Starting simulation")
 
     strategies = [
+        Strategy.ALWAYS_REPLACE,
+
         Strategy.ALWAYS_PROT_1,
         Strategy.ALWAYS_PROT_2,
         Strategy.ALWAYS_PROT_3,
+        Strategy.ALWAYS_PMD,
     ]
 
     # in mili secs
-    decoherence_times = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    decoherence_times = [0.001, 0.005, 0.01, 0.05, 0.1]
 
     for strategy in strategies:
         for decoherence_time in decoherence_times:
