@@ -52,9 +52,12 @@ class Simulation:
 
         if self.time.last_event() == Event.ENTANGLEMENT_GENERATION:
             self.node_a.handle_entanglement_generation()
+            self.node_a.serve_request()
+
 
         if self.time.last_event() == Event.REQUEST_ARRIVAL:
             self.node_a.handle_request_arrival()
+            self.node_a.serve_request()
 
         # Logging
         if self.node_a.good_memory is not None:

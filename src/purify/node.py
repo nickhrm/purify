@@ -157,7 +157,23 @@ class Node:
             return None
 
     def handle_request_arrival(self):
-        self.queue = Qubit(self.time, self.decoherence_time)
+        # fill queue if empty
+        if self.queue is None:
+            self.queue = Qubit(self.time, self.decoherence_time)
+        else:
+        # if queue was already full, request is dropped
+            write_results_csv(
+                0,
+                self.queue.get_waiting_time(),
+                self.strategy.name,
+                self.decoherence_time
+            )
+            logger.info("Serving request failed. queue was already full")
+
+    def serve_request(self):
+        if self.queue is None:
+            return
+
         if self.good_memory is not None:
             teleportation_fidelity: float = self.queue.teleportation_fidelity(
                 self.good_memory.get_current_fidelity()
@@ -174,19 +190,11 @@ class Node:
                 self.decoherence_time
             )
 
+            # remove qubit from queue, because it was served
+            self.queue = None
             # discard link in good_memory
             self.good_memory = None
             # put bad_memory entanglement in good_memory
             if self.bad_memory is not None:
                 self.good_memory = self.bad_memory
                 self.bad_memory = None
-        else:
-            write_results_csv(
-                0,
-                self.queue.get_waiting_time(),
-                self.strategy.name,
-                self.decoherence_time
-            )
-            logger.info("Serving request failed")
-
-        self.queue = None
