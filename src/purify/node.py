@@ -1,4 +1,5 @@
 import logging
+from math import inf
 
 import numpy as np
 
@@ -100,11 +101,24 @@ class Node:
                 )
 
         if bernouli_with_probability_is_successfull(success_probability):
+
+            logger.info(
+                "Updated good-memory. Old value: "
+                + str(
+                    self.good_memory.get_current_fidelity()
+                    if self.good_memory is not None
+                    else None
+                )
+                + ", new value: "
+                + str(fidelity_after_pumping) + " using strategy " + strategy.name
+            )
+
             self.good_memory = Entanglement.from_fidelity(
                 self.time, fidelity_after_pumping, self.decoherence_time
             )
             self.bad_memory = None
             logger.info("purification was successfull")
+
         else:
             self.good_memory = None
             self.bad_memory = None
@@ -164,7 +178,7 @@ class Node:
         # if queue was already full, request is dropped
             write_results_csv(
                 0,
-                self.queue.get_waiting_time(),
+                0.0,
                 self.strategy.name,
                 self.decoherence_time
             )
