@@ -37,7 +37,7 @@ def main() -> None:
         Strategy.ALWAYS_PROT_1,
         Strategy.ALWAYS_PROT_2,
         Strategy.ALWAYS_PROT_3,
-        Strategy.ALWAYS_PMD
+        # Strategy.ALWAYS_PMD
     ]
 
     # in mili secs

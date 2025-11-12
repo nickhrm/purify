@@ -161,7 +161,7 @@ class Node:
 
     def __generate_entanglement(self) -> Entanglement | None:
         generation_successful = bernouli_with_probability_is_successfull(
-            ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY
+            1
         )
         if generation_successful:
             logger.info("Entanglement Generation Successful")
