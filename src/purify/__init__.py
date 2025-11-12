@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 import numpy as np
 
@@ -33,7 +34,6 @@ def main() -> None:
 
     strategies = [
         Strategy.ALWAYS_REPLACE,
-
         Strategy.ALWAYS_PROT_1,
         Strategy.ALWAYS_PROT_2,
         Strategy.ALWAYS_PROT_3,
@@ -41,8 +41,21 @@ def main() -> None:
     ]
 
     # in mili secs
-    decoherence_times = [0.001, 0.005, 0.01, 0.05, 0.1]
+    decoherence_times = [
+        0.0001,
+        0.001,
+        0.005,
+        0.01,
+        0.05,
+        0.1,
+        1,
+    ]
 
+    try:
+        os.remove("results/ALL_RESULTS.csv")
+    except Exception as e:
+        print(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
+    
     for strategy in strategies:
         for decoherence_time in decoherence_times:
             sim = Simulation(strategy, decoherence_time)

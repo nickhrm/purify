@@ -1,3 +1,4 @@
+from purify.my_constants import LAMBDA_1, LAMBDA_2, LAMBDA_3
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -50,14 +51,14 @@ def create_decoherence_plot():
 
     # Diagramm beschriften
     plt.title(
-        "Teleportation fidelity for different decoherence times and teleportation protocols"
+        f"Entanglement({LAMBDA_1}; {LAMBDA_2}; {LAMBDA_3})"
     )
-    plt.xlabel("Decoherence Time ($t_c$ in ms)")
+    plt.xlabel("Decoherence Time ($t_c$ in s)")
     plt.ylabel("Teleportation Fidelity ($F$)")
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.legend(title="Strategie")
     plt.xscale("log")
-    plt.ylim(0.0, 1.0)
+    plt.ylim(0.7, 1.0)
     plt.tight_layout()
 
     output_file = "fidelity_curve_plot.png"

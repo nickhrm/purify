@@ -17,17 +17,19 @@ class Qubit:
 
     def teleportation_fidelity(self, entanglement_fidelity: float) -> float:
         Fe = float(np.clip(entanglement_fidelity, 0.0, 1.0))
-        Fq = self.get_current_fidelity()
+        Fq = float(np.clip(self.get_current_fidelity(), 0.0, 1.0))
 
+        # Terme aus der Gleichung
         term1 = ((2.0 * Fe + 1.0) * Fq) / 3.0
-        term2 = (2.0 * (Fe - 1.0) * (1.0 - Fq)) / 3.0
+        term2 = (2.0 * (1.0 - Fe) * (1.0 - Fq)) / 3.0
 
-        # Radikanden stabilisieren (Rundungsfehler -> kleine negative Zahlen vermeiden)
+        # numerisch stabile Berechnung der Wurzeln
         a = np.sqrt(max(term1, 0.0))
         b = np.sqrt(max(term2, 0.0))
 
         FT = (a - b) ** 2
         return float(np.clip(FT, 0.0, 1.0))
+
 
     def get_waiting_time(self):
         return self._time.get_current_time() - self.creationTime

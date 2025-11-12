@@ -5,14 +5,14 @@ import numpy as np
 
 from purify.entanglement import Entanglement
 from purify.my_constants import (
-    ENTANGLEMENT_GENERATION_SUCESS_PROBABILITY,
+    P_G,
 )
 from purify.my_enums import Strategy
 from purify.my_time import Time
 from purify.qubit import Qubit
 from purify.utils.bernouli_util import bernouli_with_probability_is_successfull
-from purify.utils.clifford_util import Purification
 from purify.utils.csv_utils import write_results_csv
+from purify.utils.purification_util import Purification
 
 logger = logging.getLogger(__name__)
 rng = np.random.default_rng()
@@ -101,7 +101,6 @@ class Node:
                 )
 
         if bernouli_with_probability_is_successfull(success_probability):
-
             logger.info(
                 "Updated good-memory. Old value: "
                 + str(
@@ -110,7 +109,9 @@ class Node:
                     else None
                 )
                 + ", new value: "
-                + str(fidelity_after_pumping) + " using strategy " + strategy.name
+                + str(fidelity_after_pumping)
+                + " using strategy "
+                + strategy.name
             )
 
             self.good_memory = Entanglement.from_fidelity(
@@ -160,9 +161,7 @@ class Node:
                 self.bad_memory = entanglement
 
     def __generate_entanglement(self) -> Entanglement | None:
-        generation_successful = bernouli_with_probability_is_successfull(
-            1
-        )
+        generation_successful = bernouli_with_probability_is_successfull(P_G)
         if generation_successful:
             logger.info("Entanglement Generation Successful")
             return Entanglement.from_default_lambdas(self.time, self.decoherence_time)
@@ -175,13 +174,7 @@ class Node:
         if self.queue is None:
             self.queue = Qubit(self.time, self.decoherence_time)
         else:
-        # if queue was already full, request is dropped
-            write_results_csv(
-                0,
-                0.0,
-                self.strategy.name,
-                self.decoherence_time
-            )
+            # if queue was already full, request is dropped
             logger.info("Serving request failed. queue was already full")
 
     def serve_request(self):
@@ -193,15 +186,16 @@ class Node:
                 self.good_memory.get_current_fidelity()
             )
             logger.info(
-                "Served request with fidelity %s and waiting time %s",
+                "Served request with fidelity %s and waiting time %s. Initial qubit had fidelity: %s",
                 teleportation_fidelity,
                 self.queue.get_waiting_time(),
+                self.queue.get_current_fidelity(),
             )
             write_results_csv(
                 teleportation_fidelity,
                 self.queue.get_waiting_time(),
                 self.strategy.name,
-                self.decoherence_time
+                self.decoherence_time,
             )
 
             # remove qubit from queue, because it was served

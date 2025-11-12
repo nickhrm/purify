@@ -1,10 +1,13 @@
 import logging
+from math import floor
 
 import numpy as np
 
 from purify.my_constants import (
+    DELTA_T,
     ENTANGLEMENT_GENERATION_COUNT,
-    ENTANGLEMENT_GENERATION_SCALE,
+    QUBIT_ARRIVAL_SCALE,
+    QUBIT_ENTANGLEMENT_FACTOR,
 )
 from purify.my_enums import Event, Strategy
 from purify.my_time import Time
@@ -23,12 +26,14 @@ class Simulation:
         self.node_a = Node(self.time, strategy, decoherence_time)
         self.strategy = strategy
         self.decoerence_time = decoherence_time
-        # Samples (hier aus Exponentialverteilungen)
-        self.entanglement_samples = rng.exponential(
-            ENTANGLEMENT_GENERATION_SCALE, ENTANGLEMENT_GENERATION_COUNT
-        )
+        # Samples (hier Bernouli)
+        self.entanglement_samples = [
+            DELTA_T for _ in range(ENTANGLEMENT_GENERATION_COUNT)
+        ]
+
         self.request_samples = rng.exponential(
-            ENTANGLEMENT_GENERATION_SCALE * 100, ENTANGLEMENT_GENERATION_COUNT * 100
+           scale=1/QUBIT_ARRIVAL_SCALE,
+           size= round(ENTANGLEMENT_GENERATION_COUNT / QUBIT_ENTANGLEMENT_FACTOR)
         )
 
     def step(self) -> bool:
@@ -53,7 +58,6 @@ class Simulation:
         if self.time.last_event() == Event.ENTANGLEMENT_GENERATION:
             self.node_a.handle_entanglement_generation()
             self.node_a.serve_request()
-
 
         if self.time.last_event() == Event.REQUEST_ARRIVAL:
             self.node_a.handle_request_arrival()
@@ -85,7 +89,6 @@ class Simulation:
 
         else:
             logger.info("Bad Memory = None")
-
 
         return True
 
