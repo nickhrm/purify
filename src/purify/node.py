@@ -44,86 +44,46 @@ class Node:
         match self.strategy:
             case Strategy.ALWAYS_REPLACE:
                 self.strategy_always_replace(entanglement)
-            case (
-                Strategy.ALWAYS_PROT_1
-                | Strategy.ALWAYS_PROT_2
-                | Strategy.ALWAYS_PROT_3
-                | Strategy.ALWAYS_PMD
-            ):
-                self.strategy_always_prot_x(entanglement, self.strategy)
+            case Strategy.ALWAYS_PROT_1:
+                self.strategy_always_prot_1(entanglement)
+            case Strategy.ALWAYS_PROT_2:
+                self.strategy_always_prot_2(entanglement)
+            case Strategy.ALWAYS_PROT_3:
+                self.strategy_always_prot_3(entanglement)
+            case Strategy.ALWAYS_PMD:
+                self.strategy_always_pmd(entanglement)
 
-    def strategy_always_prot_x(
-        self, new_entanglement: Entanglement, strategy: Strategy
-    ) -> None:
-        fidelity_after_pumping = 0
-        success_probability = 0
-
+    def strategy_always_prot_1(self, new_entanglement: Entanglement):
         if self.good_memory is None:
             raise Exception("Cannot pump without Entanglement")
-
-        logger.info(
-            "pump with 1G-Fidelity: %s and 1B-Fidelity: %s, using strategy %s",
-            self.good_memory.get_current_fidelity(),
-            new_entanglement.get_current_fidelity(),
-            strategy.name,
+        self.always_prot_x_helper(
+            Purification.prot_1_success_probability(self.good_memory, new_entanglement),
+            Purification.prot_1_jump_function(self.good_memory, new_entanglement),
         )
 
-        match strategy:
-            case Strategy.ALWAYS_PROT_1:
-                fidelity_after_pumping = Purification.prot_1_jump_function(
-                    self.good_memory, new_entanglement
-                )
-                success_probability = Purification.prot_1_success_probability(
-                    self.good_memory, new_entanglement
-                )
-            case Strategy.ALWAYS_PROT_2:
-                fidelity_after_pumping = Purification.prot_2_jump_function(
-                    self.good_memory, new_entanglement
-                )
-                success_probability: float = Purification.prot_2_success_probability(
-                    self.good_memory, new_entanglement
-                )
-            case Strategy.ALWAYS_PROT_3:
-                fidelity_after_pumping: float = Purification.prot_3_jump_function(
-                    self.good_memory, new_entanglement
-                )
-                success_probability = Purification.prot_3_success_probability(
-                    self.good_memory, new_entanglement
-                )
+    def strategy_always_prot_2(self, new_entanglement: Entanglement):
+        if self.good_memory is None:
+            raise Exception("Cannot pump without Entanglement")
+        self.always_prot_x_helper(
+            Purification.prot_2_success_probability(self.good_memory, new_entanglement),
+            Purification.prot_2_jump_function(self.good_memory, new_entanglement),
+        )
 
-            case Strategy.ALWAYS_PMD:
-                fidelity_after_pumping = Purification.pmd_jump_function(
-                    self.good_memory, new_entanglement
-                )
+    def strategy_always_prot_3(self, new_entanglement: Entanglement):
+        if self.good_memory is None:
+            raise Exception("Cannot pump without Entanglement")
+        self.always_prot_x_helper(
+            Purification.prot_3_success_probability(self.good_memory, new_entanglement),
+            Purification.prot_3_jump_function(self.good_memory, new_entanglement),
+        )
 
-                success_probability = Purification.pmd_success_probability(
-                    self.good_memory, new_entanglement
-                )
-
-        if bernouli_with_probability_is_successfull(success_probability):
-            logger.info(
-                "Updated good-memory. Old value: "
-                + str(
-                    self.good_memory.get_current_fidelity()
-                    if self.good_memory is not None
-                    else None
-                )
-                + ", new value: "
-                + str(fidelity_after_pumping)
-                + " using strategy "
-                + strategy.name
-            )
-
-            self.good_memory = Entanglement.from_fidelity(
-                self.time, fidelity_after_pumping, self.decoherence_time
-            )
-            self.bad_memory = None
-            logger.info("purification was successfull")
-
-        else:
-            self.good_memory = None
-            self.bad_memory = None
-            logger.info("Purification failed")
+    def strategy_always_pmd(self, new_entanglement: Entanglement):
+        if self.good_memory is None:
+            raise Exception("Cannot pump without Entanglement")
+        self.always_prot_x_helper(
+            Purification.pmd_success_probability(self.good_memory, new_entanglement),
+            Purification.pmd_jump_function(self.good_memory, new_entanglement),
+        )
 
     def strategy_always_replace(self, entanglement) -> None:
         if (
@@ -159,6 +119,34 @@ class Node:
                     + str(entanglement.get_current_fidelity())
                 )
                 self.bad_memory = entanglement
+
+    def always_prot_x_helper(
+        self, success_probability: float, fidelity_after_pumping: float
+    ):
+        if bernouli_with_probability_is_successfull(success_probability):
+            logger.info(
+                "Updated good-memory. Old value: "
+                + str(
+                    self.good_memory.get_current_fidelity()
+                    if self.good_memory is not None
+                    else None
+                )
+                + ", new value: "
+                + str(fidelity_after_pumping)
+                + " using strategy "
+                + self.strategy.name
+            )
+
+            self.good_memory = Entanglement.from_fidelity(
+                self.time, fidelity_after_pumping, self.decoherence_time
+            )
+            self.bad_memory = None
+            logger.info("purification was successfull")
+
+        else:
+            self.good_memory = None
+            self.bad_memory = None
+            logger.info("Purification failed")
 
     def __generate_entanglement(self) -> Entanglement | None:
         generation_successful = bernouli_with_probability_is_successfull(P_G)
