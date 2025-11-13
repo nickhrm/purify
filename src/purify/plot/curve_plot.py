@@ -51,9 +51,7 @@ def create_decoherence_plot():
         )
 
     # Diagramm beschriften
-    plt.title(
-        f"Entanglement({LAMBDA_1}; {LAMBDA_2}; {LAMBDA_3})"
-    )
+    plt.title(f"Entanglement({LAMBDA_1}; {LAMBDA_2}; {LAMBDA_3})")
     plt.xlabel("Decoherence Time ($t_c$ in s)")
     plt.ylabel("Teleportation Fidelity ($F$)")
     plt.grid(True, linestyle="--", alpha=0.6)
@@ -62,6 +60,6 @@ def create_decoherence_plot():
     plt.ylim(0.0, 1.0)
     plt.tight_layout()
 
-    output_file = "fidelity_curve_plot.png"
+    output_file = f"fidelity_curve_plot_{str(LAMBDA_1).replace('.', '')}_{str(LAMBDA_2).replace('.', '')}_{str(LAMBDA_3).replace('.', '')}.png"
     plt.savefig(output_file, dpi=300)
     print(f"Plot erfolgreich gespeichert als: {output_file}")

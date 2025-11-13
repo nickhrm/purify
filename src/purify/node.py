@@ -1,5 +1,4 @@
 import logging
-from math import inf
 
 import numpy as np
 
