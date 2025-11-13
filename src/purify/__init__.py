@@ -23,9 +23,9 @@ def main() -> None:
     # strategy = Strategy(args.strategy)
 
     logging.basicConfig(
-        filename="myapp.log",
-        filemode="w",
-        level=logging.INFO,
+        # filename="myapp.log",
+        # filemode="w",
+        level=logging.CRITICAL,
         format="%(levelname)s - %(message)s",
     )
     logger.info("Starting simulation")

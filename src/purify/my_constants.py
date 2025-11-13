@@ -1,8 +1,8 @@
 from purify.my_enums import Strategy
 
-ENTANGLEMENT_GENERATION_COUNT = 50000
+ENTANGLEMENT_GENERATION_COUNT = 100000
 
-# Times between bernouli trials for entanglement generation
+# Times between bernouli trials for entanglement generation. in [sec]
 DELTA_T = 1.66782e-5
 # Success probability of entangelement generation
 P_G = 0.4723665527
@@ -30,12 +30,17 @@ STRATEGIES = [
 
 # Decoherence times to include in the simulation in secs
 DECOHERENCE_TIMES = [
-        # 0.00001,
-        # 0.0001,
+        #0.00001,
+        0.0001,
+        0.0003,
+        0.0005,
+        0.0008,
         0.001,
+        0.003,
         0.005,
+        0.008,
         0.01,
-        0.05,
-        0.1,
+        # 0.05,
+        # 0.1,
         # 1,
     ]
