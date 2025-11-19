@@ -31,7 +31,8 @@ class Simulation:
             DELTA_T for _ in range(ENTANGLEMENT_GENERATION_COUNT)
         ]
 
-        self.request_samples = rng.exponential(
+        self.request_samples = rng.gamma(
+            shape=2,
            scale=1/QUBIT_ARRIVAL_SCALE,
            size= round(ENTANGLEMENT_GENERATION_COUNT / QUBIT_ENTANGLEMENT_FACTOR)
         )
