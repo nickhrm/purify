@@ -1,42 +1,47 @@
 import csv
 from pathlib import Path
-from typing import Union # Für die Typisierung von Zahlen
+
+from purify import ConstantsTuple
+
 
 def write_results_csv(
-    fidelity: Union[float, int], 
-    time: Union[float, int], 
-    protocol_name: str, 
-    decoherence_time: Union[float, int]
+    fidelity: float,
+    time: float,
+    my_constants: ConstantsTuple
 ) -> None:
     """
     Hängt einen Datensatz an die zentrale ALL_RESULTS.csv an.
-    Fügt die Spalten für das Protokoll und die Dekohärenzzeit hinzu.
-    Schreibt den Header nur einmal.
+    Die Spalten werden automatisch aus der ConstantsTuple und den Ergebniswerten
+    erstellt.
     """
-    # 1. Zentraler Dateiname für alle Ergebnisse
-    CENTRAL_FILE_NAME = "ALL_RESULTS.csv"
+    # 1. Zentraler Dateiname
+    CENTRAL_FILE_NAME = "ALL_RESULTS_TUPLE.csv"
     path = Path(f"results/{CENTRAL_FILE_NAME}")
 
-    # 2. WICHTIG: Erstelle den Ordner, falls er nicht existiert
+    # 2. Erstelle den Ordner, falls er nicht existiert
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 3. Prüfe Existenz/Größe der Datei
+    # 3. Prüfe Existenz/Größe der Datei, um den Header zu steuern
     file_exists = path.exists()
-    # Stat: Die Datei existiert, und ihre Größe ist 0 (leer)
     file_empty = (path.stat().st_size == 0) if file_exists else True
-    
+
+    # 4. Erstelle den Header automatisch
+    # Basisfelder
+    RESULT_FIELDS = ["fidelity", "time"]
+    # Felder aus dem NamedTuple (z.B. 'strategy', 'decoherence_time')
+    CONSTANTS_FIELDS = list(ConstantsTuple._fields)
+
     # Der vollständige Header
-    HEADER = ["fidelity", "time", "protocol_name", "decoherence_time"]
+    HEADER = RESULT_FIELDS + CONSTANTS_FIELDS
 
     # Append-Modus: "a"
     try:
         with path.open(mode="a", newline="", encoding="utf-8") as f:
-            # Hier verwenden wir den DictWriter, da er mit Headern besser umgeht.
             writer = csv.DictWriter(
-                f, 
-                fieldnames=HEADER, 
-                delimiter=",", 
-                quotechar='"', 
+                f,
+                fieldnames=HEADER,
+                delimiter=",",
+                quotechar='"',
                 quoting=csv.QUOTE_MINIMAL
             )
 
@@ -44,21 +49,19 @@ def write_results_csv(
             if file_empty:
                 writer.writeheader()
 
-            # Datensatz als Dictionary anhängen (mit den neuen Spalten)
-            writer.writerow({
-                "fidelity": fidelity, 
-                "time": time, 
-                "protocol_name": protocol_name,
-                "decoherence_time": decoherence_time
-            })
+            # 5. Datensatz als Dictionary erstellen
+            # Starte mit den Ergebnis-Werten
+            row_data = {
+                "fidelity": fidelity,
+                "time": time,
+            }
+            # Füge die NamedTuple-Werte als Dictionary hinzu
+            # my_constants._asdict() konvertiert das NamedTuple in ein Dictionary
+            row_data.update(my_constants._asdict())
+
+            # 6. Datensatz anhängen
+            writer.writerow(row_data)
+
     except Exception as e:
         print(f"Fehler beim Schreiben der Ergebnisse: {e}")
 
-# Beispiel für die zukünftige Verwendung in Ihrer Simulationsschleife:
-# Angenommen, Sie haben diese Werte in einem Simulationsschritt berechnet
-# current_fidelity = 0.82
-# current_time = 15
-# current_protocol = "Protokoll 1"
-# current_deco_time = 0.5
-#
-# write_results_csv(current_fidelity, current_time, current_protocol, current_deco_time)

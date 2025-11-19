@@ -51,6 +51,36 @@ class Node:
                 self.strategy_always_prot_3(entanglement)
             case Strategy.ALWAYS_PMD:
                 self.strategy_always_pmd(entanglement)
+            case Strategy.ALWAYS_PROT_1_WITH_PROBABILITY:
+                self.strategy_always_prot_1_with_probbility(entanglement)
+            case Strategy.ALWAYS_PROT_2_WITH_PROBABILITY:
+                self.strategy_always_prot_2_with_probbility(entanglement)
+            case Strategy.ALWAYS_PROT_3_WITH_PROBABILITY:
+                self.strategy_always_prot_3_with_probbility(entanglement)
+
+    def strategy_always_prot_1_with_probbility(self, new_entanglement: Entanglement):
+        if self.good_memory is None:
+            raise Exception("Cannot pump without Entanglement")
+        self.sometimes_prot_x_helper(
+            Purification.prot_1_success_probability(self.good_memory, new_entanglement),
+            Purification.prot_1_jump_function(self.good_memory, new_entanglement),
+        )
+
+    def strategy_always_prot_2_with_probbility(self, new_entanglement: Entanglement):
+        if self.good_memory is None:
+            raise Exception("Cannot pump without Entanglement")
+        self.sometimes_prot_x_helper(
+            Purification.prot_2_success_probability(self.good_memory, new_entanglement),
+            Purification.prot_2_jump_function(self.good_memory, new_entanglement),
+        )
+
+    def strategy_always_prot_3_with_probbility(self, new_entanglement: Entanglement):
+        if self.good_memory is None:
+            raise Exception("Cannot pump without Entanglement")
+        self.sometimes_prot_x_helper(
+            Purification.prot_3_success_probability(self.good_memory, new_entanglement),
+            Purification.prot_3_jump_function(self.good_memory, new_entanglement),
+        )
 
     def strategy_always_prot_1(self, new_entanglement: Entanglement):
         if self.good_memory is None:
@@ -157,7 +187,9 @@ class Node:
         generation_successful = bernouli_with_probability_is_successfull(P_G)
         if generation_successful:
             logger.info("Entanglement Generation Successful")
-            return Entanglement.from_default_lambdas(self.time, self.constants.decoherence_time)
+            return Entanglement.from_default_lambdas(
+                self.time, self.constants.decoherence_time
+            )
         else:
             logger.info("Entanglement Generation Failed")
             return None
@@ -187,8 +219,7 @@ class Node:
             write_results_csv(
                 teleportation_fidelity,
                 self.queue.get_waiting_time(),
-                self.constants.strategy.name,
-                self.constants.decoherence_time,
+                self.constants
             )
 
             # remove qubit from queue, because it was served

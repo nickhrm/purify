@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-from purify import ConstantsTuple
+from purify.constants_tuple import ConstantsTuple
 from purify.my_constants import (
     DELTA_T,
     ENTANGLEMENT_GENERATION_COUNT,

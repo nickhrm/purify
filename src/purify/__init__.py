@@ -1,15 +1,12 @@
-from asyncio import constants
 import logging
 import os
-from typing import NamedTuple
 
 import numpy as np
 
-from purify import my_constants
+from plot.curve_plot import create_decoherence_plot
+from purify.constants_tuple import ConstantsTuple
 from purify.my_constants import DECOHERENCE_TIMES, PUMPING_PROBABILTIES, STRATEGIES
-from purify.my_enums import Strategy
 from purify.my_simulation import Simulation
-from purify.plot.curve_plot import create_decoherence_plot
 
 logger = logging.getLogger(__name__)
 rng = np.random.default_rng()
@@ -53,9 +50,4 @@ def main() -> None:
 
     create_decoherence_plot()
 
-
-class ConstantsTuple(NamedTuple):
-    strategy: Strategy
-    decoherence_time: float
-    pumping_probability: int
 

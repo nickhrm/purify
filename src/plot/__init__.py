@@ -1,7 +1,11 @@
 
 
 
-from purify.plot.curve_plot import create_decoherence_plot
+
+
+
+
+from plot.curve_plot import create_decoherence_plot
 
 
 def main() -> None:
