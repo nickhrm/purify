@@ -1,15 +1,15 @@
 import logging
-from math import floor
 
 import numpy as np
 
+from purify import ConstantsTuple
 from purify.my_constants import (
     DELTA_T,
     ENTANGLEMENT_GENERATION_COUNT,
     QUBIT_ARRIVAL_SCALE,
     QUBIT_ENTANGLEMENT_FACTOR,
 )
-from purify.my_enums import Event, Strategy
+from purify.my_enums import Event
 from purify.my_time import Time
 from purify.node import Node
 
@@ -18,23 +18,23 @@ rng = np.random.default_rng()
 
 
 class Simulation:
-    def __init__(self, strategy: Strategy, decoherence_time: float) -> None:
-        # Inittialize Time
+    def __init__(
+        self,  constants: ConstantsTuple
+    ) -> None:
         self.time = Time()
+        self.node_a = Node(self.time, constants)
+        self.constants = constants
 
-        # create Node
-        self.node_a = Node(self.time, strategy, decoherence_time)
-        self.strategy = strategy
-        self.decoerence_time = decoherence_time
-        # Samples (hier Bernouli)
+
+        # Samples (hier Bernouli/geometric)
         self.entanglement_samples = [
             DELTA_T for _ in range(ENTANGLEMENT_GENERATION_COUNT)
         ]
 
         self.request_samples = rng.gamma(
             shape=2,
-           scale=1/QUBIT_ARRIVAL_SCALE,
-           size= round(ENTANGLEMENT_GENERATION_COUNT / QUBIT_ENTANGLEMENT_FACTOR)
+            scale=1 / QUBIT_ARRIVAL_SCALE,
+            size=round(ENTANGLEMENT_GENERATION_COUNT / QUBIT_ENTANGLEMENT_FACTOR),
         )
 
     def step(self) -> bool:

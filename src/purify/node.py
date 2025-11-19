@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 
+from purify import ConstantsTuple
 from purify.entanglement import Entanglement
 from purify.my_constants import (
     P_G,
@@ -18,13 +19,12 @@ rng = np.random.default_rng()
 
 
 class Node:
-    def __init__(self, time: Time, strategy: Strategy, decoherence_time: float) -> None:
+    def __init__(self, time: Time, constants: ConstantsTuple) -> None:
         self.time = time
         self.good_memory: Entanglement | None = None
         self.bad_memory: Entanglement | None = None
         self.queue: Qubit | None = None
-        self.strategy: Strategy = strategy
-        self.decoherence_time: float = decoherence_time
+        self.constants: ConstantsTuple = constants
 
     "is called, when event entanglement_generation happend"
 
@@ -40,7 +40,7 @@ class Node:
             self.good_memory = entanglement
             return
 
-        match self.strategy:
+        match self.constants.strategy:
             case Strategy.ALWAYS_REPLACE:
                 self.strategy_always_replace(entanglement)
             case Strategy.ALWAYS_PROT_1:
@@ -119,6 +119,12 @@ class Node:
                 )
                 self.bad_memory = entanglement
 
+    def sometimes_prot_x_helper(
+        self, success_probability: float, fidelity_after_pumping: float
+    ):
+        if bernouli_with_probability_is_successfull(self.constants.pumping_probability):
+            self.always_prot_x_helper(success_probability, fidelity_after_pumping)
+
     def always_prot_x_helper(
         self, success_probability: float, fidelity_after_pumping: float
     ):
@@ -133,11 +139,11 @@ class Node:
                 + ", new value: "
                 + str(fidelity_after_pumping)
                 + " using strategy "
-                + self.strategy.name
+                + self.constants.strategy.name
             )
 
             self.good_memory = Entanglement.from_fidelity(
-                self.time, fidelity_after_pumping, self.decoherence_time
+                self.time, fidelity_after_pumping, self.constants.decoherence_time
             )
             self.bad_memory = None
             logger.info("purification was successfull")
@@ -151,7 +157,7 @@ class Node:
         generation_successful = bernouli_with_probability_is_successfull(P_G)
         if generation_successful:
             logger.info("Entanglement Generation Successful")
-            return Entanglement.from_default_lambdas(self.time, self.decoherence_time)
+            return Entanglement.from_default_lambdas(self.time, self.constants.decoherence_time)
         else:
             logger.info("Entanglement Generation Failed")
             return None
@@ -159,7 +165,7 @@ class Node:
     def handle_request_arrival(self):
         # fill queue if empty
         if self.queue is None:
-            self.queue = Qubit(self.time, self.decoherence_time)
+            self.queue = Qubit(self.time, self.constants.decoherence_time)
         else:
             # if queue was already full, request is dropped
             logger.info("Serving request failed. queue was already full")
@@ -181,8 +187,8 @@ class Node:
             write_results_csv(
                 teleportation_fidelity,
                 self.queue.get_waiting_time(),
-                self.strategy.name,
-                self.decoherence_time,
+                self.constants.strategy.name,
+                self.constants.decoherence_time,
             )
 
             # remove qubit from queue, because it was served

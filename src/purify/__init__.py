@@ -1,9 +1,13 @@
+from asyncio import constants
 import logging
 import os
+from typing import NamedTuple
 
 import numpy as np
 
-from purify.my_constants import DECOHERENCE_TIMES, STRATEGIES
+from purify import my_constants
+from purify.my_constants import DECOHERENCE_TIMES, PUMPING_PROBABILTIES, STRATEGIES
+from purify.my_enums import Strategy
 from purify.my_simulation import Simulation
 from purify.plot.curve_plot import create_decoherence_plot
 
@@ -35,9 +39,23 @@ def main() -> None:
     except Exception as e:
         print(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
 
+
     for strategy in STRATEGIES:
         for decoherence_time in DECOHERENCE_TIMES:
-            sim = Simulation(strategy, decoherence_time)
-            sim.run()
+            for pumping_probabily in PUMPING_PROBABILTIES:
+                constant_tuple = ConstantsTuple(
+                strategy=strategy,
+                decoherence_time=decoherence_time,
+                pumping_probability=pumping_probabily
+            )
+                sim = Simulation(constant_tuple)
+                sim.run()
 
     create_decoherence_plot()
+
+
+class ConstantsTuple(NamedTuple):
+    strategy: Strategy
+    decoherence_time: float
+    pumping_probability: int
+
