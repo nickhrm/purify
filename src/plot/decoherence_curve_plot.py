@@ -11,7 +11,9 @@ def create_decoherence_plot():
     Erstellt ein Diagramm, das die Fidelity gegen die Decoherence Time aufträgt,
     basierend auf einer einzigen, zusammengeführten CSV-Datei.
     """
-    results_file = Path("results/ALL_RESULTS.csv")
+    file_name =f"results/ALL_RESULTS_{LAMBDA_1}_{LAMBDA_2}_{LAMBDA_3}.csv"
+
+    results_file = Path(file_name)
 
     if not results_file.exists():
         print(f"Fehler: Die Datei '{results_file}' wurde nicht gefunden.")
@@ -23,7 +25,7 @@ def create_decoherence_plot():
 
         # 1. Daten aggregieren: Durchschnittliche Fidelity pro Protokoll und Decoherence Time
         plot_df = (
-            df.groupby(["protocol_name", "decoherence_time"])["fidelity"]
+            df.groupby(["strategy", "decoherence_time"])["fidelity"]
             .mean()
             .reset_index()
         )
@@ -36,7 +38,7 @@ def create_decoherence_plot():
     plt.figure(figsize=(10, 6))
 
     # 2. Gruppieren nach Protokollname für das Plotten
-    grouped_data = plot_df.sort_values(by="decoherence_time").groupby("protocol_name")
+    grouped_data = plot_df.sort_values(by="decoherence_time").groupby("strategy")
 
     # Sortieren der Protokollnamen (optional, aber hilfreich für konsistente
     # Farben/Legenden)
@@ -57,9 +59,10 @@ def create_decoherence_plot():
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.legend(title="Strategie")
     plt.xscale("log")
-    plt.ylim(0.7, .95)
+    plt.ylim(0.4, 1.0)
     plt.tight_layout()
 
     output_file = f"fidelity_curve_plot_{str(LAMBDA_1).replace('.', '')}_{str(LAMBDA_2).replace('.', '')}_{str(LAMBDA_3).replace('.', '')}.png"
     plt.savefig(output_file, dpi=300)
     print(f"Plot erfolgreich gespeichert als: {output_file}")
+    

@@ -153,7 +153,10 @@ class Node:
         self, success_probability: float, fidelity_after_pumping: float
     ):
         if bernouli_with_probability_is_successfull(self.constants.pumping_probability):
+            logger.warning("Pumping")
             self.always_prot_x_helper(success_probability, fidelity_after_pumping)
+        else:
+            logger.warning("Dont Pumping")
 
     def always_prot_x_helper(
         self, success_probability: float, fidelity_after_pumping: float

@@ -2,6 +2,7 @@ import csv
 from pathlib import Path
 
 from purify import ConstantsTuple
+from purify.my_constants import LAMBDA_1, LAMBDA_2, LAMBDA_3
 
 
 def write_results_csv(
@@ -15,7 +16,7 @@ def write_results_csv(
     erstellt.
     """
     # 1. Zentraler Dateiname
-    CENTRAL_FILE_NAME = "ALL_RESULTS_TUPLE.csv"
+    CENTRAL_FILE_NAME = f"ALL_RESULTS_{LAMBDA_1}_{LAMBDA_2}_{LAMBDA_3}.csv"
     path = Path(f"results/{CENTRAL_FILE_NAME}")
 
     # 2. Erstelle den Ordner, falls er nicht existiert

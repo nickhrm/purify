@@ -6,5 +6,5 @@ from purify.my_enums import Strategy
 class ConstantsTuple(NamedTuple):
     strategy: Strategy
     decoherence_time: float
-    pumping_probability: int
+    pumping_probability: float
 

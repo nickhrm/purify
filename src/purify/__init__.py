@@ -1,12 +1,11 @@
 import logging
-from math import log
 import os
+from math import log
 
 import numpy as np
 
-from plot.curve_plot import create_decoherence_plot
 from purify.constants_tuple import ConstantsTuple
-from purify.my_constants import DECOHERENCE_TIMES, PUMPING_PROBABILTIES, STRATEGIES
+from purify.my_constants import DECOHERENCE_TIMES, LAMBDA_1, LAMBDA_2, LAMBDA_3, PUMPING_PROBABILTIES, STRATEGIES
 from purify.my_simulation import Simulation
 
 logger = logging.getLogger(__name__)
@@ -25,15 +24,15 @@ def main() -> None:
     # strategy = Strategy(args.strategy)
 
     logging.basicConfig(
-        # filename="myapp.log",
-        # filemode="w",
-        level=logging.WARNING,
+        filename="myapp.log",
+        filemode="w",
+        level=logging.INFO,
         format="%(levelname)s - %(message)s",
     )
     logger.info("Starting simulation")
 
     try:
-        os.remove("results/ALL_RESULTS.csv")
+        os.remove(f"results/ALL_RESULTS_{LAMBDA_1}_{LAMBDA_2}_{LAMBDA_3}.csv")
     except Exception as e:
         print(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
 
@@ -52,6 +51,5 @@ def main() -> None:
                 sim = Simulation(constant_tuple)
                 sim.run()
 
-    create_decoherence_plot()
 
 
