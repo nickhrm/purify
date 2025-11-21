@@ -1,4 +1,5 @@
 import logging
+from math import log
 import os
 
 import numpy as np
@@ -26,7 +27,7 @@ def main() -> None:
     logging.basicConfig(
         # filename="myapp.log",
         # filemode="w",
-        level=logging.CRITICAL,
+        level=logging.WARNING,
         format="%(levelname)s - %(message)s",
     )
     logger.info("Starting simulation")
@@ -38,8 +39,11 @@ def main() -> None:
 
 
     for strategy in STRATEGIES:
+        logger.warning(f"Starting Strategy {strategy}")
         for decoherence_time in DECOHERENCE_TIMES:
+            logger.warning(f"Starting decoherence time {decoherence_time}")
             for pumping_probabily in PUMPING_PROBABILTIES:
+                logger.warning(f"Starting Pumping Probability {pumping_probabily}")
                 constant_tuple = ConstantsTuple(
                 strategy=strategy,
                 decoherence_time=decoherence_time,
