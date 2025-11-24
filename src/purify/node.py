@@ -1,8 +1,10 @@
+from asyncio import constants
 import logging
 
 import numpy as np
 
 from purify import ConstantsTuple
+from purify import my_constants
 from purify.entanglement import Entanglement
 from purify.my_constants import (
     P_G,
@@ -153,10 +155,7 @@ class Node:
         self, success_probability: float, fidelity_after_pumping: float
     ):
         if bernouli_with_probability_is_successfull(self.constants.pumping_probability):
-            logger.warning("Pumping")
             self.always_prot_x_helper(success_probability, fidelity_after_pumping)
-        else:
-            logger.warning("Dont Pumping")
 
     def always_prot_x_helper(
         self, success_probability: float, fidelity_after_pumping: float
@@ -200,7 +199,7 @@ class Node:
     def handle_request_arrival(self):
         # fill queue if empty
         if self.queue is None:
-            self.queue = Qubit(self.time, self.constants.decoherence_time)
+            self.queue = Qubit(self.time, self.constants)
         else:
             # if queue was already full, request is dropped
             logger.info("Serving request failed. queue was already full")
@@ -220,9 +219,7 @@ class Node:
                 self.queue.get_current_fidelity(),
             )
             write_results_csv(
-                teleportation_fidelity,
-                self.queue.get_waiting_time(),
-                self.constants
+                teleportation_fidelity, self.queue.get_waiting_time(), self.constants
             )
 
             # remove qubit from queue, because it was served

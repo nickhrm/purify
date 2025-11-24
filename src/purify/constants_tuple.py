@@ -7,4 +7,5 @@ class ConstantsTuple(NamedTuple):
     strategy: Strategy
     decoherence_time: float
     pumping_probability: float
+    waiting_time_sensitivity:float
 

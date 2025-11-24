@@ -1,11 +1,12 @@
 import logging
+import math
 import os
 from math import log
 
 import numpy as np
 
 from purify.constants_tuple import ConstantsTuple
-from purify.my_constants import DECOHERENCE_TIMES, LAMBDA_1, LAMBDA_2, LAMBDA_3, PUMPING_PROBABILTIES, STRATEGIES
+from purify.my_constants import DECOHERENCE_TIMES, ETA, LAMBDA_1, LAMBDA_2, LAMBDA_3, LENGTH, P_G, PUMPING_PROBABILTIES, STRATEGIES, WAITING_TIME_SENSIVITIES
 from purify.my_simulation import Simulation
 
 logger = logging.getLogger(__name__)
@@ -13,6 +14,7 @@ rng = np.random.default_rng()
 
 
 def main() -> None:
+
     # parser = argparse.ArgumentParser()
     # parser.add_argument(
     #     "--strategy",
@@ -26,10 +28,12 @@ def main() -> None:
     logging.basicConfig(
         filename="myapp.log",
         filemode="w",
-        level=logging.INFO,
+        level=logging.WARNING,
         format="%(levelname)s - %(message)s",
     )
     logger.info("Starting simulation")
+    logger.warning(math.exp(-ETA*LENGTH))
+    logger.warning(P_G)
 
     try:
         os.remove(f"results/ALL_RESULTS_{LAMBDA_1}_{LAMBDA_2}_{LAMBDA_3}.csv")
@@ -43,13 +47,16 @@ def main() -> None:
             logger.warning(f"Starting decoherence time {decoherence_time}")
             for pumping_probabily in PUMPING_PROBABILTIES:
                 logger.warning(f"Starting Pumping Probability {pumping_probabily}")
-                constant_tuple = ConstantsTuple(
-                strategy=strategy,
-                decoherence_time=decoherence_time,
-                pumping_probability=pumping_probabily
+                for waiting_time_sensitivity in WAITING_TIME_SENSIVITIES:
+                    logger.warning(f"Starting Waiting time sensitivity: {waiting_time_sensitivity}")
+                    constant_tuple = ConstantsTuple(
+                    strategy=strategy,
+                    decoherence_time=decoherence_time,
+                    pumping_probability=pumping_probabily,
+                    waiting_time_sensitivity=waiting_time_sensitivity
             )
-                sim = Simulation(constant_tuple)
-                sim.run()
+                    sim = Simulation(constant_tuple)
+                    sim.run()
 
 
 
