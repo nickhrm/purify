@@ -58,7 +58,7 @@ def create_waiting_time_sensitivity_plot():
     plt.legend(title="Strategie")
     
     plt.xscale("linear") 
-    plt.ylim(0.4, 1.0) # Der Bereich kann an die Daten von Figur 3b (0.7 bis 0.9) angepasst werden
+    plt.ylim(0.7, 0.9) # Der Bereich kann an die Daten von Figur 3b (0.7 bis 0.9) angepasst werden
     plt.tight_layout()
 
     # Neuer Dateiname, der die Änderung widerspiegelt

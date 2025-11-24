@@ -15,11 +15,11 @@ class Qubit:
         self.constants: ConstantsTuple = constants
 
     def get_current_fidelity(self) -> float:
-        current_time = (
-            self._time.get_current_time() * self.constants.waiting_time_sensitivity
-        )
-        time_alive = current_time - self.creationTime
-        logger.warning(f"waiting time: {time_alive}")
+        current_time = self._time.get_current_time()
+        time_alive = (
+            current_time - self.creationTime
+        ) * self.constants.waiting_time_sensitivity
+        logger.warning(f"Time Alive: {time_alive}")
         current_fidelity = (
             np.exp(-time_alive / self.constants.decoherence_time) + 2.0
         ) / 3.0

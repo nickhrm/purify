@@ -1,8 +1,7 @@
-import math
-from purify.my_enums import Strategy
-from purify.utils.decibel_util import decibel_to_linear
 
-ENTANGLEMENT_GENERATION_COUNT = 100000
+from purify.my_enums import Strategy
+
+ENTANGLEMENT_GENERATION_COUNT = 500000
 
 LENGTH = 20000
 C = 2e8
@@ -17,24 +16,22 @@ ETA = -0.00015
 
 # P_G = decibel_to_linear(ETA * LENGTH)
 
-
-
 QUBIT_ENTANGLEMENT_FACTOR = 100
 
 QUBIT_ARRIVAL_SCALE = P_G/(QUBIT_ENTANGLEMENT_FACTOR * DELTA_T)
 
 
 WAITING_TIME_SENSIVITIES = [
-    0.1,
+    0.2,
     1,
     5,
     10,
     15,
-    20,
+    20
 ]
 
-LAMBDA_1 = 0.3
-LAMBDA_2 = 0.0
+LAMBDA_1 = 0.0
+LAMBDA_2 = 0.3
 LAMBDA_3 = 0.0
 
 
@@ -44,7 +41,7 @@ STRATEGIES = [
         Strategy.ALWAYS_PROT_1,
         Strategy.ALWAYS_PROT_2,
         Strategy.ALWAYS_PROT_3,
-        Strategy.ALWAYS_PMD,
+        # Strategy.ALWAYS_PMD,
     ]
 
 
@@ -64,7 +61,8 @@ DECOHERENCE_TIMES = [
          # 0.1,
         # 0.5
          # 1.0,
-    ]       
+    ]
+
 
 PUMPING_PROBABILTIES = [
     # 0.0,
