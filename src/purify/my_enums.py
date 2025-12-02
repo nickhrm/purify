@@ -19,3 +19,6 @@ class Strategy(Enum):
     ALWAYS_PMD = 10
 
 
+class LambdaSrategy(Enum):
+    USE_CONSTANTS = 1
+    RANDOM_WITH_LARGEST_LAMBDA = 2

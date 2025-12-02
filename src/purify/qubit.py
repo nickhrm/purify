@@ -19,11 +19,9 @@ class Qubit:
         time_alive = (
             current_time - self.creationTime
         ) * self.constants.waiting_time_sensitivity
-        logger.warning(f"Time Alive: {time_alive}")
         current_fidelity = (
             np.exp(-time_alive / self.constants.decoherence_time) + 2.0
         ) / 3.0
-        logger.warning(f"qubit fidelity: {current_fidelity}")
         return current_fidelity
 
     def teleportation_fidelity(self, entanglement_fidelity: float) -> float:

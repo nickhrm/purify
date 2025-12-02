@@ -1,3 +1,4 @@
+from purify.utils.path_util import path_from_lambdas
 import csv
 from pathlib import Path
 
@@ -16,8 +17,8 @@ def write_results_csv(
     erstellt.
     """
     # 1. Zentraler Dateiname
-    CENTRAL_FILE_NAME = f"ALL_RESULTS_{LAMBDA_1}_{LAMBDA_2}_{LAMBDA_3}.csv"
-    path = Path(f"results/{CENTRAL_FILE_NAME}")
+    
+    path = Path(path_from_lambdas())
 
     # 2. Erstelle den Ordner, falls er nicht existiert
     path.parent.mkdir(parents=True, exist_ok=True)

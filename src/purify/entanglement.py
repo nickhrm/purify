@@ -8,6 +8,7 @@ from purify.my_constants import (
     LAMBDA_3,
 )
 from purify.my_time import Time
+from purify.utils.generate_lambdas_util import generate_y_z
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,32 @@ class Entanglement:
             creation_lambda_3=LAMBDA_3,
             decoherence_time = decoherence_time
         )
+
+
+    @classmethod
+    def from_random_with_biggest_lambda(cls, time: Time, decoherence_time: float):
+        """
+        Erzeugt entanglement, für das gilt: x > (y + z). x,y,z sind lambda werte
+        """
+
+        creation_fidelity = 0.7
+        lambda_1 = LAMBDA_1
+        (y,z) = generate_y_z(lambda_1,creation_fidelity)
+
+        logger.warning(f"lambda_2: {y} und lambda_3: {z}")
+
+        return cls(
+            time=time,
+            creation_time=time.get_current_time(),
+            creation_fidelity=creation_fidelity,
+            creation_lambda_1= lambda_1,
+            creation_lambda_2=y,
+            creation_lambda_3=z,
+            decoherence_time=decoherence_time,
+        )
+
+
+
 
     @classmethod
     def from_fidelity(cls, time: Time, fidelity: float, decoherence_time: float):

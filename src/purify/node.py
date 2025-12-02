@@ -1,15 +1,13 @@
-from asyncio import constants
 import logging
 
 import numpy as np
 
 from purify import ConstantsTuple
-from purify import my_constants
 from purify.entanglement import Entanglement
 from purify.my_constants import (
     P_G,
 )
-from purify.my_enums import Strategy
+from purify.my_enums import LambdaSrategy, Strategy
 from purify.my_time import Time
 from purify.qubit import Qubit
 from purify.utils.bernouli_util import bernouli_with_probability_is_successfull
@@ -189,9 +187,16 @@ class Node:
         generation_successful = bernouli_with_probability_is_successfull(P_G)
         if generation_successful:
             logger.info("Entanglement Generation Successful")
-            return Entanglement.from_default_lambdas(
-                self.time, self.constants.decoherence_time
-            )
+
+            match self.constants.lambda_strategy:
+                case LambdaSrategy.USE_CONSTANTS:
+                    return Entanglement.from_default_lambdas(
+                        self.time, self.constants.decoherence_time
+                    )
+                case LambdaSrategy.RANDOM_WITH_LARGEST_LAMBDA:
+                    return Entanglement.from_random_with_biggest_lambda(
+                        self.time, self.constants.decoherence_time
+                    )
         else:
             logger.info("Entanglement Generation Failed")
             return None

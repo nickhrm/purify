@@ -12,6 +12,6 @@ from plot.waitingtime_curve_plot import create_waiting_time_plot
 
 def main() -> None:
     # plot_more()
-    # create_decoherence_plot()
+    create_decoherence_plot()
     # create_waiting_time_plot()
-    calculate_average_waiting_times()
+    # calculate_average_waiting_times()

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from purify.my_constants import LAMBDA_1, LAMBDA_2, LAMBDA_3
+from purify.utils.path_util import path_from_lambdas
 
 
 def create_decoherence_plot():
@@ -11,9 +12,8 @@ def create_decoherence_plot():
     Erstellt ein Diagramm, das die Fidelity gegen die Decoherence Time aufträgt,
     basierend auf einer einzigen, zusammengeführten CSV-Datei.
     """
-    file_name =f"results/ALL_RESULTS_{LAMBDA_1}_{LAMBDA_2}_{LAMBDA_3}.csv"
 
-    results_file = Path(file_name)
+    results_file = Path(path_from_lambdas())
 
     if not results_file.exists():
         print(f"Fehler: Die Datei '{results_file}' wurde nicht gefunden.")

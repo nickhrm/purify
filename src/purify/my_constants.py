@@ -1,7 +1,8 @@
 
+from purify.my_enums import LambdaSrategy
 from purify.my_enums import Strategy
 
-ENTANGLEMENT_GENERATION_COUNT = 500000
+ENTANGLEMENT_GENERATION_COUNT = 300000
 
 LENGTH = 20000
 C = 2e8
@@ -25,11 +26,15 @@ WAITING_TIME_SENSIVITIES = [
   1
 ]
 
-LAMBDA_1 = 0.1
+LAMBDA_1 = 0.0
 LAMBDA_2 = 0.2
-LAMBDA_3 = 0.05
+LAMBDA_3 = 0.1
 
 
+LAMBDA_STRAT = [
+    # LambdaSrategy.RANDOM_WITH_LARGEST_LAMBDA
+    LambdaSrategy.USE_CONSTANTS
+]
 
 
 
@@ -46,17 +51,17 @@ STRATEGIES = [
 # Decoherence times to include in the simulation in secs
 DECOHERENCE_TIMES = [
         # 0.00001,
-        # 0.0001,
-        # 0.0003,
-        # 0.0005,
-        # 0.0008,
-        # 0.001,
-        # 0.003,
-        # 0.005,
-        # 0.008,
+         0.0001,
+         0.0003,
+         0.0005,
+         0.0008,
+         0.001,
+         0.003,
+         0.005,
+         0.008,
         0.01,
-        # 0.05,
-        # 0.1,
+         0.05,
+         0.1,
         # 0.5
         # 1.0,
     ]
