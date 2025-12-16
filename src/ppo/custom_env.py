@@ -30,6 +30,9 @@ class TrainingEnv(gym.Env):
         self.observation_space = Box(
             low=np.array([0, 0]), high=np.array([1, 1]), shape=(2,), dtype=np.float32
         )
+        self.action_space = spaces.Discrete(len(Action))
+
+        self.info = {}
 
     def reset(self, seed=None, options=None):
         self.time = Time()
@@ -43,28 +46,27 @@ class TrainingEnv(gym.Env):
 
         return self.curr_obs, {}
 
-    def step(self, action: Action):
-        # Initialisiere Reward und Terminierung
+def step(self, action: Action):
         reward = 0.0
         terminated = False
         truncated = False
+        if not self.time.update():
+            truncated = True
+        current_event = self.time.last_event()
 
-        while not terminated:
-            if not self.time.update():
+        if current_event == Event.ENTANGLEMENT_GENERATION:
+            self.node.handle_entanglement_generation(action)
+        elif current_event == Event.REQUEST_ARRIVAL:
+            self.node.handle_request_arrival()
+            result = self.node.serve_request()
+            if result is not None:
+                (teleportation_fidelity, waiting_time) = result
                 terminated = True
-            
-            if self.time.last_event() == Event.REQUEST_ARRIVAL:
-                self.node.handle_request_arrival()
-                result = self.node.serve_request()
-                if result is None:
-                    print()
-                else:
-                    (teleportation_fidelity, _) = result
-                    terminated = True
-                    reward = teleportation_fidelity
+                reward = teleportation_fidelity
 
-            if self.time.last_event() == Event.ENTANGLEMENT_GENERATION:
-                self.node.handle_entanglement_generation(action)
+        req_wait = 0 if self.node.queue is None else 1
+        self.curr_obs = np.array(
+            [self.node.get_good_memory_fidelity(), req_wait], dtype=np.float32
+        )
 
-
-        return self.observation, reward, terminated, truncated,
+        return self.curr_obs, reward, terminated, truncated, self.info
