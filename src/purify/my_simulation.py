@@ -25,30 +25,13 @@ class Simulation:
         self.node_a = Node(self.time, constants)
         self.constants = constants
 
-
-        # Samples (hier Bernouli/geometric)
-        self.entanglement_samples = [
-            DELTA_T for _ in range(ENTANGLEMENT_GENERATION_COUNT)
-        ]
-
-        self.request_samples = rng.gamma(
-            shape=2,
-            scale=1 / QUBIT_ARRIVAL_SCALE,
-            size=round(ENTANGLEMENT_GENERATION_COUNT / QUBIT_ENTANGLEMENT_FACTOR),
-        )
-
+    
     def step(self) -> bool:
         """Eine Simulationsiteration. Gibt False zurück, wenn Samples
         verbraucht sind."""
-        if self.time.entanglement_count >= len(
-            self.entanglement_samples
-        ) or self.time.request_count >= len(self.request_samples):
-            return False
 
-        self.time.update(
-            self.entanglement_samples[self.time.entanglement_count],
-            self.request_samples[self.time.request_count],
-        )
+        if not self.time.update():
+            return False
 
         logger.info(
             "Current Time: %s | Last Event: %s",
@@ -57,7 +40,7 @@ class Simulation:
         )
 
         if self.time.last_event() == Event.ENTANGLEMENT_GENERATION:
-            self.node_a.handle_entanglement_generation()
+            self.node_a.handle_entanglement_generation_use_constants_action()
             self.node_a.serve_request()
 
         if self.time.last_event() == Event.REQUEST_ARRIVAL:

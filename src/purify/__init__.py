@@ -26,15 +26,6 @@ rng = np.random.default_rng()
 
 
 def main() -> None:
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument(
-    #     "--strategy",
-    #     type=int,
-    #     choices=range(1, len(Strategy) + 1),
-    #     required=True,
-    # )
-    # args = parser.parse_args()
-    # strategy = Strategy(args.strategy)
 
     logging.basicConfig(
         filename="myapp.log",

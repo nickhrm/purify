@@ -1,3 +1,4 @@
+from asyncio import constants
 import logging
 
 import numpy as np
@@ -7,7 +8,7 @@ from purify.entanglement import Entanglement
 from purify.my_constants import (
     P_G,
 )
-from purify.my_enums import LambdaSrategy, Strategy
+from purify.my_enums import LambdaSrategy, Action
 from purify.my_time import Time
 from purify.qubit import Qubit
 from purify.utils.bernouli_util import bernouli_with_probability_is_successfull
@@ -28,8 +29,12 @@ class Node:
 
     "is called, when event entanglement_generation happend"
 
-    def handle_entanglement_generation(self) -> None:
-        entanglement: Entanglement | None = self.__generate_entanglement()
+    def handle_entanglement_generation_use_constants_action(self) -> None:
+        self.handle_entanglement_generation(self.constants.strategy)
+
+
+    def handle_entanglement_generation(self, action: Action) -> None:
+        entanglement: Entanglement | None = self.generate_entanglement()
 
         # generation was not successful
         if entanglement is None:
@@ -40,22 +45,24 @@ class Node:
             self.good_memory = entanglement
             return
 
-        match self.constants.strategy:
-            case Strategy.ALWAYS_REPLACE:
+        match action:
+            case Action.TRAINING_MODE:
+                return
+            case Action.REPLACE:
                 self.strategy_always_replace(entanglement)
-            case Strategy.ALWAYS_PROT_1:
+            case Action.PROT_1:
                 self.strategy_always_prot_1(entanglement)
-            case Strategy.ALWAYS_PROT_2:
+            case Action.PROT_2:
                 self.strategy_always_prot_2(entanglement)
-            case Strategy.ALWAYS_PROT_3:
+            case Action.PROT_3:
                 self.strategy_always_prot_3(entanglement)
-            case Strategy.ALWAYS_PMD:
+            case Action.ALWAYS_PMD:
                 self.strategy_always_pmd(entanglement)
-            case Strategy.ALWAYS_PROT_1_WITH_PROBABILITY:
+            case Action.PROT_1_WITH_PROBABILITY:
                 self.strategy_always_prot_1_with_probbility(entanglement)
-            case Strategy.ALWAYS_PROT_2_WITH_PROBABILITY:
+            case Action.PROT_2_WITH_PROBABILITY:
                 self.strategy_always_prot_2_with_probbility(entanglement)
-            case Strategy.ALWAYS_PROT_3_WITH_PROBABILITY:
+            case Action.PROT_3_WITH_PROBABILITY:
                 self.strategy_always_prot_3_with_probbility(entanglement)
 
     def strategy_always_prot_1_with_probbility(self, new_entanglement: Entanglement):
@@ -183,7 +190,7 @@ class Node:
             self.bad_memory = None
             logger.info("Purification failed")
 
-    def __generate_entanglement(self) -> Entanglement | None:
+    def generate_entanglement(self) -> Entanglement | None:
         generation_successful = bernouli_with_probability_is_successfull(P_G)
         if generation_successful:
             logger.info("Entanglement Generation Successful")
@@ -209,9 +216,10 @@ class Node:
             # if queue was already full, request is dropped
             logger.info("Serving request failed. queue was already full")
 
-    def serve_request(self):
+    # TODO: Update simulation to work with new version of this fun
+    def serve_request(self) -> tuple[float, float] | None:
         if self.queue is None:
-            return
+            return None
 
         if self.good_memory is not None:
             teleportation_fidelity: float = self.queue.teleportation_fidelity(
@@ -223,9 +231,12 @@ class Node:
                 self.queue.get_waiting_time(),
                 self.queue.get_current_fidelity(),
             )
-            write_results_csv(
-                teleportation_fidelity, self.queue.get_waiting_time(), self.constants
-            )
+            # TODO: auslagern, sodass serve_request unabhängig ist
+            # write_results_csv(
+            #     teleportation_fidelity, self.queue.get_waiting_time(), self.constants
+            # )
+
+            waiting_time = self.queue.get_waiting_time()
 
             # remove qubit from queue, because it was served
             self.queue = None
@@ -235,3 +246,10 @@ class Node:
             if self.bad_memory is not None:
                 self.good_memory = self.bad_memory
                 self.bad_memory = None
+            return (teleportation_fidelity, waiting_time)
+
+    def get_good_memory_fidelity(self) -> float:
+        if self.good_memory is None:
+            return 0.0
+        else:
+            return self.good_memory.get_current_fidelity()

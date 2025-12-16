@@ -13,7 +13,7 @@ dependencies = [
     "pandas>=2.3.3",
     "pyrefly>=0.40.1",
     "seaborn>=0.13.2",
-    "stable-baselines3>=2.7.0",
+    "stable-baselines3[extra]>=2.7.0",
 ]
 
 [tool.pyrefly]

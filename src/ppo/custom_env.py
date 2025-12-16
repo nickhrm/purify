@@ -1,0 +1,70 @@
+import gymnasium as gym
+import numpy as np
+from gymnasium import spaces
+from gymnasium.spaces.box import Box
+
+from purify.constants_tuple import ConstantsTuple
+from purify.my_constants import (
+    LEARNING_ENV_CONSTANTS,
+)
+from purify.my_enums import Action, Event, LambdaSrategy, Action
+from purify.my_simulation import Simulation
+from purify.my_time import Time
+from purify.node import Node
+
+# ... (Ihre Imports für Simulation, ConstantsTuple, Node, etc.)
+
+
+class TrainingEnv(gym.Env):
+    def __init__(
+        self,
+    ):
+        super().__init__()
+        self.time = Time()
+
+        self.constants = LEARNING_ENV_CONSTANTS
+
+        self.node = Node(self.time, self.constants)
+
+        # State (F_e, is_request_waiting)
+        self.observation_space = Box(
+            low=np.array([0, 0]), high=np.array([1, 1]), shape=(2,), dtype=np.float32
+        )
+
+    def reset(self, seed=None, options=None):
+        self.time = Time()
+        self.node = Node(self.time, self.constants)
+
+        req_wait = 0 if self.node.queue is None else 1
+
+        self.curr_obs = np.array(
+            [self.node.get_good_memory_fidelity(), req_wait], dtype=np.float32
+        )
+
+        return self.curr_obs, {}
+
+    def step(self, action: Action):
+        # Initialisiere Reward und Terminierung
+        reward = 0.0
+        terminated = False
+        truncated = False
+
+        while not terminated:
+            if not self.time.update():
+                terminated = True
+            
+            if self.time.last_event() == Event.REQUEST_ARRIVAL:
+                self.node.handle_request_arrival()
+                result = self.node.serve_request()
+                if result is None:
+                    print()
+                else:
+                    (teleportation_fidelity, _) = result
+                    terminated = True
+                    reward = teleportation_fidelity
+
+            if self.time.last_event() == Event.ENTANGLEMENT_GENERATION:
+                self.node.handle_entanglement_generation(action)
+
+
+        return self.observation, reward, terminated, truncated,
