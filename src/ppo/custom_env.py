@@ -26,11 +26,14 @@ class TrainingEnv(gym.Env):
 
         self.node = Node(self.time, self.constants)
 
-        # State (F_e, is_request_waiting)
+        # State (F_e, is_request_waiting, time_since_last_request)
         self.observation_space = Box(
-            low=np.array([0, 0]), high=np.array([1, 1]), shape=(2,), dtype=np.float32
+            low=np.array([0.0, 0.0, 0.0]),
+            high=np.array([1.0, 1.0, np.inf]),
+            shape=(3,),
+            dtype=np.float64,
         )
-        self.action_space = spaces.Discrete(len(Action))
+        self.action_space = spaces.Discrete(4)
 
         self.info = {}
 
@@ -41,12 +44,12 @@ class TrainingEnv(gym.Env):
         req_wait = 0 if self.node.queue is None else 1
 
         self.curr_obs = np.array(
-            [self.node.get_good_memory_fidelity(), req_wait], dtype=np.float32
+            [self.node.get_good_memory_fidelity(), req_wait, 0.0], dtype=np.float32
         )
 
         return self.curr_obs, {}
 
-def step(self, action: Action):
+    def step(self, action):
         reward = 0.0
         terminated = False
         truncated = False
@@ -55,18 +58,22 @@ def step(self, action: Action):
         current_event = self.time.last_event()
 
         if current_event == Event.ENTANGLEMENT_GENERATION:
-            self.node.handle_entanglement_generation(action)
+            self.node.handle_entanglement_generation(Action(action))
         elif current_event == Event.REQUEST_ARRIVAL:
             self.node.handle_request_arrival()
-            result = self.node.serve_request()
-            if result is not None:
-                (teleportation_fidelity, waiting_time) = result
-                terminated = True
-                reward = teleportation_fidelity
+
+        result = self.node.serve_request()
+        if result is not None:
+            (teleportation_fidelity, waiting_time) = result
+            terminated = True
+            reward = teleportation_fidelity
 
         req_wait = 0 if self.node.queue is None else 1
+        time_since_last_req = self.time.get_current_time() - self.time.request_time
+
         self.curr_obs = np.array(
-            [self.node.get_good_memory_fidelity(), req_wait], dtype=np.float32
+            [self.node.get_good_memory_fidelity(), req_wait, time_since_last_req],
+            dtype=np.float32,
         )
 
         return self.curr_obs, reward, terminated, truncated, self.info

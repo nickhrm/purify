@@ -1,52 +1,59 @@
-from ray.rllib.algorithms.algorithm_config import AlgorithmConfig
-import ray
-from ray.rllib.algorithms.ppo import PPOConfig
-from ray.tune import register_env
+import os
+from stable_baselines3 import PPO
+from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.monitor import Monitor
 
 from ppo.custom_env import TrainingEnv
-# Importiere oder definiere deine TrainingEnv-Klasse
 
-# -----------------------------------------------
-# SCHRITT 1: Registrieren Sie die benutzerdefinierte Umgebung
-# -----------------------------------------------
+# Importieren Sie Ihre oben definierte Klasse
+# from my_env_file import TrainingEnv 
 
-# Zuerst Ray initialisieren
-ray.init(ignore_reinit_error=True)
+def train_agent():
+    # 1. Environment erstellen
+    env = TrainingEnv()
+    
+    # 2. Sanity Check (EXTREM NÜTZLICH)
+    # SB3 prüft hier, ob Ihr Env den Gym-Standards entspricht (Shapes, Datentypen, Limits).
+    # Wenn hier ein Fehler kommt, stimmt etwas in der Env-Klasse nicht.
+    print("Prüfe Environment...")
+    check_env(env) 
+    print("Environment ist valide!")
 
-def env_creator():
-    return TrainingEnv()
+    # 3. Verzeichnis für Logs erstellen
+    log_dir = "./ppo_results/"
+    os.makedirs(log_dir, exist_ok=True)
 
-# Umgebung registrieren
-ENV_NAME = "QuantumEntanglementEnv"
-register_env(ENV_NAME, env_creator)
+    # 4. Agent initialisieren
+    # MlpPolicy = Standard neuronales Netz für Vektor-Input
+    model = PPO(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        tensorboard_log=log_dir,
+        learning_rate=0.0003,
+        gamma=1.0,  # Ihr gewünschtes Gamma
+        ent_coef=0.01, # Ihr gewünschter Entropy Coeff
+        device='cpu'
+    )
 
-# -----------------------------------------------
-# SCHRITT 2: PPO konfigurieren
-# -----------------------------------------------
+    # 5. Training starten
+    print("Starte Training...")
+    # total_timesteps: Wie viele Schritte (Steps) insgesamt interagiert werden soll
+    model.learn(total_timesteps=300000) 
 
-# Annahme: Deine Action-Klasse (Action) hat N mögliche diskrete Werte (z.B. 7 Strategien).
-NUM_DISCRETE_ACTIONS = 7
+    # 6. Modell speichern
+    model.save("ppo_quantum_agent")
+    print("Training beendet und Modell gespeichert.")
 
+    # --- Optional: Testen des trainierten Agenten ---
+    print("Teste den trainierten Agenten...")
+    obs, _ = env.reset()
+    for _ in range(200):
+        action, _states = model.predict(obs, deterministic=True)
+        obs, reward, terminated, truncated, info = env.step(action)
+        print(f"Action: {action}, Reward: {reward}, Obs: {obs}")
+        if terminated or truncated:
+            obs, _ = env.reset()
 
-config = PPOConfig()
-config.environment(ENV_NAME)
-config.env_runners(num_env_runners=6)
-config.training(
-    gamma=1, lr=0.01, kl_coeff=0.3, train_batch_size_per_learner=256
-)
-
-
-# 3. PPO-Algorithmus bauen und trainieren
-algo = config.build()
-
-# Trainiere für eine bestimmte Anzahl von Iterationen
-print("Starte das Training...")
-
-for i in range(10):  
-    result = algo.train()
-    print(f"Iteration {i}: Mean Reward = {result['episode_reward_mean']:.4f}")
-
-# Optional: Speichere den finalen Trainer
-# algo.save("/pfad/zum/checkpoint")
-
-print("Training abgeschlossen.")
+if __name__ == "__main__":
+    train_agent()
