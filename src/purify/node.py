@@ -56,7 +56,7 @@ class Node:
                 self.strategy_always_prot_2(entanglement)
             case Action.PROT_3:
                 self.strategy_always_prot_3(entanglement)
-            case Action.ALWAYS_PMD:
+            case Action.PMD:
                 self.strategy_always_pmd(entanglement)
             case Action.PROT_1_WITH_PROBABILITY:
                 self.strategy_always_prot_1_with_probbility(entanglement)
@@ -203,6 +203,10 @@ class Node:
                 case LambdaSrategy.RANDOM_WITH_LARGEST_LAMBDA:
                     return Entanglement.from_random_with_biggest_lambda(
                         self.time, self.constants.decoherence_time
+                    )
+                case LambdaSrategy.RANDOM:
+                    return Entanglement.from_random_fidelity_range(
+                        self.time, 0.6, 0.8, self.constants.decoherence_time
                     )
         else:
             logger.info("Entanglement Generation Failed")

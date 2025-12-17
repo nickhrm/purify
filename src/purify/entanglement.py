@@ -122,3 +122,38 @@ class Entanglement:
             creation_lambda_3=lambda_values,
             decoherence_time = decoherence_time
         )
+    
+    @classmethod
+    def from_random_fidelity_range(cls, time: Time, min_fidelity: float, max_fidelity: float, decoherence_time: float):
+        """
+        Erzeugt Entanglement mit einer zufälligen Fidelity im Bereich [min_fidelity, max_fidelity].
+        Die Lambdas werden zufällig so verteilt, dass die Summe 1.0 ergibt.
+        """
+        if not (0 <= min_fidelity <= max_fidelity <= 1):
+            raise ValueError("Ungültige Fidelity-Range. Werte müssen zwischen 0 und 1 liegen.")
+
+        # 1. Zufällige Fidelity im Intervall wählen
+        chosen_fidelity = np.random.uniform(min_fidelity, max_fidelity)
+
+        # 2. Restwert berechnen, der auf die 3 Lambdas verteilt werden muss
+        remaining_mass = 1.0 - chosen_fidelity
+
+        # 3. Zufällige Verteilung der restlichen Masse auf 3 Lambdas (Dirichlet-Prinzip)
+        # Wir ziehen zwei Zufallszahlen, um die Strecke 'remaining_mass' in 3 Teile zu schneiden
+        cuts = np.sort(np.random.uniform(0, remaining_mass, 2))
+
+        l1 = cuts[0]
+        l2 = cuts[1] - cuts[0]
+        l3 = remaining_mass - cuts[1]
+
+        # logger.info(f"Generated Random Entanglement: F={chosen_fidelity:.4f}, L1={l1:.4f}, L2={l2:.4f}, L3={l3:.4f}")
+
+        return cls(
+            time=time,
+            creation_time=time.get_current_time(),
+            creation_fidelity=chosen_fidelity,
+            creation_lambda_1=l1,
+            creation_lambda_2=l2,
+            creation_lambda_3=l3,
+            decoherence_time=decoherence_time
+        )

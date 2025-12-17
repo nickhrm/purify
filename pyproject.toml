@@ -15,6 +15,7 @@ dependencies = [
     "ray[rllib]>=2.52.1",
     "seaborn>=0.13.2",
     "stable-baselines3[extra]>=2.7.0",
+    "tensorboard>=2.20.0",
 ]
 
 [tool.pyrefly]

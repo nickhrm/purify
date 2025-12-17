@@ -16,11 +16,12 @@ class Action(Enum):
     PROT_3_WITH_PROBABILITY = 6
     CHOOSE_RANDOM_ACTION_UNIFORMLY = 8
     GPS = 9
-    ALWAYS_PMD = 10
+    PMD = 10
     TRAINING_MODE = 11
 
 
 class LambdaSrategy(Enum):
     USE_CONSTANTS = 1
     RANDOM_WITH_LARGEST_LAMBDA = 2
+    RANDOM = 3
 

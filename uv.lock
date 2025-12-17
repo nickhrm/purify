@@ -1029,6 +1029,7 @@ dependencies = [
     { name = "ray", extra = ["rllib"] },
     { name = "seaborn" },
     { name = "stable-baselines3", extra = ["extra"] },
+    { name = "tensorboard" },
 ]
 
 [package.dev-dependencies]
@@ -1047,6 +1048,7 @@ requires-dist = [
     { name = "ray", extras = ["rllib"], specifier = ">=2.52.1" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "stable-baselines3", extras = ["extra"], specifier = ">=2.7.0" },
+    { name = "tensorboard", specifier = ">=2.20.0" },
 ]
 
 [package.metadata.requires-dev]

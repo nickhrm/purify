@@ -1,3 +1,4 @@
+from cv2 import log
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
@@ -47,6 +48,8 @@ class TrainingEnv(gym.Env):
             [self.node.get_good_memory_fidelity(), req_wait, 0.0], dtype=np.float32
         )
 
+        self.info = {}
+
         return self.curr_obs, {}
 
     def step(self, action):
@@ -65,6 +68,7 @@ class TrainingEnv(gym.Env):
         result = self.node.serve_request()
         if result is not None:
             (teleportation_fidelity, waiting_time) = result
+            # print(f"Telepored qubit with f={teleportation_fidelity}")
             terminated = True
             reward = teleportation_fidelity
 
@@ -75,5 +79,9 @@ class TrainingEnv(gym.Env):
             [self.node.get_good_memory_fidelity(), req_wait, time_since_last_req],
             dtype=np.float32,
         )
+        self.info = {
+            "event" : current_event,
+            "reward" : reward
+        }
 
         return self.curr_obs, reward, terminated, truncated, self.info

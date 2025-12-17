@@ -18,7 +18,7 @@ ETA = -0.00015
 
 # P_G = decibel_to_linear(ETA * LENGTH)
 
-QUBIT_ENTANGLEMENT_FACTOR = 100
+QUBIT_ENTANGLEMENT_FACTOR = 5
 
 QUBIT_ARRIVAL_SCALE = P_G/(QUBIT_ENTANGLEMENT_FACTOR * DELTA_T)
 
@@ -27,9 +27,9 @@ QUBIT_ARRIVAL_SCALE = P_G/(QUBIT_ENTANGLEMENT_FACTOR * DELTA_T)
 LEARNING_ENV_CONSTANTS = ConstantsTuple(
             decoherence_time=0.05,
             strategy=Action.TRAINING_MODE,
+            lambda_strategy=LambdaSrategy.RANDOM,
 
-            # These are not used
-            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            # Not Used
             waiting_time_sensitivity=1,
             pumping_probability=1.0,
         )
@@ -40,9 +40,9 @@ WAITING_TIME_SENSIVITIES = [
   1
 ]
 
-LAMBDA_1 = 0.1
+LAMBDA_1 = 0.3
 LAMBDA_2 = 0.0
-LAMBDA_3 = 0.2
+LAMBDA_3 = 0.0
 
 
 LAMBDA_STRAT = [
