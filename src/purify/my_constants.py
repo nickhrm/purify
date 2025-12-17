@@ -25,7 +25,7 @@ QUBIT_ARRIVAL_SCALE = P_G/(QUBIT_ENTANGLEMENT_FACTOR * DELTA_T)
 
 
 LEARNING_ENV_CONSTANTS = ConstantsTuple(
-            decoherence_time=0.05,
+            decoherence_time=0.5,
             strategy=Action.TRAINING_MODE,
             lambda_strategy=LambdaSrategy.RANDOM,
 

@@ -71,6 +71,7 @@ class TrainingEnv(gym.Env):
             # print(f"Telepored qubit with f={teleportation_fidelity}")
             terminated = True
             reward = teleportation_fidelity
+            write_results_csv(teleportation_fidelity, self.time, self.constants)
 
         req_wait = 0 if self.node.queue is None else 1
         time_since_last_req = self.time.get_current_time() - self.time.request_time

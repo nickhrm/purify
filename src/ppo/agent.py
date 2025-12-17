@@ -1,47 +1,46 @@
 import os
-# Importiere die notwendigen Vektorisierungs-Tools
+import multiprocessing
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 from stable_baselines3 import PPO
 from ppo.custom_env import TrainingEnv
 
 def make_env():
-    """Hilfsfunktion zum Erstellen einer Env-Instanz."""
     return TrainingEnv()
 
 def train_agent():
-    # 1. Konfiguration für mehrere Worker
-    num_cpu = 6  # Entspricht 'num_workers' in deinem Ray-Beispiel
+    # 1. Maximale CPU-Auslastung
+    # Nutze fast alle Kerne, lass 1-2 für das System frei, um Ruckeln zu vermeiden
+    num_cpu = max(1, multiprocessing.cpu_count() - 1) 
     
-    # Erstelle das vektorisierte Environment
-    # SubprocVecEnv führt jede Instanz in einem eigenen Prozess aus
+    # SubprocVecEnv ist perfekt für CPU-Parallelisierung
     env = SubprocVecEnv([make_env for _ in range(num_cpu)])
     
-    # Monitor für vektorisierte Envs hinzufügen, um Statistiken zu loggen
     log_dir = "./ppo_results/"
     os.makedirs(log_dir, exist_ok=True)
     env = VecMonitor(env, log_dir)
 
-    # 2. Agent initialisieren
-    # SB3 passt n_steps automatisch pro Worker an. 
-    # Wenn n_steps=2048 und du 6 Worker hast, beträgt der Batch-Size 12288.
+    # 2. CPU-Optimierte Hyperparameter
     model = PPO(
         "MlpPolicy",
         env,
-        verbose=1,
-        tensorboard_log=log_dir,
+        # Kleine n_steps für CPU: Agent lernt öfter aus frischen Daten
+        n_steps=1024,      
+        # Kleinere Batch-Size: Die CPU verarbeitet kleine Häppchen schneller als riesige Matrizen
+        batch_size=64,     
+        # Weniger Epochen: CPU braucht länger für Optimierungsschritte, 
+        # daher reduzieren wir die Wiederholungen pro Batch
+        n_epochs=4,        
         learning_rate=0.0003,
         gamma=1.0,
         ent_coef=0.01,
-        device='auto'
+        device='cpu',      # Explizit CPU nutzen
+        verbose=1,
+        tensorboard_log=log_dir
     )
 
-    # 3. Training starten
-    print(f"Starte Training mit {num_cpu} Workern...")
-    model.learn(total_timesteps=1000000)
-
-    # 4. Modell speichern
+    print(f"Starte CPU-optimiertes Training mit {num_cpu} Workern...")
+    model.learn(total_timesteps=5_000_000)
     model.save("ppo_quantum_agent")
-    print("Training beendet.")
 
 if __name__ == "__main__":
     train_agent()

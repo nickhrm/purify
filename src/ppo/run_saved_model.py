@@ -42,14 +42,11 @@ def run_saved_model():
             total_reward += reward
             step_counter += 1
 
-            # Optional: Action lesbar machen für den Print
-            # (Hängt davon ab, wie du deine Action-Liste definiert hast, z.B. so:)
             try:
                 action_name = list(Action)[int(action)].name
             except:
                 action_name = str(action)
 
-            # Nur interessante Schritte printen (z.B. wenn Reward > 0 oder alle 10 Schritte)
             if reward > 0 or step_counter % 1 == 0: # Hier % 1 für ALLES printen
                 print(f"Step {step_counter:3} | Action: {action} ({action_name}) | Reward: {reward:.4f} | Obs: {obs}")
                 print(f"2nd event: {info["event"]}, reward: {info["reward"]}")

@@ -147,7 +147,7 @@ class Entanglement:
         l3 = remaining_mass - cuts[1]
 
         # logger.info(f"Generated Random Entanglement: F={chosen_fidelity:.4f}, L1={l1:.4f}, L2={l2:.4f}, L3={l3:.4f}")
-
+        # print(f"Entanglement has form ({l1},{l2},{l3})")
         return cls(
             time=time,
             creation_time=time.get_current_time(),
