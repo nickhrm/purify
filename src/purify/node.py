@@ -32,6 +32,29 @@ class Node:
     def handle_entanglement_generation_use_constants_action(self) -> None:
         self.handle_entanglement_generation(self.constants.strategy)
 
+    def handle_existing_entanglement(self, entanglement: Entanglement, action: Action) -> None:
+        """Verarbeitet ein bereits generiertes Paar basierend auf der Agenten-Action."""
+        if entanglement is None:
+            return
+
+        # Wenn der Speicher leer ist, wird das Paar einfach abgelegt
+        if self.good_memory is None:
+            self.good_memory = entanglement
+            return
+
+        # Purifizierungs-Logik basierend auf der Action
+        match action:
+            case Action.REPLACE:
+                self.strategy_always_replace(entanglement)
+            case Action.PROT_1:
+                self.strategy_always_prot_1(entanglement)
+            case Action.PROT_2:
+                self.strategy_always_prot_2(entanglement)
+            case Action.PROT_3:
+                self.strategy_always_prot_3(entanglement)
+            case Action.PMD:
+                self.strategy_always_pmd(entanglement)
+            # ... weitere Protokolle falls nötig
 
     def handle_entanglement_generation(self, action: Action) -> None:
         entanglement: Entanglement | None = self.generate_entanglement()

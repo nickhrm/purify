@@ -18,21 +18,13 @@ ETA = -0.00015
 
 # P_G = decibel_to_linear(ETA * LENGTH)
 
-QUBIT_ENTANGLEMENT_FACTOR = 5
+QUBIT_ENTANGLEMENT_FACTOR = 100
 
 QUBIT_ARRIVAL_SCALE = P_G/(QUBIT_ENTANGLEMENT_FACTOR * DELTA_T)
 
 
 
-LEARNING_ENV_CONSTANTS = ConstantsTuple(
-            decoherence_time=0.5,
-            strategy=Action.TRAINING_MODE,
-            lambda_strategy=LambdaSrategy.RANDOM,
 
-            # Not Used
-            waiting_time_sensitivity=1,
-            pumping_probability=1.0,
-        )
 
 
 
@@ -55,10 +47,10 @@ LAMBDA_STRAT = [
 # Stratgies to include in the simulation
 STRATEGIES = [
         Action.REPLACE,
+        Action.PMD,
         Action.PROT_1,
         Action.PROT_2,
         Action.PROT_3,
-        # Strategy.ALWAYS_PMD,
     ]
 
 

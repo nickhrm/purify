@@ -12,3 +12,8 @@ wheels/
 *.log
 /results
 *.csv
+
+*.zip
+
+
+/ppo_results
