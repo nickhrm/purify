@@ -8,7 +8,7 @@ class Event(Enum):
 
 class Action(Enum):
     REPLACE = 0
-    PROT_1 = 10
+    PROT_1 = 1
     PROT_2 = 2
     PROT_3 = 3
     PROT_1_WITH_PROBABILITY = 4
@@ -16,7 +16,7 @@ class Action(Enum):
     PROT_3_WITH_PROBABILITY = 6
     CHOOSE_RANDOM_ACTION_UNIFORMLY = 8
     GPS = 9
-    PMD = 1
+    PMD = 10
     TRAINING_MODE = 11
 
 

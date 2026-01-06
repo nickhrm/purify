@@ -13,10 +13,11 @@ class TrainingEnv(gym.Env):
         super().__init__()
         self.time = Time()
         self.constants = constants
+
         self.node = Node(self.time, self.constants)
 
         # 7 Dimensionen im State:
-        # [F_mem, req_wait, time_diff, F_new, L1_new, L2_new, L3_new]
+        # [F_mem, req_wait, time_diff, difficulty_feature, L1_new, L2_new, L3_new]
         self.observation_space = Box(
             low=0,
             high=1,
@@ -25,7 +26,7 @@ class TrainingEnv(gym.Env):
         )
 
         # Der Agent kann zwischen 4 Protokollen wählen (z.B. REPLACE, PROT_1, PROT_2, PROT_3)
-        self.action_space = spaces.Discrete(2)
+        self.action_space = spaces.Discrete(4)
 
         # Interne Tracking-Variablen für das Look-Ahead
         self.last_generated_entanglement = None
@@ -38,6 +39,12 @@ class TrainingEnv(gym.Env):
         decay_factor = np.exp(-raw_time / self.constants.decoherence_time)
         f_mem = self.node.get_good_memory_fidelity()
 
+
+        log_t = np.log10(self.constants.decoherence_time) # Ergibt -4 bis -1
+        difficulty_feature = (log_t + 4.0) / 3.0          # Normierung auf [0, 1]
+        difficulty_feature = np.clip(difficulty_feature, 0.0, 1.0)
+
+
         # Falls ein neues Paar auf Verarbeitung wartet, dessen Werte in den State packen
         if self.last_generated_entanglement is not None:
             f_new = self.last_generated_entanglement.get_current_fidelity()
@@ -45,28 +52,29 @@ class TrainingEnv(gym.Env):
             l2 = self.last_generated_entanglement.get_current_lambda_2()
             l3 = self.last_generated_entanglement.get_current_lambda_3()
         else:
-            f_new, l1, l2, l3 = 0.0, 0.0, 0.0, 0.0
+            l1, l2, l3 =  0.0, 0.0, 0.0
 
         return np.array(
-            [f_mem, req_wait, decay_factor, f_new, l1, l2, l3],
+            [f_mem, req_wait, decay_factor, difficulty_feature, l1, l2, l3],
             dtype=np.float32
         )
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
+
+        # Node und Time neu initialisieren mit den neuen Konstanten
         self.time = Time()
         self.node = Node(self.time, self.constants)
 
         self.last_generated_entanglement = None
         self.current_event = None
 
-        # Ersten Zeitschritt triggern, damit wir nicht mit leerem State starten
         self.time.update()
         self.current_event = self.time.last_event()
 
         if self.current_event == Event.ENTANGLEMENT_GENERATION:
             self.last_generated_entanglement = self.node.generate_entanglement()
-
+        print(self.constants.decoherence_time)
         return self._get_obs(), {}
 
     def step(self, action):

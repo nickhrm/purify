@@ -11,7 +11,7 @@ from purify.my_enums import Action, LambdaSrategy
 
 def run_parameter_sweep():
     decoherence_times = [10e-4, 5e-3, 10e-3, 5e-2, 10e-2]
-    N_EPISODES = 50
+    N_EPISODES = 400
 
     # Dictionary initialisieren wir jetzt dynamisch
     results = {}
@@ -24,7 +24,7 @@ def run_parameter_sweep():
         current_constants = ConstantsTuple(
             decoherence_time=t_coh,
             strategy=Action.TRAINING_MODE,
-            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            lambda_strategy=LambdaSrategy.RANDOM,
             waiting_time_sensitivity=1,
             pumping_probability=1.0,
         )
@@ -35,11 +35,11 @@ def run_parameter_sweep():
         policies = [
             PPOAgent("ppo_quantum_agent", env),
             FixedActionAgent(Action.REPLACE),
-            FixedActionAgent(Action.PMD),
-            # FixedActionAgent(Action.PROT_1),
-            # FixedActionAgent(Action.PROT_2),
-            # FixedActionAgent(Action.PROT_3),
-            # RandomAgent(env.action_space)
+            # FixedActionAgent(Action.PMD),
+            FixedActionAgent(Action.PROT_1),
+            FixedActionAgent(Action.PROT_2),
+            FixedActionAgent(Action.PROT_3),
+            RandomAgent(env.action_space)
         ]
 
         for policy in policies:
