@@ -13,7 +13,7 @@ def calculate_average_waiting_times():
 
     # Suche alle CSV-Dateien, die mit ALL_RESULTS beginnen
     files = list(results_dir.glob("ALL_RESULTS_*.csv"))
-    
+
     print(f"{len(files)} Dateien gefunden. Verarbeite...\n")
 
     for file_path in files:
@@ -21,7 +21,7 @@ def calculate_average_waiting_times():
             # 1. Lambda-Werte aus dem Dateinamen extrahieren
             # Dateiname ist z.B. "ALL_RESULTS_00_02_00.csv" oder "ALL_RESULTS_0.2_0.0_0.0.csv"
             parts = file_path.stem.split('_') 
-            
+
             # Wir erwarten, dass die letzten 3 Teile die Lambda-Werte sind
             # (Index 2, 3, 4 nach 'ALL' und 'RESULTS')
             if len(parts) >= 5:

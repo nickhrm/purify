@@ -1,7 +1,7 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
-from purify.my_constants import LAMBDA_1, LAMBDA_2, LAMBDA_3 # Annahme: Diese Konstanten sind definiert
+from purify.my_constants import LAMBDA_1, LAMBDA_2, LAMBDA_3 
 
 def create_waiting_time_sensitivity_plot():
     """
