@@ -1,10 +1,11 @@
-from dataclasses import dataclass
 from typing import NamedTuple
 
-from purify.my_enums import LambdaSrategy, Action
+from ale_py import Action
+
+from purify.my_enums import LambdaSrategy
+
 
 class ConstantsTuple(NamedTuple):
-    strategy: Action
     decoherence_time: float
     pumping_probability: float
     waiting_time_sensitivity:float

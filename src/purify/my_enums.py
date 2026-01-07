@@ -11,13 +11,7 @@ class Action(Enum):
     PROT_1 = 1
     PROT_2 = 2
     PROT_3 = 3
-    PROT_1_WITH_PROBABILITY = 4
-    PROT_2_WITH_PROBABILITY = 5
-    PROT_3_WITH_PROBABILITY = 6
-    CHOOSE_RANDOM_ACTION_UNIFORMLY = 8
-    GPS = 9
-    PMD = 10
-    TRAINING_MODE = 11
+    PMD = 4
 
 
 class LambdaSrategy(Enum):

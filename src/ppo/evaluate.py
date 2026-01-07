@@ -6,11 +6,27 @@ import numpy as np
 from ppo.custom_env import TrainingEnv
 from ppo.policy_wrapper import FixedActionAgent, PPOAgent, RandomAgent
 from purify.constants_tuple import ConstantsTuple
+from purify.my_constants import AVAILABLE_ACTIONS
 from purify.my_enums import Action, LambdaSrategy
 
 
 def run_parameter_sweep():
-    decoherence_times = [10e-4, 5e-3, 10e-3, 5e-2, 10e-2]
+    decoherence_times = [
+        0.001,
+        0.002,
+        0.003,
+        0.004,
+        0.005,
+        0.006,
+        0.007,
+        0.008,
+        0.009,
+        0.01,
+        0.03,
+        0.05,
+        0.07,
+        0.1,
+    ]
     N_EPISODES = 400
 
     # Dictionary initialisieren wir jetzt dynamisch
@@ -23,8 +39,7 @@ def run_parameter_sweep():
 
         current_constants = ConstantsTuple(
             decoherence_time=t_coh,
-            strategy=Action.TRAINING_MODE,
-            lambda_strategy=LambdaSrategy.RANDOM,
+            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
             waiting_time_sensitivity=1,
             pumping_probability=1.0,
         )
@@ -39,11 +54,10 @@ def run_parameter_sweep():
             FixedActionAgent(Action.PROT_1),
             FixedActionAgent(Action.PROT_2),
             FixedActionAgent(Action.PROT_3),
-            RandomAgent(env.action_space)
+            RandomAgent(env.action_space),
         ]
 
         for policy in policies:
-
             if policy.name not in results:
                 results[policy.name] = []
 
@@ -54,7 +68,7 @@ def run_parameter_sweep():
                 done = False
                 while not done:
                     action = policy.predict(obs)
-                    print(f"Taking action {Action(action).name}")
+                    print(f"Taking action {AVAILABLE_ACTIONS[action].name}")
                     obs, reward, terminated, truncated, _ = env.step(action)
                     total_reward += reward
                     done = terminated or truncated
@@ -64,15 +78,16 @@ def run_parameter_sweep():
     print("\nSweep beendet.")
     return decoherence_times, results
 
+
 def plot_sweep(x, y_data):
     plt.figure(figsize=(10, 6))
     for name, values in y_data.items():
-        plt.plot(x, values, label=name, marker='o', markersize=4)
+        plt.plot(x, values, label=name, marker="o", markersize=4)
 
-    plt.xscale('log')
-    plt.xlabel('Decoherence Time ($T_{coh}$)')
-    plt.ylabel('Average Teleportation Fidelity (Reward)')
-    plt.title('Agent Performance vs. Decoherence Time')
+    plt.xscale("log")
+    plt.xlabel("Decoherence Time ($T_{coh}$)")
+    plt.ylabel("Average Teleportation Fidelity (Reward)")
+    plt.title("Agent Performance vs. Decoherence Time")
     plt.legend()
     plt.grid(True, which="both", linestyle="--", alpha=0.5)
     plt.tight_layout()
@@ -80,6 +95,7 @@ def plot_sweep(x, y_data):
     # Pfad ohne führenden Slash für lokale Speicherung
     plt.savefig("sweep_results.png")
     print("Graph gespeichert als 'sweep_results.png'")
+
 
 if __name__ == "__main__":
     times, res = run_parameter_sweep()

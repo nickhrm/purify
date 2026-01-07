@@ -9,14 +9,13 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
 from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple
-from purify.my_enums import Action, LambdaSrategy
+from purify.my_enums import LambdaSrategy
 
 
 def make_env():
     # Deine Konstanten
     current_constants = ConstantsTuple(
         decoherence_time=0.05,
-        strategy=Action.TRAINING_MODE,
         lambda_strategy=LambdaSrategy.RANDOM,
         waiting_time_sensitivity=1,
         pumping_probability=1.0,

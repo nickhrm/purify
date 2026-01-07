@@ -1,7 +1,6 @@
 
 from purify.constants_tuple import ConstantsTuple
-from purify.my_enums import LambdaSrategy
-from purify.my_enums import Action
+from purify.my_enums import Action, LambdaSrategy
 
 ENTANGLEMENT_GENERATION_COUNT = 300000
 
@@ -22,63 +21,15 @@ QUBIT_ENTANGLEMENT_FACTOR = 100
 
 QUBIT_ARRIVAL_SCALE = P_G/(QUBIT_ENTANGLEMENT_FACTOR * DELTA_T)
 
-
-
-
-
-
-
-WAITING_TIME_SENSIVITIES = [
-  1
+AVAILABLE_ACTIONS = [
+    Action.REPLACE,
+    Action.PROT_1,
+    Action.PROT_2,
+    Action.PROT_3,
 ]
+
 
 LAMBDA_1 = 0.3
 LAMBDA_2 = 0.0
 LAMBDA_3 = 0.0
-
-
-LAMBDA_STRAT = [
-    # LambdaSrategy.RANDOM_WITH_LARGEST_LAMBDA
-    LambdaSrategy.USE_CONSTANTS
-]
-
-
-
-# Stratgies to include in the simulation
-STRATEGIES = [
-        Action.REPLACE,
-        Action.PMD,
-        Action.PROT_1,
-        Action.PROT_2,
-        Action.PROT_3,
-    ]
-
-
-# Decoherence times to include in the simulation in secs
-DECOHERENCE_TIMES = [
-        # 0.00001,
-         0.0001,
-         0.0003,
-         0.0005,
-         0.0008,
-         0.001,
-         0.003,
-         0.005,
-         0.008,
-        0.01,
-         0.05,
-         0.1,
-        # 0.5
-        # 1.0,
-    ]
-
-
-PUMPING_PROBABILTIES = [
-    # 0.0,
-    # 0.2,
-    # 0.4,
-    # 0.6,
-    # 0.8,
-    1.0
-]
 

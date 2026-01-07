@@ -3,7 +3,8 @@ import numpy as np
 from gymnasium import spaces
 from gymnasium.spaces.box import Box
 
-from purify.my_enums import Action, Event
+from purify.my_constants import AVAILABLE_ACTIONS
+from purify.my_enums import Event
 from purify.my_time import Time
 from purify.node import Node
 
@@ -16,7 +17,6 @@ class TrainingEnv(gym.Env):
 
         self.node = Node(self.time, self.constants)
 
-        # 7 Dimensionen im State:
         # [F_mem, req_wait, time_diff, difficulty_feature, L1_new, L2_new, L3_new]
         self.observation_space = Box(
             low=0,
@@ -25,27 +25,24 @@ class TrainingEnv(gym.Env):
             dtype=np.float64,
         )
 
-        # Der Agent kann zwischen 4 Protokollen wählen (z.B. REPLACE, PROT_1, PROT_2, PROT_3)
-        self.action_space = spaces.Discrete(4)
+        self.action_space = spaces.Discrete(len(AVAILABLE_ACTIONS))
 
         # Interne Tracking-Variablen für das Look-Ahead
         self.last_generated_entanglement = None
         self.current_event = None
 
     def _get_obs(self):
-        """Erstellt den State-Vektor inkl. der Lambdas des wartenden Paares."""
+        """Creates the observation state"""
         req_wait = 1.0 if self.node.queue is not None else 0.0
         raw_time = self.time.get_current_time() - self.time.request_time
         decay_factor = np.exp(-raw_time / self.constants.decoherence_time)
         f_mem = self.node.get_good_memory_fidelity()
 
-
-        log_t = np.log10(self.constants.decoherence_time) # Ergibt -4 bis -1
-        difficulty_feature = (log_t + 4.0) / 3.0          # Normierung auf [0, 1]
+        # Normalize coherence time to [0,1]
+        log_t = np.log10(self.constants.decoherence_time)
+        difficulty_feature = (log_t + 4.0) / 3.0
         difficulty_feature = np.clip(difficulty_feature, 0.0, 1.0)
 
-
-        # Falls ein neues Paar auf Verarbeitung wartet, dessen Werte in den State packen
         if self.last_generated_entanglement is not None:
             f_new = self.last_generated_entanglement.get_current_fidelity()
             l1 = self.last_generated_entanglement.get_current_lambda_1()
@@ -62,7 +59,6 @@ class TrainingEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        # Node und Time neu initialisieren mit den neuen Konstanten
         self.time = Time()
         self.node = Node(self.time, self.constants)
 
@@ -82,37 +78,28 @@ class TrainingEnv(gym.Env):
         terminated = False
         truncated = False
 
-        # --- PHASE 1: Aktion ausführen (basierend auf dem State der Vorrunde) ---
         if self.current_event == Event.ENTANGLEMENT_GENERATION:
-            # Der Agent nutzt 'action', um das Paar zu verarbeiten, das er im State gesehen hat
             if self.last_generated_entanglement is not None:
-                self.node.handle_existing_entanglement(self.last_generated_entanglement, Action(action))
-            self.last_generated_entanglement = None # Verarbeitung abgeschlossen
+                self.node.handle_existing_entanglement(self.last_generated_entanglement,AVAILABLE_ACTIONS[action])
+            self.last_generated_entanglement = None
 
-        # --- PHASE 2: Simulation einen Schritt weiterbewegen ---
         if not self.time.update():
             truncated = True
 
         self.current_event = self.time.last_event()
 
-        # Falls ein Request ankommt, direkt verarbeiten (keine Agenten-Interaktion nötig)
         if self.current_event == Event.REQUEST_ARRIVAL:
             self.node.handle_request_arrival()
 
-        # --- PHASE 3: "Look-Ahead" für den nächsten State ---
         if self.current_event == Event.ENTANGLEMENT_GENERATION:
-            # Wir würfeln das neue Paar schon JETZT aus, damit es im Rückgabewert (Obs) steht
             self.last_generated_entanglement = self.node.generate_entanglement()
 
-        # --- PHASE 4: Belohnung berechnen ---
         result = self.node.serve_request()
         if result is not None:
             (teleportation_fidelity, waiting_time) = result
             terminated = True
             reward = teleportation_fidelity
-            # write_results_csv(teleportation_fidelity, self.time.get_current_time(), self.constants)
 
-        # --- PHASE 5: Rückgabe ---
         obs = self._get_obs()
         info = {"event": self.current_event, "reward": reward}
 
