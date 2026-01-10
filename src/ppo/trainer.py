@@ -7,17 +7,21 @@ from stable_baselines3.common.callbacks import (
     StopTrainingOnNoModelImprovement,
 )
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import LambdaSrategy
 
-#0.001, 0.003, 0.007, 0.01, 0.005
-def main(): 
-    coherence_times  = [ 0.1]
-    lambdas = [(0.3, 0.0, 0.0),(0.0, 0.3, 0.0), (0.0, 0.0, 0.3),]
+
+# 0.001, 0.003, 0.007, 0.01, 0.005
+def main():
+    coherence_times = [0.1]
+    lambdas = [
+        (0.3, 0.0, 0.0),
+        (0.0, 0.3, 0.0),
+        (0.0, 0.0, 0.3),
+    ]
 
     for coherence_time in coherence_times:
         # # First train for fixed lambdas
@@ -36,14 +40,14 @@ def main():
 
         # Train with Random Lambdas
         constants = ConstantsTuple(
-                coherence_time=coherence_time,
-                lambda_strategy=LambdaSrategy.RANDOM,
-                lambdas=(0,0,0),
-                pumping_probability=1,
-                waiting_time_sensitivity=1,
-            )
+            coherence_time=coherence_time,
+            lambda_strategy=LambdaSrategy.RANDOM,
+            lambdas=(0, 0, 0),
+            pumping_probability=1,
+            waiting_time_sensitivity=1,
+        )
         print(f"Training Randomly for coherence time: {coherence_time}")
-        run_name = f"{str(coherence_time).replace(".","_")}"
+        run_name = f"{str(coherence_time).replace('.', '_')}"
         train(constants, run_name)
 
 
@@ -57,23 +61,18 @@ def train(constants: ConstantsTuple, run_name: str):
     )
 
     eval_env = make_vec_env(
-        lambda: TrainingEnv(constants),
-        n_envs=1,
-        vec_env_cls=SubprocVecEnv
+        lambda: TrainingEnv(constants), n_envs=1, vec_env_cls=SubprocVecEnv
     )
 
     model_path = f"results/agent_{run_name}.zip"
 
     # --- CALLBACK SETUP ---
     stop_train_callback = StopTrainingOnNoModelImprovement(
-        max_no_improvement_evals=4,
-        min_evals=6,
-        verbose=1
+        max_no_improvement_evals=4, min_evals=6, verbose=1
     )
 
     desired_freq = 200000
     actual_eval_freq = desired_freq // num_cpu
-
 
     eval_callback = EvalCallback(
         eval_env,
@@ -81,9 +80,8 @@ def train(constants: ConstantsTuple, run_name: str):
         callback_after_eval=stop_train_callback,
         best_model_save_path=f"./best_models/{run_name}/",
         verbose=1,
-        deterministic=True
+        deterministic=True,
     )
-
 
     policy_kwargs = dict(
         net_arch=dict(pi=[64, 64], vf=[64, 64]),
@@ -114,7 +112,11 @@ def train(constants: ConstantsTuple, run_name: str):
     print("Starte Training mit Early Stopping...")
 
     try:
-        model.learn(total_timesteps=50_000_000, reset_num_timesteps=False, callback=eval_callback)
+        model.learn(
+            total_timesteps=50_000_000,
+            reset_num_timesteps=False,
+            callback=eval_callback,
+        )
     except KeyboardInterrupt:
         print("Training manuell unterbrochen...")
 

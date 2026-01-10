@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ppo.custom_env import TrainingEnv
-from ppo.policy_wrapper import FixedActionAgent, PPOAgent, RandomAgent
+from ppo.policy_wrapper import FixedActionAgent, PPOAgent
 from purify.constants_tuple import ConstantsTuple
 from purify.my_constants import AVAILABLE_ACTIONS
 from purify.my_enums import Action, LambdaSrategy
@@ -47,7 +47,7 @@ def run_parameter_sweep():
             lambda_strategy=LambdaSrategy.USE_CONSTANTS,
             waiting_time_sensitivity=1,
             pumping_probability=1.0,
-            lambdas=(0.3, 0.0, 0.0)
+            lambdas=(0.3, 0.0, 0.0),
         )
 
         env = TrainingEnv(current_constants)

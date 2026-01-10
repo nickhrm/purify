@@ -12,7 +12,6 @@ dependencies = [
     "matplotlib>=3.10.7",
     "numpy>=2.3.4",
     "pandas>=2.3.3",
-    "pyrefly>=0.40.1",
     "ray[rllib]>=2.52.1",
     "seaborn>=0.13.2",
     "stable-baselines3[extra]>=2.7.0",
@@ -28,6 +27,7 @@ project-includes = [
 [dependency-groups]
 dev = [
     "ruff>=0.14.2",
+    "ty>=0.0.11",
 ]
 
 

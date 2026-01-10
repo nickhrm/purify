@@ -6,7 +6,6 @@ import numpy as np
 from stable_baselines3 import PPO
 
 # Importiere deine Env-Klasse
-from ppo.custom_env import TrainingEnv
 from purify.my_enums import Action
 
 
