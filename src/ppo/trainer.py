@@ -29,7 +29,6 @@ def main():
                 pumping_probability=1,
                 waiting_time_sensitivity=1,
             )
-            # WICHTIG: Eindeutigen Namen für Logs generieren, damit sie sich nicht überschreiben
             run_name = f"fixed_{lam}_{coherence_time}"
             train(constants, run_name)
 
@@ -46,21 +45,23 @@ def main():
 
 
 def train(constants: ConstantsTuple, run_name: str):
-    num_cpu = 5 
+    num_cpu = 5
     log_dir = "./ppo_results/"
     os.makedirs(log_dir, exist_ok=True)
-    
-    # 1. Trainings-Umgebung (Vectorized für Speed)
+
     env = make_vec_env(
         lambda: TrainingEnv(constants), n_envs=num_cpu, vec_env_cls=SubprocVecEnv
     )
 
-    eval_env = Monitor(TrainingEnv(constants))
+    eval_env = make_vec_env(
+        lambda: TrainingEnv(constants),
+        n_envs=1,
+        vec_env_cls=SubprocVecEnv
+    )
 
     model_path = f"results/agent_{run_name}.zip"
 
     # --- CALLBACK SETUP ---
-    
     stop_train_callback = StopTrainingOnNoModelImprovement(
         max_no_improvement_evals=5,
         min_evals=10,

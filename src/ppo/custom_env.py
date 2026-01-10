@@ -63,7 +63,6 @@ class TrainingEnv(gym.Env):
 
         if self.current_event == Event.ENTANGLEMENT_GENERATION:
             self.last_generated_entanglement = self.node.generate_entanglement()
-        print(self.constants.decoherence_time)
         return self._get_obs(), {}
 
     def step(self, action):
