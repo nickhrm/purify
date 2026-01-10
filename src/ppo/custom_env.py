@@ -17,11 +17,11 @@ class TrainingEnv(gym.Env):
 
         self.node = Node(self.time, self.constants)
 
-        # [F_mem, req_wait, time_diff, difficulty_feature, L1_new, L2_new, L3_new]
+        # [F_mem, request_is_waiting, time_since_last_request, L1_new, L2_new, L3_new]
         self.observation_space = Box(
             low=0,
             high=1,
-            shape=(7,),
+            shape=(6,),
             dtype=np.float64,
         )
 
@@ -33,18 +33,11 @@ class TrainingEnv(gym.Env):
 
     def _get_obs(self):
         """Creates the observation state"""
-        req_wait = 1.0 if self.node.queue is not None else 0.0
-        raw_time = self.time.get_current_time() - self.time.request_time
-        decay_factor = np.exp(-raw_time / self.constants.decoherence_time)
+        request_is_waiting = 1.0 if self.node.queue is not None else 0.0
+        time_since_last_request = self.time.get_current_time() - self.time.request_time
         f_mem = self.node.get_good_memory_fidelity()
 
-        # Normalize coherence time to [0,1]
-        log_t = np.log10(self.constants.decoherence_time)
-        difficulty_feature = (log_t + 4.0) / 3.0
-        difficulty_feature = np.clip(difficulty_feature, 0.0, 1.0)
-
         if self.last_generated_entanglement is not None:
-            f_new = self.last_generated_entanglement.get_current_fidelity()
             l1 = self.last_generated_entanglement.get_current_lambda_1()
             l2 = self.last_generated_entanglement.get_current_lambda_2()
             l3 = self.last_generated_entanglement.get_current_lambda_3()
@@ -52,7 +45,7 @@ class TrainingEnv(gym.Env):
             l1, l2, l3 =  0.0, 0.0, 0.0
 
         return np.array(
-            [f_mem, req_wait, decay_factor, difficulty_feature, l1, l2, l3],
+            [f_mem, request_is_waiting, time_since_last_request, l1, l2, l3],
             dtype=np.float32
         )
 

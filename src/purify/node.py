@@ -8,7 +8,7 @@ from purify.entanglement import Entanglement
 from purify.my_constants import (
     P_G,
 )
-from purify.my_enums import Action, LambdaSrategy
+from purify.my_enums import Action
 from purify.my_time import Time
 from purify.qubit import Qubit
 from purify.utils.bernouli_util import bernouli_with_probability_is_successfull
@@ -37,13 +37,13 @@ class Node:
             self.good_memory = entanglement
 
         elif action == Action.REPLACE:
-                self.replace(entanglement)
+                self._replace(entanglement)
 
         else:
-            self.pump(entanglement, action)
+            self._pump(entanglement, action)
 
 
-    def replace(self, entanglement) -> None:
+    def _replace(self, entanglement) -> None:
         if (
             self.good_memory is None
             or self.good_memory.get_current_fidelity()
@@ -58,7 +58,7 @@ class Node:
             ):
                 self.bad_memory = entanglement
 
-    def pump(
+    def _pump(
         self, new_entanglement:Entanglement, action: Action
     ):
         good_memory = cast(Entanglement, self.good_memory)
@@ -67,7 +67,7 @@ class Node:
 
         if bernouli_with_probability_is_successfull(success_probability):
             self.good_memory = Entanglement.from_fidelity(
-                self.time, fidelity_after_pumping, self.constants.decoherence_time
+                self.time, fidelity_after_pumping, self.constants.coherence_time
             )
             logger.info("purification was successful")
 
@@ -81,20 +81,7 @@ class Node:
         generation_successful = bernouli_with_probability_is_successfull(P_G)
         if generation_successful:
             logger.info("Entanglement Generation Successful")
-
-            match self.constants.lambda_strategy:
-                case LambdaSrategy.USE_CONSTANTS:
-                    return Entanglement.from_default_lambdas(
-                        self.time, self.constants.decoherence_time
-                    )
-                case LambdaSrategy.RANDOM_WITH_LARGEST_LAMBDA:
-                    return Entanglement.from_random_with_biggest_lambda(
-                        self.time, self.constants.decoherence_time
-                    )
-                case LambdaSrategy.RANDOM:
-                    return Entanglement.from_random_fidelity_range(
-                        self.time, 0.6, 0.8, self.constants.decoherence_time
-                    )
+            return Entanglement.from_strategy(self.time, self.constants)
         else:
             logger.info("Entanglement Generation Failed")
             return None

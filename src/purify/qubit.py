@@ -20,7 +20,7 @@ class Qubit:
             current_time - self.creationTime
         ) * self.constants.waiting_time_sensitivity
         current_fidelity = (
-            np.exp(-time_alive / self.constants.decoherence_time) + 2.0
+            np.exp(-time_alive / self.constants.coherence_time) + 2.0
         ) / 3.0
         return current_fidelity
 

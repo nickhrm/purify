@@ -1,6 +1,5 @@
 
-from purify.constants_tuple import ConstantsTuple
-from purify.my_enums import Action, LambdaSrategy
+from purify.my_enums import Action
 
 ENTANGLEMENT_GENERATION_COUNT = 300000
 
@@ -27,9 +26,4 @@ AVAILABLE_ACTIONS = [
     Action.PROT_2,
     Action.PROT_3,
 ]
-
-
-LAMBDA_1 = 0.3
-LAMBDA_2 = 0.0
-LAMBDA_3 = 0.0
 

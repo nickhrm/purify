@@ -13,18 +13,23 @@ from purify.my_enums import Action, LambdaSrategy
 def run_parameter_sweep():
     decoherence_times = [
         0.001,
-        0.002,
+        # 0.002,
         0.003,
-        0.004,
+        # 0.004,
         0.005,
-        0.006,
+        # 0.006,
         0.007,
-        0.008,
-        0.009,
+        # 0.008,
+        # 0.009,
         0.01,
-        0.03,
+        # 0.02,
+        # 0.03,
+        # 0.04,
         0.05,
-        0.07,
+        # 0.06,
+        # 0.07,
+        # 0.08,
+        # 0.09,
         0.1,
     ]
     N_EPISODES = 400
@@ -38,10 +43,11 @@ def run_parameter_sweep():
         print(f"Evaluating for T_coh = {t_coh}...", end="\r")
 
         current_constants = ConstantsTuple(
-            decoherence_time=t_coh,
-            lambda_strategy=LambdaSrategy.RANDOM,
+            coherence_time=t_coh,
+            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
             waiting_time_sensitivity=1,
             pumping_probability=1.0,
+            lambdas=(0.3, 0.0, 0.0)
         )
 
         env = TrainingEnv(current_constants)
@@ -54,7 +60,7 @@ def run_parameter_sweep():
             FixedActionAgent(Action.PROT_1),
             FixedActionAgent(Action.PROT_2),
             FixedActionAgent(Action.PROT_3),
-            RandomAgent(env.action_space),
+            # RandomAgent(env.action_space),
         ]
 
         for policy in policies:
