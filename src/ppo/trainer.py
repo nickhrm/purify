@@ -14,9 +14,9 @@ from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import LambdaSrategy
 
-
+#0.001, 0.003, 0.007, 0.01, 0.005
 def main(): 
-    coherence_times  = [0.001, 0.003, 0.007, 0.01, 0.005, 0.1]
+    coherence_times  = [ 0.1]
     lambdas = [(0.3, 0.0, 0.0),(0.0, 0.3, 0.0), (0.0, 0.0, 0.3),]
 
     for coherence_time in coherence_times:
@@ -42,7 +42,7 @@ def main():
                 pumping_probability=1,
                 waiting_time_sensitivity=1,
             )
-        print(f"Training with Randomly for coherence time: {coherence_time}")
+        print(f"Training Randomly for coherence time: {coherence_time}")
         run_name = f"{str(coherence_time).replace(".","_")}"
         train(constants, run_name)
 
