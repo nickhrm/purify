@@ -20,17 +20,19 @@ def main():
     lambdas = [(0.3, 0.0, 0.0),(0.0, 0.3, 0.0), (0.0, 0.0, 0.3),]
 
     for coherence_time in coherence_times:
-        # First train for fixed lambdas
-        for lam in lambdas:
-            constants = ConstantsTuple(
-                coherence_time=coherence_time,
-                lambda_strategy=LambdaSrategy.USE_CONSTANTS,
-                lambdas=lam,
-                pumping_probability=1,
-                waiting_time_sensitivity=1,
-            )
-            run_name = f"fixed_{lam}_{coherence_time}"
-            train(constants, run_name)
+        # # First train for fixed lambdas
+        # print(f"Training coherence_time: {coherence_time}")
+        # for lam in lambdas:
+        # print(f"Training with lambda: {lam}")
+        #     constants = ConstantsTuple(
+        #         coherence_time=coherence_time,
+        #         lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+        #         lambdas=lam,
+        #         pumping_probability=1,
+        #         waiting_time_sensitivity=1,
+        #     )
+        #     run_name = f"{str(coherence_time).replace(".","_")}"
+        #     train(constants, run_name)
 
         # Train with Random Lambdas
         constants = ConstantsTuple(
@@ -40,12 +42,13 @@ def main():
                 pumping_probability=1,
                 waiting_time_sensitivity=1,
             )
-        run_name = f"random_{coherence_time}"
+        print(f"Training with Randomly for coherence time: {coherence_time}")
+        run_name = f"{str(coherence_time).replace(".","_")}"
         train(constants, run_name)
 
 
 def train(constants: ConstantsTuple, run_name: str):
-    num_cpu = 5
+    num_cpu = 12
     log_dir = "./ppo_results/"
     os.makedirs(log_dir, exist_ok=True)
 
@@ -63,14 +66,18 @@ def train(constants: ConstantsTuple, run_name: str):
 
     # --- CALLBACK SETUP ---
     stop_train_callback = StopTrainingOnNoModelImprovement(
-        max_no_improvement_evals=5,
-        min_evals=10,
+        max_no_improvement_evals=4,
+        min_evals=6,
         verbose=1
     )
 
+    desired_freq = 200000
+    actual_eval_freq = desired_freq // num_cpu
+
+
     eval_callback = EvalCallback(
         eval_env,
-        eval_freq=300000,
+        eval_freq=actual_eval_freq,
         callback_after_eval=stop_train_callback,
         best_model_save_path=f"./best_models/{run_name}/",
         verbose=1,
