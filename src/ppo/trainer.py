@@ -16,7 +16,7 @@ from purify.my_enums import LambdaSrategy
 
 # 0.001, 0.003, 0.007, 0.01, 0.005
 def main():
-    coherence_times = [0.1]
+    coherence_times = [0.001, 0.003, 0.007, 0.01, 0.005,0.1]
     lambdas = [
         (0.3, 0.0, 0.0),
         (0.0, 0.3, 0.0),
@@ -57,7 +57,7 @@ def train(constants: ConstantsTuple, run_name: str):
     os.makedirs(log_dir, exist_ok=True)
 
     env = make_vec_env(
-        lambda: TrainingEnv(constants), n_envs=num_cpu, vec_env_cls=SubprocVecEnv
+        lambda: TrainingEnv(constants), n_envs=num_cpu, vec_env_cls=SubprocVecEnv,
     )
 
     eval_env = make_vec_env(
@@ -68,7 +68,7 @@ def train(constants: ConstantsTuple, run_name: str):
 
     # --- CALLBACK SETUP ---
     stop_train_callback = StopTrainingOnNoModelImprovement(
-        max_no_improvement_evals=4, min_evals=6, verbose=1
+        max_no_improvement_evals=15, min_evals=30, verbose=1
     )
 
     desired_freq = 200000
@@ -77,6 +77,7 @@ def train(constants: ConstantsTuple, run_name: str):
     eval_callback = EvalCallback(
         eval_env,
         eval_freq=actual_eval_freq,
+        n_eval_episodes=20,
         callback_after_eval=stop_train_callback,
         best_model_save_path=f"./best_models/{run_name}/",
         verbose=1,
