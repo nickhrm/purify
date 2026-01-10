@@ -19,8 +19,8 @@ class TrainingEnv(gym.Env):
 
         # [F_mem, request_is_waiting, time_since_last_request, L1_new, L2_new, L3_new]
         self.observation_space = Box(
-            low=0,
-            high=1,
+            low=np.array([0, 0, 0, 0, 0, 0]),
+            high=np.array([1, 1, 2, 1, 1, 1]),
             shape=(6,),
             dtype=np.float64,
         )
@@ -42,11 +42,11 @@ class TrainingEnv(gym.Env):
             l2 = self.last_generated_entanglement.get_current_lambda_2()
             l3 = self.last_generated_entanglement.get_current_lambda_3()
         else:
-            l1, l2, l3 =  0.0, 0.0, 0.0
+            l1, l2, l3 = 0.0, 0.0, 0.0
 
         return np.array(
             [f_mem, request_is_waiting, time_since_last_request, l1, l2, l3],
-            dtype=np.float32
+            dtype=np.float32,
         )
 
     def reset(self, seed=None, options=None):
@@ -72,7 +72,9 @@ class TrainingEnv(gym.Env):
 
         if self.current_event == Event.ENTANGLEMENT_GENERATION:
             if self.last_generated_entanglement is not None:
-                self.node.handle_existing_entanglement(self.last_generated_entanglement,AVAILABLE_ACTIONS[action])
+                self.node.handle_existing_entanglement(
+                    self.last_generated_entanglement, AVAILABLE_ACTIONS[action]
+                )
             self.last_generated_entanglement = None
 
         if not self.time.update():
