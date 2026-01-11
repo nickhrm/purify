@@ -16,7 +16,7 @@ from purify.my_enums import LambdaSrategy
 
 # 0.001, 0.003, 0.007, 0.01, 0.005
 def main():
-    coherence_times = [0.001, 0.003, 0.007, 0.01, 0.005,0.1]
+    coherence_times = [0.07]
     lambdas = [
         (0.3, 0.0, 0.0),
         (0.0, 0.3, 0.0),
