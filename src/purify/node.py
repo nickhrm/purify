@@ -26,8 +26,9 @@ class Node:
         self.queue: Qubit | None = None
         self.constants: ConstantsTuple = constants
 
-
-    def handle_existing_entanglement(self, entanglement: Entanglement, action: Action) -> None:
+    def handle_existing_entanglement(
+        self, entanglement: Entanglement, action: Action
+    ) -> None:
         """Verarbeitet ein bereits generiertes Paar basierend auf der Agenten-Action."""
         if entanglement is None:
             return
@@ -37,11 +38,10 @@ class Node:
             self.good_memory = entanglement
 
         elif action == Action.REPLACE:
-                self._replace(entanglement)
+            self._replace(entanglement)
 
         else:
             self._pump(entanglement, action)
-
 
     def _replace(self, entanglement) -> None:
         if (
@@ -58,12 +58,14 @@ class Node:
             ):
                 self.bad_memory = entanglement
 
-    def _pump(
-        self, new_entanglement:Entanglement, action: Action
-    ):
+    def _pump(self, new_entanglement: Entanglement, action: Action):
         good_memory = cast(Entanglement, self.good_memory)
-        success_probability = Purification.success_probability_from_action(good_memory, new_entanglement, action)
-        fidelity_after_pumping = Purification.jump_function_from_action(good_memory,new_entanglement, action)
+        success_probability = Purification.success_probability_from_action(
+            good_memory, new_entanglement, action
+        )
+        fidelity_after_pumping = Purification.jump_function_from_action(
+            good_memory, new_entanglement, action
+        )
 
         if bernouli_with_probability_is_successfull(success_probability):
             self.good_memory = Entanglement.from_fidelity(

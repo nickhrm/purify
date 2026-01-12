@@ -89,18 +89,13 @@ def run_parameter_sweep():
             )
             env = TrainingEnv(current_constants)
 
-            # Agenten Setup
-            # Wir benennen den PPO Agenten eindeutig, damit man in der CSV sieht, welches Modell es war
-            ppo_agent = PPOAgent(model_path, env)
-            # Optional: Name anpassen, damit in der CSV z.B. "PPO (0_1)" steht
-            ppo_agent.name = f"PPO"
-
             policies = [
-                ppo_agent,
-                FixedActionAgent(Action.REPLACE),
-                FixedActionAgent(Action.PROT_1),
-                FixedActionAgent(Action.PROT_2),
-                FixedActionAgent(Action.PROT_3),
+                # PPOAgent(model_path, env),
+                # FixedActionAgent(Action.REPLACE),
+                # FixedActionAgent(Action.PROT_1),
+                # FixedActionAgent(Action.PROT_2),
+                # FixedActionAgent(Action.PROT_3),
+                FixedActionAgent(Action.PMD)
             ]
 
             # Evaluation Loop
