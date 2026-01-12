@@ -85,7 +85,7 @@ def run_parameter_sweep():
                 lambda_strategy=LambdaSrategy.USE_CONSTANTS,
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
-                lambdas=(0.3, 0.0, 0.0),
+                lambdas=(0.0, 0.3, 0.0),
             )
             env = TrainingEnv(current_constants)
 
