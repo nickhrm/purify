@@ -41,8 +41,8 @@ def main():
         # Train with Random Lambdas
         constants = ConstantsTuple(
             coherence_time=coherence_time,
-            lambda_strategy=LambdaSrategy.RANDOM,
-            lambdas=(0, 0, 0),
+            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            lambdas=(0.3, 0.0, 0.0),
             pumping_probability=1,
             waiting_time_sensitivity=1,
         )
