@@ -8,10 +8,10 @@ class Event(Enum):
 
 class Action(Enum):
     REPLACE = 0
-    PROT_1 = 4
+    PROT_1 = 1
     PROT_2 = 2
     PROT_3 = 3
-    PMD = 1
+    PMD = 4
 
 
 class LambdaSrategy(Enum):

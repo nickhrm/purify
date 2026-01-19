@@ -22,6 +22,8 @@ QUBIT_ARRIVAL_SCALE = P_G/(QUBIT_ENTANGLEMENT_FACTOR * DELTA_T)
 
 AVAILABLE_ACTIONS = [
     Action.REPLACE,
-    Action.PMD
+    Action.PROT_1,  
+    Action.PROT_2,
+    Action.PROT_3,
 ]
 

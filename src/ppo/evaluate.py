@@ -46,13 +46,13 @@ def save_to_csv(times, results, filename="sweep_results.csv"):
 def run_parameter_sweep():
     # Dein Test-Szenario
     test_config = {
-        "0_1": [0.09, 0.1],
-        "0_07" : [0.05, 0.06, 0.07, 0.08],
-        "0_03" : [0.02, 0.03, 0.04, 0.05],
-        "0_01": [0.009, 0.01, 0.02],
-        "0_007": [0.005, 0.006, 0.007, 0.008],
-        "0_003": [0.002, 0.003, 0.004, 0.005],
-        "0_001": [0.001, 0.002],
+        "0_01": [0.01],
+        # "0_07" : [0.06, 0.07, 0.08],
+        # "0_03" : [0.02, 0.03, 0.04, 0.05],
+        # "0_01": [0.009, 0.01, 0.02],
+        # "0_007": [0.005, 0.006, 0.007, 0.008],
+        # "0_003": [0.002, 0.003, 0.004, 0.005],
+        # "0_001": [0.001, 0.002],
     }
 
     N_EPISODES = 600
@@ -82,20 +82,20 @@ def run_parameter_sweep():
             # Environment Setup
             current_constants = ConstantsTuple(
                 coherence_time=t_coh,
-                lambda_strategy=LambdaSrategy.USE_CONSTANTS,
-                waiting_time_sensitivity=1,
+                lambda_strategy=LambdaSrategy.RANDOM,
+                waiting_time_sensitivity=20,
                 pumping_probability=1.0,
-                lambdas=(0.0, 0.3, 0.0),
+                lambdas=(0.0, 0.0, 0.0),
             )
             env = TrainingEnv(current_constants)
 
             policies = [
-                # PPOAgent(model_path, env),
-                # FixedActionAgent(Action.REPLACE),
-                # FixedActionAgent(Action.PROT_1),
-                # FixedActionAgent(Action.PROT_2),
-                # FixedActionAgent(Action.PROT_3),
-                FixedActionAgent(Action.PMD)
+                PPOAgent(model_path, env),
+                FixedActionAgent(Action.REPLACE),
+                FixedActionAgent(Action.PROT_1),
+                FixedActionAgent(Action.PROT_2),
+                FixedActionAgent(Action.PROT_3),
+                # FixedActionAgent(Action.PMD)
             ]
 
             # Evaluation Loop
