@@ -14,9 +14,17 @@ from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import LambdaSrategy
 
 
-# 0.001, 0.003, 0.007, 0.01, 0.005
+# 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03,
+# 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1
 def main():
-    coherence_times = [0.1]
+    coherence_times = [0.001,  0.002, 0.003, 0.004, 0.005]
+    coherence_times = [0.006,  0.007, 0.008, 0.009, 0.010]
+    coherence_times = [0.020,  0.030, 0.040, 0.050, 0.060]
+    coherence_times = [0.070,  0.080, 0.090, 0.100,]
+
+
+
+
     lambdas = [
         (0.3, 0.0, 0.0),
         (0.0, 0.3, 0.0),
@@ -38,7 +46,6 @@ def main():
         #     run_name = f"{str(coherence_time).replace(".","_")}"
         #     train(constants, run_name)
 
-        # Train with Random Lambdas
         constants = ConstantsTuple(
             coherence_time=coherence_time,
             lambda_strategy=LambdaSrategy.USE_CONSTANTS,
@@ -52,7 +59,7 @@ def main():
 
 
 def train(constants: ConstantsTuple, run_name: str):
-    num_cpu = 12
+    num_cpu = 4
     log_dir = "./ppo_results/"
     os.makedirs(log_dir, exist_ok=True)
 
@@ -68,7 +75,7 @@ def train(constants: ConstantsTuple, run_name: str):
 
     # --- CALLBACK SETUP ---
     stop_train_callback = StopTrainingOnNoModelImprovement(
-        max_no_improvement_evals=15, min_evals=30, verbose=1
+        max_no_improvement_evals=12, min_evals=20, verbose=1
     )
 
     desired_freq = 200000
