@@ -1,3 +1,4 @@
+from purify.my_enums import LambdaSrategy
 from ray.rllib.algorithms import AlgorithmConfig, PPOConfig
 import os
 import numpy as np
@@ -135,3 +136,49 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
 
     # WICHTIG: Hier geben wir nun explizit den Status zurück
     return interrupted
+
+
+def main():
+    coherence_times = [0.001,  0.002, 0.003, 0.004, 0.005]
+    # coherence_times = [0.006,  0.007, 0.008, 0.009, 0.010]
+    # coherence_times = [0.020,  0.030, 0.040, 0.050, 0.060]
+    # coherence_times = [0.070,  0.080, 0.090, 0.100,]
+
+
+
+
+    lambdas = [
+        (0.3, 0.0, 0.0),
+        (0.0, 0.3, 0.0),
+        (0.0, 0.0, 0.3),
+    ]
+
+    for coherence_time in coherence_times:
+        # # First train for fixed lambdas
+        # print(f"Training coherence_time: {coherence_time}")
+        # for lam in lambdas:
+        # print(f"Training with lambda: {lam}")
+        #     constants = ConstantsTuple(
+        #         coherence_time=coherence_time,
+        #         lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+        #         lambdas=lam,
+        #         pumping_probability=1,
+        #         waiting_time_sensitivity=1,
+        #     )
+        #     run_name = f"{str(coherence_time).replace(".","_")}"
+        #     train(constants, run_name)
+
+        constants = ConstantsTuple(
+            coherence_time=coherence_time,
+            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            lambdas=(0.3, 0.0, 0.0),
+            pumping_probability=1,
+            waiting_time_sensitivity=1,
+        )
+        print(f"Training Randomly for coherence time: {coherence_time}")
+        run_name = f"{str(coherence_time).replace('.', '_')}"
+        train(constants, run_name)
+
+
+if __name__ == "__main__":
+    main()
