@@ -46,13 +46,28 @@ def save_to_csv(times, results, filename="sweep_results.csv"):
 def run_parameter_sweep():
     # Dein Test-Szenario
     test_config = {
-        "0_01": [0.01],
-        # "0_07" : [0.06, 0.07, 0.08],
-        # "0_03" : [0.02, 0.03, 0.04, 0.05],
-        # "0_01": [0.009, 0.01, 0.02],
-        # "0_007": [0.005, 0.006, 0.007, 0.008],
-        # "0_003": [0.002, 0.003, 0.004, 0.005],
-        # "0_001": [0.001, 0.002],
+        # "0_001" : [0.001],
+        # "0_002" : [0.002],
+        # "0_003" : [0.003],
+        # "0_004" : [0.004],
+        "0_005" : [0.005],
+        # "0_006" : [0.006],
+        # "0_007" : [0.007],
+        # "0_008" : [0.008],
+        # "0_009" : [0.009],
+        "0_01" : [0.010],
+        # "0_02" : [0.020],
+        # "0_03" : [0.030],
+        "0_04" : [0.040], # nochmal
+        # "0_05": [0.05],
+        # "0_06": [0.06],
+        # "0_07": [0.07],
+        "0_08": [0.08],
+        # "0_09": [0.09],
+        # "0_1": [0.1],
+
+
+
     }
 
     N_EPISODES = 600
@@ -70,7 +85,7 @@ def run_parameter_sweep():
         print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
 
         # Pfad dynamisch zusammenbauen
-        model_path = f"best_models/{model_folder}/best_model.zip"
+        model_path = f"best_models_real_gps/{model_folder}/best_model.zip"
 
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
@@ -82,19 +97,19 @@ def run_parameter_sweep():
             # Environment Setup
             current_constants = ConstantsTuple(
                 coherence_time=t_coh,
-                lambda_strategy=LambdaSrategy.RANDOM,
-                waiting_time_sensitivity=20,
+                lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+                waiting_time_sensitivity=1,
                 pumping_probability=1.0,
-                lambdas=(0.0, 0.0, 0.0),
+                lambdas=(0.3, 0.0, 0.0),
             )
             env = TrainingEnv(current_constants)
 
             policies = [
                 PPOAgent(model_path, env),
-                FixedActionAgent(Action.REPLACE),
-                FixedActionAgent(Action.PROT_1),
-                FixedActionAgent(Action.PROT_2),
-                FixedActionAgent(Action.PROT_3),
+                # FixedActionAgent(Action.REPLACE),
+                # FixedActionAgent(Action.PROT_1),
+                # FixedActionAgent(Action.PROT_2),
+                # FixedActionAgent(Action.PROT_3),
                 # FixedActionAgent(Action.PMD)
             ]
 
@@ -109,6 +124,7 @@ def run_parameter_sweep():
                     done = False
                     while not done:
                         action = policy.predict(obs)
+                        print(Action(action))
                         obs, reward, terminated, truncated, _ = env.step(action)
                         total_reward += reward
                         done = terminated or truncated
