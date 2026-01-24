@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from ray.rllib.algorithms import AlgorithmConfig, PPOConfig
+from ray.rllib.algorithms import AlgorithmConfig, PPOConfig, Algorithm
 
 from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple
@@ -58,11 +58,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
         .debugging(log_level="ERROR")
     )
 
-    try:
-        algo = config.build_algo()
-    except Exception as e:
-        print(f"Fehler beim Bauen des Algos: {e}")
-        return True
+    algo: Algorithm = config.build_algo()
 
     # Variablen für Evaluation
     best_mean_reward = -float("inf")
@@ -79,56 +75,59 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
 
     try:
         for i in range(iterations):
-            result = algo.train()
+            res = algo.train()
+            checkpoint_dir = algo.save_to_path()
 
-            # Metriken extrahieren (kompatibel mit alter und neuer API)
-            mean_reward = result.get("episode_reward_mean")
-            if mean_reward is None and "env_runners" in result:
-                mean_reward = result["env_runners"].get("episode_reward_mean")
+            print(res)
 
-            total_steps = result.get("num_env_steps_sampled", 0)
+            # # Metriken extrahieren (kompatibel mit alter und neuer API)
+            # mean_reward = result.get("episode_reward_mean")
+            # if mean_reward is None and "env_runners" in result:
+            #     mean_reward = result["env_runners"].get("episode_reward_mean")
 
-            # Logging
-            if i % 1 == 0:
-                reward_str = (
-                    f"{mean_reward:.3f}" if mean_reward is not None else "Wait..."
-                )
-                print(
-                    f"Iter: {i:4d} | Reward: {reward_str} | Total Steps: {total_steps}"
-                )
+            # total_steps = result.get("num_env_steps_sampled", 0)
 
-            # --- Evaluation Logik ---
-            if "evaluation" in result:
-                # Pfad zu den Metriken finden
-                eval_metrics = result["evaluation"]
-                if "env_runners" in eval_metrics:
-                    eval_metrics = eval_metrics["env_runners"]
+            # # Logging
+            # if i % 1 == 0:
+            #     reward_str = (
+            #         f"{mean_reward:.3f}" if mean_reward is not None else "Wait..."
+            #     )
+            #     print(
+            #         f"Iter: {i:4d} | Reward: {reward_str} | Total Steps: {total_steps}"
+            #     )
 
-                eval_mean_reward = eval_metrics.get("episode_reward_mean", None)
+            # # --- Evaluation Logik ---
+            # if "evaluation" in result:
+            #     # Pfad zu den Metriken finden
+            #     eval_metrics = result["evaluation"]
+            #     if "env_runners" in eval_metrics:
+            #         eval_metrics = eval_metrics["env_runners"]
 
-                if eval_mean_reward is not None and not np.isnan(eval_mean_reward):
-                    eval_counter += 1
-                    print(f"   --> EVAL RESULT: {eval_mean_reward:.3f}")
+            #     eval_mean_reward = eval_metrics.get("episode_reward_mean", None)
 
-                    if eval_mean_reward > best_mean_reward:
-                        best_mean_reward = eval_mean_reward
-                        no_improvement_evals = 0
-                        save_path = algo.save(checkpoint_dir)
-                        print(
-                            f"   --> Neues Bestes Modell: {os.path.basename(save_path)}"
-                        )
-                    else:
-                        no_improvement_evals += 1
-                        print(
-                            f"   --> Kein Fortschritt ({no_improvement_evals}/{max_no_improvement})"  # noqa: E501
-                        )
+            #     if eval_mean_reward is not None and not np.isnan(eval_mean_reward):
+            #         eval_counter += 1
+            #         print(f"   --> EVAL RESULT: {eval_mean_reward:.3f}")
 
-                    if (
-                        eval_counter >= min_evals_before_stop
-                        and no_improvement_evals >= max_no_improvement
-                    ):
-                        print(f"Early Stopping! Iteration {i}")
-                        break
+            #         if eval_mean_reward > best_mean_reward:
+            #             best_mean_reward = eval_mean_reward
+            #             no_improvement_evals = 0
+            #             save_path = algo.save(checkpoint_dir)
+            #             print(
+            #                 f"   --> Neues Bestes Modell: {os.path.basename(save_path)}"
+            #             )
+            #         else:
+            #             no_improvement_evals += 1
+            #             print(
+            #                 f"   --> Kein Fortschritt ({no_improvement_evals}/{max_no_improvement})"  # noqa: E501
+            #             )
+
+            #         if (
+            #             eval_counter >= min_evals_before_stop
+            #             and no_improvement_evals >= max_no_improvement
+            #         ):
+            #             print(f"Early Stopping! Iteration {i}")
+            #             break
 
     except KeyboardInterrupt:
         print("\nTraining manuell unterbrochen (in train() Loop)...")

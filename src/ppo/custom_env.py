@@ -1,4 +1,5 @@
 from typing import Optional
+
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
@@ -25,7 +26,7 @@ class TrainingEnv(gym.Env):
             low=np.array([0, 0, 0, 0, 0, 0]),
             high=np.array([1, 1, 2, 1, 1, 1]),
             shape=(6,),
-            dtype=np.float64,
+            dtype=np.float32,
         )
 
         self.action_space = spaces.Discrete(len(AVAILABLE_ACTIONS))
