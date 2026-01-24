@@ -1,3 +1,4 @@
+from pyparsing import Optional
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
@@ -11,10 +12,10 @@ from purify.node import Node
 
 
 class TrainingEnv(gym.Env):
-    def __init__(self, constants):
+    def __init__(self, config: Optional[dict] = None):
         super().__init__()
         self.time = Time()
-        self.constants: ConstantsTuple = constants
+        self.constants: ConstantsTuple = config["constants"]
 
         self.node = Node(self.time, self.constants)
 
