@@ -3,6 +3,7 @@ import numpy as np
 from gymnasium import spaces
 from gymnasium.spaces.box import Box
 
+from purify.constants_tuple import ConstantsTuple
 from purify.my_constants import AVAILABLE_ACTIONS
 from purify.my_enums import Event
 from purify.my_time import Time
@@ -13,7 +14,7 @@ class TrainingEnv(gym.Env):
     def __init__(self, constants):
         super().__init__()
         self.time = Time()
-        self.constants = constants
+        self.constants: ConstantsTuple = constants
 
         self.node = Node(self.time, self.constants)
 
