@@ -10,7 +10,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from ppo.custom_env import TrainingEnv
-from purify.constants_tuple import ConstantsTuple
+from purify.constants_tuple import ConstantsTuple, tupleAdapter
 from purify.my_enums import LambdaSrategy
 
 
@@ -64,11 +64,11 @@ def train(constants: ConstantsTuple, run_name: str):
     os.makedirs(log_dir, exist_ok=True)
 
     env = make_vec_env(
-        lambda: TrainingEnv(constants), n_envs=num_cpu, vec_env_cls=SubprocVecEnv,
+        lambda: TrainingEnv(tupleAdapter(constants)), n_envs=num_cpu, vec_env_cls=SubprocVecEnv,
     )
 
     eval_env = make_vec_env(
-        lambda: TrainingEnv(constants), n_envs=1, vec_env_cls=SubprocVecEnv
+        lambda: TrainingEnv(tupleAdapter(constants)), n_envs=1, vec_env_cls=SubprocVecEnv
     )
 
     model_path = f"results/agent_{run_name}.zip"
