@@ -6,7 +6,7 @@ from ray.rllib.core.rl_module.default_model_config import DefaultModelConfig
 from sympy.core.evalf import evalf_integer
 
 from ppo.custom_env import TrainingEnv
-from purify.constants_tuple import ConstantsTuple
+from purify.constants_tuple import ConstantsTuple, tupleAdapter
 from purify.my_enums import LambdaSrategy
 
 
@@ -28,7 +28,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
         PPOConfig()
         .environment(
             env=TrainingEnv,
-            env_config={"constants": constants},
+            env_config=tupleAdapter(constants),
             disable_env_checking=False,
         )
         .rl_module(
