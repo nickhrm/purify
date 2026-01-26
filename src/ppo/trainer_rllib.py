@@ -160,12 +160,12 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
                         # Save the best model
                         save_path = algo.save_to_path(best_model_dir)
                         print(
-                            f"   --> Neues Bestes Modell: {os.path.basename(save_path)}"
+                            f"   --> Neues Bestes Modell: {os.path.basename(save_path)} for t_c = {constants.coherence_time}"
                         )
                     else:
                         no_improvement_evals += 1
                         print(
-                            f"   --> Kein Fortschritt ({no_improvement_evals}/{max_no_improvement})"
+                            f"   --> Kein Fortschritt ({no_improvement_evals}/{max_no_improvement}) for t_c = {constants.coherence_time}"
                         )
 
                     # Early Stopping Condition
