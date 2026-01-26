@@ -10,6 +10,7 @@ from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple, tupleAdapter
 from purify.my_enums import LambdaSrategy
 
+my_temp = os.path.expanduser("~/ray_tmp")
 
 def train(constants: ConstantsTuple, run_name: str) -> bool:
     if not ray.is_initialized():
@@ -18,7 +19,8 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
                 "excludes": [
                     "**/.git/objects/pack/*.pack",
                 ]
-            }
+            },
+            temp_dir=my_temp    
         )
     log_dir = os.path.abspath("./ppo_results_rllib/")
     checkpoint_dir = os.path.join(log_dir, "checkpoints", run_name)
