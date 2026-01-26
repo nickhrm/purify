@@ -135,7 +135,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
             # ------------------------------------------------------------------
             # If evaluation_interval is set, RLlib runs evaluation automatically.
             # The results are stored under the "evaluation" key.
-            if i > 0 and i % eval_interval and "evaluation" in result:
+            if i > 0 and i % eval_interval == 0 and "evaluation" in result:
                 eval_results = result["evaluation"]
 
                 # Evaluation metrics also follow the 'env_runners' hierarchy
@@ -200,10 +200,10 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
     return interrupted
 
 def main():
-    coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005]
+    # coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005]
     # coherence_times = [0.006,  0.007, 0.008, 0.009, 0.010]
     # coherence_times = [0.020,  0.030, 0.040, 0.050, 0.060]
-    # coherence_times = [0.070,  0.080, 0.090, 0.100,]
+    coherence_times = [0.070,  0.080, 0.090, 0.100,]
 
     # lambdas = [
     #     (0.3, 0.0, 0.0),
