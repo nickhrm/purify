@@ -200,7 +200,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
     return interrupted
 
 def main():
-    coherence_times = [0.001, ] # 0.002, 0.003, 0.004, 0.005
+    coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005]
     # coherence_times = [0.006,  0.007, 0.008, 0.009, 0.010]
     # coherence_times = [0.020,  0.030, 0.040, 0.050, 0.060]
     # coherence_times = [0.070,  0.080, 0.090, 0.100,]
