@@ -1,4 +1,5 @@
 import os
+import ray
 
 import numpy as np
 from ray.rllib.algorithms import Algorithm, AlgorithmConfig, PPOConfig
@@ -11,6 +12,14 @@ from purify.my_enums import LambdaSrategy
 
 
 def train(constants: ConstantsTuple, run_name: str) -> bool:
+    if not ray.is_initialized():
+        ray.init(
+            runtime_env={
+                "excludes": [
+                    "**/.git/objects/pack/*.pack",
+                ]
+            }
+        )
     log_dir = os.path.abspath("./ppo_results_rllib/")
     checkpoint_dir = os.path.join(log_dir, "checkpoints", run_name)
     os.makedirs(checkpoint_dir, exist_ok=True)

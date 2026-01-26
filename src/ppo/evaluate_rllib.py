@@ -6,7 +6,14 @@ from purify.my_enums import LambdaSrategy
 def run_rllib_native_sweep():
     # Ray starten
     if not ray.is_initialized():
-        ray.init()
+        ray.init(
+            runtime_env={
+                "excludes": [
+                    # Exclude large .pack files in .git to avoid upload errors
+                    "**/.git/objects/pack/*.pack",
+                ]
+            }
+        )
 
     base_path = "/home/nick/Documents/purify/ppo_results_rllib/checkpoints/0_001/best_model"
     algo = Algorithm.from_checkpoint(base_path)
