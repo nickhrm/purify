@@ -7,13 +7,13 @@ from gymnasium.spaces.box import Box
 
 from purify.constants_tuple import ConstantsTuple
 from purify.my_constants import AVAILABLE_ACTIONS
-from purify.my_enums import Event
+from purify.my_enums import Event, Action
 from purify.my_time import Time
 from purify.node import Node
 
 
 class TrainingEnv(gym.Env):
-    def __init__(self, config: Optional[dict] = None):
+    def __init__(self, config: dict | None = None):
         super().__init__()
         config = config or {}
         self.time = Time()

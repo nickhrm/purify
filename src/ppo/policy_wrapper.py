@@ -3,6 +3,7 @@ from typing import Any
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
+from ray.rllib.algorithms import Algorithm
 from stable_baselines3 import PPO
 
 # Importiere deine Env-Klasse
@@ -14,13 +15,35 @@ class PolicyWrapper:
     def __init__(self, name): self.name = name
     def predict(self, obs) -> Any: raise NotImplementedError
 
-class PPOAgent(PolicyWrapper):
+class SB3Agent(PolicyWrapper):
     def __init__(self, path, env):
         super().__init__("PPO AI")
         self.model = PPO.load(path, env=env, device="cpu")
     def predict(self, obs):
         action, _ = self.model.predict(obs, deterministic=True)
         return action
+
+
+class RLlibAgent(PolicyWrapper):
+    def __init__(self, checkpoint_path, name="RLlib PPO"):
+        super().__init__(name)
+        print(f"Lade Ray Modell aus: {checkpoint_path}")
+        # Lädt den gesamten Algorithmus-Status aus dem Ordner
+        try:
+            self.model = Algorithm.from_checkpoint(checkpoint_path)
+        except Exception as e:
+            print(f"Kritischer Fehler beim Laden von Ray Checkpoint: {e}")
+            self.model = None
+
+    def predict(self, obs):
+        if self.model is None:
+            return 0 # Fallback Safe-Mode
+
+        # explore=False ist das Ray-Äquivalent zu deterministic=True
+        # Es nimmt die Aktion mit der höchsten Wahrscheinlichkeit (Argmax)
+        action = self.model.compute_single_action(obs, explore=False)
+        return action
+
 
 class FixedActionAgent(PolicyWrapper):
     def __init__(self, action: Action):

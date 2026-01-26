@@ -9,8 +9,8 @@ from ray.rllib.utils.actor_manager import CallResult
 
 # Deine Imports
 from ppo.custom_env import TrainingEnv
-from ppo.policy_wrapper import FixedActionAgent, PPOAgent
-from purify.constants_tuple import ConstantsTuple
+from ppo.policy_wrapper import FixedActionAgent, SB3Agent, RLlibAgent
+from purify.constants_tuple import ConstantsTuple, tupleAdapter
 from purify.my_enums import Action, LambdaSrategy
 
 
@@ -86,7 +86,7 @@ def run_parameter_sweep():
 
         # Pfad dynamisch zusammenbauen
         model_path = f"best_models_real_gps/{model_folder}/best_model.zip"
-
+        rllib_path = f"ppo_results_rllib/checkpoints/{model_folder}/best_model"
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
 
@@ -102,10 +102,11 @@ def run_parameter_sweep():
                 pumping_probability=1.0,
                 lambdas=(0.3, 0.0, 0.0),
             )
-            env = TrainingEnv(current_constants)
+            env = TrainingEnv(tupleAdapter(current_constants))
 
             policies = [
-                PPOAgent(model_path, env),
+                # SB3Agent(model_path, env),
+                RLlibAgent(rllib_path)
                 # FixedActionAgent(Action.REPLACE),
                 # FixedActionAgent(Action.PROT_1),
                 # FixedActionAgent(Action.PROT_2),

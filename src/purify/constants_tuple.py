@@ -10,3 +10,6 @@ class ConstantsTuple(NamedTuple):
     lambda_strategy: LambdaSrategy
     lambdas: tuple[float, float, float]
 
+
+def tupleAdapter(tuple: ConstantsTuple):
+    return {"constants" : tuple}
