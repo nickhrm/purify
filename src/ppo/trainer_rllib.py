@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from ray.rllib.algorithms import AlgorithmConfig, PPOConfig, Algorithm
+from ray.rllib.algorithms import Algorithm, AlgorithmConfig, PPOConfig
 
 from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple
@@ -75,81 +75,123 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
 
     try:
         for i in range(iterations):
-            res = algo.train()
-            checkpoint_dir = algo.save_to_path()
+            # ------------------------------------------------------------------
+            # 1. TRAINING STEP
+            # ------------------------------------------------------------------
+            # algo.train() executes one training iteration.
+            # In the new stack, this orchestrates the EnvRunners to sample
+            # and the Learners to update weights.
+            result = algo.train()
 
-            print(res)
+            # ------------------------------------------------------------------
+            # 2. CHECKPOINTING (New API: save_to_path)
+            # ------------------------------------------------------------------
+            # We use save_to_path() which is the explicit, robust method for 
+            # persisting Algorithm state in RLlib 2.x+.
+            # It returns the string path to the checkpoint directory.
+            current_checkpoint_path = algo.save_to_path(checkpoint_dir)
 
-            # # Metriken extrahieren (kompatibel mit alter und neuer API)
-            # mean_reward = result.get("episode_reward_mean")
-            # if mean_reward is None and "env_runners" in result:
-            #     mean_reward = result["env_runners"].get("episode_reward_mean")
+            # ------------------------------------------------------------------
+            # 3. METRIC EXTRACTION (Hierarchical Access)
+            # ------------------------------------------------------------------
+            # The result dictionary is now hierarchical.
+            # "env_runners" -> Metrics from the environment sampling actors.
+            # "learners"    -> Metrics from the gradient optimization actors.
 
-            # total_steps = result.get("num_env_steps_sampled", 0)
+            # Retrieve the 'env_runners' sub-dictionary.
+            # Default to empty dict to prevent AttributeError on failure.
+            env_runner_results = result.get("env_runners", {})
 
-            # # Logging
-            # if i % 1 == 0:
-            #     reward_str = (
-            #         f"{mean_reward:.3f}" if mean_reward is not None else "Wait..."
-            #     )
-            #     print(
-            #         f"Iter: {i:4d} | Reward: {reward_str} | Total Steps: {total_steps}"
-            #     )
+            # Extract 'episode_return_mean'.
+            # 'episode_reward_mean' is deprecated. 'return' is the correct RL term.
+            mean_ret = env_runner_results.get("episode_return_mean", None)
 
-            # # --- Evaluation Logik ---
-            # if "evaluation" in result:
-            #     # Pfad zu den Metriken finden
-            #     eval_metrics = result["evaluation"]
-            #     if "env_runners" in eval_metrics:
-            #         eval_metrics = eval_metrics["env_runners"]
+            # Extract total steps.
+            # 'num_env_steps_sampled_lifetime' tracks total steps across all restarts.
+            total_steps = result.get("num_env_steps_sampled_lifetime", 0)
 
-            #     eval_mean_reward = eval_metrics.get("episode_reward_mean", None)
+            # ------------------------------------------------------------------
+            # 4. LOGGING
+            # ------------------------------------------------------------------
+            if i % 1 == 0:
+                # Handle potential None or NaN values during startup
+                reward_str = (
+                    f"{mean_ret:.3f}"
+                    if mean_ret is not None and not np.isnan(mean_ret)
+                    else "Wait..."
+                )
+                print(
+                    f"Iter: {i:4d} | Return: {reward_str} | Total Steps: {total_steps}"
+                )
 
-            #     if eval_mean_reward is not None and not np.isnan(eval_mean_reward):
-            #         eval_counter += 1
-            #         print(f"   --> EVAL RESULT: {eval_mean_reward:.3f}")
+            # ------------------------------------------------------------------
+            # 5. EVALUATION LOGIC
+            # ------------------------------------------------------------------
+            # If evaluation_interval is set, RLlib runs evaluation automatically.
+            # The results are stored under the "evaluation" key.
+            if "evaluation" in result:
+                eval_results = result["evaluation"]
 
-            #         if eval_mean_reward > best_mean_reward:
-            #             best_mean_reward = eval_mean_reward
-            #             no_improvement_evals = 0
-            #             save_path = algo.save(checkpoint_dir)
-            #             print(
-            #                 f"   --> Neues Bestes Modell: {os.path.basename(save_path)}"
-            #             )
-            #         else:
-            #             no_improvement_evals += 1
-            #             print(
-            #                 f"   --> Kein Fortschritt ({no_improvement_evals}/{max_no_improvement})"  # noqa: E501
-            #             )
+                # Evaluation metrics also follow the 'env_runners' hierarchy
+                eval_env_runner_results = eval_results.get("env_runners", {})
+                eval_mean_ret = eval_env_runner_results.get("episode_return_mean", None)
 
-            #         if (
-            #             eval_counter >= min_evals_before_stop
-            #             and no_improvement_evals >= max_no_improvement
-            #         ):
-            #             print(f"Early Stopping! Iteration {i}")
-            #             break
+                # Validate evaluation result
+                if eval_mean_ret is not None and not np.isnan(eval_mean_ret):
+                    eval_counter += 1
+                    print(f"   --> EVAL RESULT: {eval_mean_ret:.3f}")
+
+                    # ----------------------------------------------------------
+                    # IMPROVEMENT CHECK & EARLY STOPPING
+                    # ----------------------------------------------------------
+                    if eval_mean_ret > best_mean_reward:
+                        best_mean_reward = eval_mean_ret
+                        no_improvement_evals = 0
+                        # Save Best Model Explicitly
+                        # We create a sub-folder to distinguish 'best' from periodic
+                        best_model_dir = os.path.join(checkpoint_dir, "best_model")
+                        os.makedirs(best_model_dir, exist_ok=True)
+                        # Save the best model
+                        save_path = algo.save_to_path(best_model_dir)
+                        print(
+                            f"   --> Neues Bestes Modell: {os.path.basename(save_path)}"
+                        )
+                    else:
+                        no_improvement_evals += 1
+                        print(
+                            f"   --> Kein Fortschritt ({no_improvement_evals}/{max_no_improvement})"
+                        )
+
+                    # Early Stopping Condition
+                    if (
+                        eval_counter >= min_evals_before_stop
+                        and no_improvement_evals >= max_no_improvement
+                    ):
+                        print(f"Early Stopping! Iteration {i}")
+                        break
 
     except KeyboardInterrupt:
         print("\nTraining manuell unterbrochen (in train() Loop)...")
-        interrupted = True  # Setze Flag auf True bei Abbruch
+        interrupted = True  # Set flag on manual interrupt
 
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         print(f"Kritischer Fehler im Training: {e}")
-        interrupted = True  # Auch bei Fehler als "unterbrochen" markieren
+        interrupted = True  # Set flag on error
 
     finally:
-        # Aufräumen und Speichern
+        # ------------------------------------------------------------------
+        # 6. CLEANUP & FINAL SAVE
+        # ------------------------------------------------------------------
         if algo:
-            final_path = algo.save(checkpoint_dir)
+            # Ensure the final state is saved before teardown
+            final_path = algo.save_to_path(checkpoint_dir)
             print(f"Training beendet. Letzter Checkpoint: {final_path}")
             algo.stop()
 
-    # WICHTIG: Hier geben wir nun explizit den Status zurück
+    # Explicit return of the interrupted status
     return interrupted
-
 
 def main():
     coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005]
