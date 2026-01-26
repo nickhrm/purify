@@ -2,6 +2,8 @@ import os
 
 import numpy as np
 from ray.rllib.algorithms import Algorithm, AlgorithmConfig, PPOConfig
+from ray.rllib.core.rl_module.default_model_config import DefaultModelConfig
+from sympy.core.evalf import evalf_integer
 
 from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple
@@ -17,7 +19,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
     minibatch_size = 128
     num_env_runners = 6 # in old api stack: num_workers
     train_batch_size_per_learner = train_batch_size // num_env_runners
-
+    eval_interval = 30
 
     total_timesteps = 50_000_000
     iterations = total_timesteps // train_batch_size
@@ -29,6 +31,11 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
             env_config={"constants": constants},
             disable_env_checking=False,
         )
+        .rl_module(
+        model_config=DefaultModelConfig(
+            fcnet_hiddens=[64, 64],
+            fcnet_activation="tanh",
+        ))
         .framework("torch")
         .env_runners(
             num_env_runners=num_env_runners,
@@ -43,13 +50,9 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
             train_batch_size_per_learner=train_batch_size_per_learner,
             minibatch_size=minibatch_size,
             num_epochs=10,
-            # model={
-            #     "fcnet_hiddens": [64, 64],
-            #     "fcnet_activation": "tanh",
-            # },
         )
         .evaluation(
-            evaluation_interval=25,
+            evaluation_interval=eval_interval,
             evaluation_duration=10,
             evaluation_duration_unit="episodes",
             evaluation_config={"explore": False},
@@ -63,13 +66,14 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
     # Variablen für Evaluation
     best_mean_reward = -float("inf")
     no_improvement_evals = 0
-    max_no_improvement = 12
-    min_evals_before_stop = 20
+    max_no_improvement = 50
+    min_evals_before_stop = 50
     eval_counter = 0
 
     print(
         f"Algorithm initialisiert. Starte Training mit BatchSize {train_batch_size}..."
     )
+
 
     interrupted = False
 
@@ -86,10 +90,12 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
             # ------------------------------------------------------------------
             # 2. CHECKPOINTING (New API: save_to_path)
             # ------------------------------------------------------------------
-            # We use save_to_path() which is the explicit, robust method for 
+            # We use save_to_path() which is the explicit, robust method for
             # persisting Algorithm state in RLlib 2.x+.
             # It returns the string path to the checkpoint directory.
-            current_checkpoint_path = algo.save_to_path(checkpoint_dir)
+            if i % 200 == 0:
+                current_checkpoint_path = algo.save_to_path(checkpoint_dir)
+                print(f"Checkpoint gespeichert: {current_checkpoint_path}")
 
             # ------------------------------------------------------------------
             # 3. METRIC EXTRACTION (Hierarchical Access)
@@ -129,7 +135,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
             # ------------------------------------------------------------------
             # If evaluation_interval is set, RLlib runs evaluation automatically.
             # The results are stored under the "evaluation" key.
-            if "evaluation" in result:
+            if i > 0 and i % eval_interval and "evaluation" in result:
                 eval_results = result["evaluation"]
 
                 # Evaluation metrics also follow the 'env_runners' hierarchy
@@ -194,7 +200,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
     return interrupted
 
 def main():
-    coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005]
+    coherence_times = [0.001, ] # 0.002, 0.003, 0.004, 0.005
     # coherence_times = [0.006,  0.007, 0.008, 0.009, 0.010]
     # coherence_times = [0.020,  0.030, 0.040, 0.050, 0.060]
     # coherence_times = [0.070,  0.080, 0.090, 0.100,]
