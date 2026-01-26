@@ -33,7 +33,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
         )
         .rl_module(
         model_config=DefaultModelConfig(
-            fcnet_hiddens=[64, 64],
+            fcnet_hiddens=[64, 64],)
             fcnet_activation="tanh",
         ))
         .framework("torch")
