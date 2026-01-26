@@ -43,7 +43,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
         .rl_module(
         model_config=DefaultModelConfig(
             fcnet_hiddens=[64, 64],
-            fcnet_activation="tanh",
+            fcnet_activation="relu",
         ))
         .framework("torch")
         .env_runners(
@@ -55,10 +55,10 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
             lr=0.0001,
             gamma=1.0,
             lambda_=0.95,
-            entropy_coeff=0.01,
+            entropy_coeff=0.05,
             train_batch_size_per_learner=train_batch_size_per_learner,
             minibatch_size=minibatch_size,
-            num_epochs=20,
+            num_epochs=10,
         )
         .evaluation(
             evaluation_interval=eval_interval,

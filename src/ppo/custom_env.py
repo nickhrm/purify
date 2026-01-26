@@ -19,6 +19,9 @@ class TrainingEnv(gym.Env):
         self.time = Time()
         self.constants: ConstantsTuple = config["constants"]
 
+        print("constants")
+        print(self.constants)
+
         self.node = Node(self.time, self.constants)
 
         # [F_mem, request_is_waiting, time_since_last_request, L1_new, L2_new, L3_new]

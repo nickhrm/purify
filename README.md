@@ -1,3 +1,0 @@
-# Purify
-
-Project description.
