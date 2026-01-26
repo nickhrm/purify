@@ -15,7 +15,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
     checkpoint_dir = os.path.join(log_dir, "checkpoints", run_name)
     os.makedirs(checkpoint_dir, exist_ok=True)
 
-    train_batch_size = 5000
+    train_batch_size = 8000
     minibatch_size = 128
     num_env_runners = 6 # in old api stack: num_workers
     train_batch_size_per_learner = train_batch_size // num_env_runners
@@ -49,7 +49,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
             entropy_coeff=0.01,
             train_batch_size_per_learner=train_batch_size_per_learner,
             minibatch_size=minibatch_size,
-            num_epochs=10,
+            num_epochs=20,
         )
         .evaluation(
             evaluation_interval=eval_interval,
