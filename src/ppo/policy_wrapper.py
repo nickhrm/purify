@@ -29,24 +29,40 @@ class RLlibAgent(PolicyWrapper):
     def __init__(self, checkpoint_path, name="RLlib PPO"):
         super().__init__(name)
         print(f"Lade Ray Modell aus: {checkpoint_path}")
-        # Lädt den gesamten Algorithmus-Status aus dem Ordner
         try:
             path = os.path.join(os.getcwd(), checkpoint_path)
             self.model = Algorithm.from_checkpoint(path)
+            # Pre-fetch module to ensure compatibility
+            self.module = self.model.get_module()
             print("loaded Rllib Model")
         except Exception as e:
             print(f"Kritischer Fehler beim Laden von Ray Checkpoint: {e}")
             self.model = None
+            self.module = None
 
     def predict(self, obs):
-        if self.model is None:
+        if self.module is None:
             print("model is none")
             raise ValueError('Model is None')
-            return 0 # Fallback Safe-Mode
 
-        # explore=False ist das Ray-Äquivalent zu deterministic=True
-        # Es nimmt die Aktion mit der höchsten Wahrscheinlichkeit (Argmax)
-        action = self.model.compute_single_action(obs, explore=False)
+        # New API Stack Inference (RLModule)
+        import torch
+        
+        # Ensure obs is a numpy array and float32
+        obs_tensor = torch.from_numpy(np.array(obs, dtype=np.float32)).unsqueeze(0)
+        
+        with torch.no_grad():
+            # Run inference
+            # RLModule expects a dict with "obs" key by default for PPO
+            input_dict = {"obs": obs_tensor}
+            output = self.module.forward_inference(input_dict)
+            
+            # Extract action
+            # output["action_dist_inputs"] contains logits
+            logits = output["action_dist_inputs"]
+            # Deterministic: Argmax
+            action = torch.argmax(logits, dim=1).item()
+            
         print(action)
         return action
 
