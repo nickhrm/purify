@@ -50,7 +50,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
         "env_config": tupleAdapter(constants),
         "framework": "torch",
         "num_workers": num_env_runners,
-        "num_envs_per_worker": 1,
+        "num_envs_per_env_runner": 1,
         "train_batch_size": train_batch_size,
         "sgd_minibatch_size": minibatch_size,
         "num_sgd_iter": 10,
