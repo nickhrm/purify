@@ -2,7 +2,8 @@ import os
 import ray
 
 import numpy as np
-from ray.rllib.algorithms import Algorithm, AlgorithmConfig, PPOConfig
+from ray.rllib.algorithms import Algorithm, AlgorithmConfig
+from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.core.rl_module.default_model_config import DefaultModelConfig
 from sympy.core.evalf import evalf_integer
 
@@ -46,6 +47,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
         model_config=DefaultModelConfig(
             fcnet_hiddens=[64, 64],
             fcnet_activation="tanh",
+            vf_share_layers=False,  
         ))
         .framework("torch")
         .env_runners(
