@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 import gymnasium as gym
@@ -30,18 +31,23 @@ class RLlibAgent(PolicyWrapper):
         print(f"Lade Ray Modell aus: {checkpoint_path}")
         # Lädt den gesamten Algorithmus-Status aus dem Ordner
         try:
-            self.model = Algorithm.from_checkpoint(checkpoint_path)
+            path = os.path.join(os.getcwd(), checkpoint_path)
+            self.model = Algorithm.from_checkpoint(path)
+            print("loaded Rllib Model")
         except Exception as e:
             print(f"Kritischer Fehler beim Laden von Ray Checkpoint: {e}")
             self.model = None
 
     def predict(self, obs):
         if self.model is None:
+            print("model is none")
+            raise ValueError('Model is None')
             return 0 # Fallback Safe-Mode
 
         # explore=False ist das Ray-Äquivalent zu deterministic=True
         # Es nimmt die Aktion mit der höchsten Wahrscheinlichkeit (Argmax)
         action = self.model.compute_single_action(obs, explore=False)
+        print(action)
         return action
 
 
