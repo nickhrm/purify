@@ -125,7 +125,6 @@ def run_parameter_sweep():
                     done = False
                     while not done:
                         action = policy.predict(obs)
-                        print(Action(action))
                         obs, reward, terminated, truncated, _ = env.step(action)
                         total_reward += reward
                         done = terminated or truncated

@@ -26,11 +26,11 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
     checkpoint_dir = os.path.join(log_dir, "checkpoints", run_name)
     os.makedirs(checkpoint_dir, exist_ok=True)
 
-    train_batch_size = 8000
+    train_batch_size = 8192 # Matches SB3 n_steps=2048 * n_envs=4
     minibatch_size = 128
-    num_env_runners = 6 # in old api stack: num_workers
+    num_env_runners = 4 # n_envs
     train_batch_size_per_learner = train_batch_size // num_env_runners
-    eval_interval = 30
+    eval_interval = 25 # ~200k steps (25 * 8192 = 204800)
 
     total_timesteps = 50_000_000
     iterations = total_timesteps // train_batch_size
@@ -45,7 +45,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
         .rl_module(
         model_config=DefaultModelConfig(
             fcnet_hiddens=[64, 64],
-            fcnet_activation="relu",
+            fcnet_activation="tanh",
         ))
         .framework("torch")
         .env_runners(
@@ -57,7 +57,12 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
             lr=0.0001,
             gamma=1.0,
             lambda_=0.95,
-            entropy_coeff=0.05,
+            entropy_coeff=0.01,
+            clip_param=0.2,
+            vf_loss_coeff=0.5,
+            grad_clip=0.5,
+            kl_coeff=0.0, # SB3 doesn't use KL penalty by default
+            vf_clip_param=100.0, # SB3 doesn't clip value function by default
             train_batch_size_per_learner=train_batch_size_per_learner,
             minibatch_size=minibatch_size,
             num_epochs=10,
