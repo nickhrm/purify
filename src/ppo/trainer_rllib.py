@@ -21,7 +21,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
                     "**/.git/objects/pack/*.pack",
                 ]
             },
-            temp_dir=my_temp    
+            _temp_dir=my_temp    
         )
     log_dir = os.path.abspath("./ppo_results_rllib/")
     checkpoint_dir = os.path.join(log_dir, "checkpoints", run_name)
