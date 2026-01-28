@@ -1,7 +1,7 @@
 import os
-import ray
 
 import numpy as np
+import ray
 from ray.rllib.algorithms import Algorithm, AlgorithmConfig
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.core.rl_module.default_model_config import DefaultModelConfig
@@ -21,7 +21,7 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
                     "**/.git/objects/pack/*.pack",
                 ]
             },
-            _temp_dir=my_temp    
+            _temp_dir=my_temp
         )
     log_dir = os.path.abspath("./ppo_results_rllib/")
     checkpoint_dir = os.path.join(log_dir, "checkpoints", run_name)
@@ -63,8 +63,6 @@ def train(constants: ConstantsTuple, run_name: str) -> bool:
             clip_param=0.2,
             vf_loss_coeff=0.5,
             grad_clip=0.5,
-            kl_coeff=0.0, # SB3 doesn't use KL penalty by default
-            vf_clip_param=100.0, # SB3 doesn't clip value function by default
             train_batch_size_per_learner=train_batch_size_per_learner,
             minibatch_size=minibatch_size,
             num_epochs=10,

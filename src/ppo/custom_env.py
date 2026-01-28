@@ -4,7 +4,6 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 from gymnasium.spaces.box import Box
-
 from purify.constants_tuple import ConstantsTuple
 from purify.my_constants import AVAILABLE_ACTIONS
 from purify.my_enums import Event, Action
