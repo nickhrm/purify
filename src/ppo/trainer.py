@@ -1,5 +1,11 @@
 import os
 
+# --- SCHRITT 1: Threading begrenzen (Muss GANZ oben stehen) ---
+# Verhindert, dass Numpy/Torch pro Prozess alle 20 Cores blockieren.
+os.environ["OMP_NUM_THREADS"] = "1" 
+os.environ["MKL_NUM_THREADS"] = "1" 
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
 import torch
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import (
@@ -14,38 +20,15 @@ from purify.constants_tuple import ConstantsTuple, tupleAdapter
 from purify.my_enums import LambdaSrategy
 
 
-# 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03,
-# 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1
 def main():
-    coherence_times = [0.001,  0.002, 0.003, 0.004, 0.005]
-    # coherence_times = [0.006,  0.007, 0.008, 0.009, 0.010]
-    # coherence_times = [0.020,  0.030, 0.040, 0.050, 0.060]
-    # coherence_times = [0.070,  0.080, 0.090, 0.100,]
-
-
-
-
-    lambdas = [
-        (0.3, 0.0, 0.0),
-        (0.0, 0.3, 0.0),
-        (0.0, 0.0, 0.3),
-    ]
-
+    # Liste deiner Coherence Times
+    coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005]
+    
+    # --- SCHRITT 2: Nutze fast alle Cores für EIN Modell ---
+    # Bei 20 Cores Server: 18 Worker, 1 Main Process, 1 OS Reserve
+    NUM_CORES_PER_RUN = 18
+    
     for coherence_time in coherence_times:
-        # # First train for fixed lambdas
-        # print(f"Training coherence_time: {coherence_time}")
-        # for lam in lambdas:
-        # print(f"Training with lambda: {lam}")
-        #     constants = ConstantsTuple(
-        #         coherence_time=coherence_time,
-        #         lambda_strategy=LambdaSrategy.USE_CONSTANTS,
-        #         lambdas=lam,
-        #         pumping_probability=1,
-        #         waiting_time_sensitivity=1,
-        #     )
-        #     run_name = f"{str(coherence_time).replace(".","_")}"
-        #     train(constants, run_name)
-
         constants = ConstantsTuple(
             coherence_time=coherence_time,
             lambda_strategy=LambdaSrategy.USE_CONSTANTS,
@@ -53,33 +36,42 @@ def main():
             pumping_probability=1,
             waiting_time_sensitivity=1,
         )
-        print(f"Training Randomly for coherence time: {coherence_time}")
+        print(f"Training für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
         run_name = f"{str(coherence_time).replace('.', '_')}"
-        train(constants, run_name)
+        
+        # Train funktion aufrufen
+        train(constants, run_name, num_cpu=NUM_CORES_PER_RUN)
 
 
-def train(constants: ConstantsTuple, run_name: str):
-    num_cpu = 4
+def train(constants: ConstantsTuple, run_name: str, num_cpu: int):
     log_dir = "./ppo_results/"
     os.makedirs(log_dir, exist_ok=True)
 
+    # Erstelle die vektorisierte Umgebung
+    # SubprocVecEnv ist korrekt für rechenintensive Simulationen
     env = make_vec_env(
-        lambda: TrainingEnv(tupleAdapter(constants)), n_envs=num_cpu, vec_env_cls=SubprocVecEnv,
+        lambda: TrainingEnv(tupleAdapter(constants)), 
+        n_envs=num_cpu,
+        vec_env_cls=SubprocVecEnv,
     )
 
+    # Eval Env braucht nur 1 Core (oder du nutzt auch hier Subproc für Isolation)
     eval_env = make_vec_env(
-        lambda: TrainingEnv(tupleAdapter(constants)), n_envs=1, vec_env_cls=SubprocVecEnv
+        lambda: TrainingEnv(tupleAdapter(constants)), 
+        n_envs=1,
+        vec_env_cls=SubprocVecEnv
     )
 
     model_path = f"results/agent_{run_name}.zip"
 
-    # --- CALLBACK SETUP ---
     stop_train_callback = StopTrainingOnNoModelImprovement(
         max_no_improvement_evals=12, min_evals=20, verbose=1
     )
 
-    desired_freq = 200000
-    actual_eval_freq = desired_freq // num_cpu
+    # Eval Frequenz anpassen: Wir sammeln jetzt viel schneller Schritte!
+    # Wir wollen immer noch alle X 'echten' Schritte evaluieren.
+    desired_total_steps_per_eval = 200000
+    actual_eval_freq = max(1, desired_total_steps_per_eval // num_cpu)
 
     eval_callback = EvalCallback(
         eval_env,
@@ -96,6 +88,11 @@ def train(constants: ConstantsTuple, run_name: str):
         activation_fn=torch.nn.Tanh,
     )
 
+    # --- SCHRITT 3: n_steps anpassen ---
+    # Ziel: Buffergröße (n_envs * n_steps) sollte ähnlich bleiben (~8192).
+    # Bei 18 CPUs ist 512 eine gute Wahl (18 * 512 = 9216 Steps pro Update).
+    n_steps_per_env = 512
+
     if os.path.exists(model_path):
         print(f"Lade existierendes Modell: {model_path}")
         model = PPO.load(model_path, env=env, device="cpu")
@@ -105,8 +102,8 @@ def train(constants: ConstantsTuple, run_name: str):
             "MlpPolicy",
             env,
             policy_kwargs=policy_kwargs,
-            n_steps=2048,
-            batch_size=128,
+            n_steps=n_steps_per_env,  # Verringert, da n_envs erhöht wurde
+            batch_size=128,           # Kann evtl. auf 256 erhöht werden bei größerem Puffer
             n_epochs=10,
             learning_rate=0.0001,
             gamma=1,
@@ -117,8 +114,7 @@ def train(constants: ConstantsTuple, run_name: str):
             tensorboard_log=log_dir,
         )
 
-    print("Starte Training mit Early Stopping...")
-
+    print("Starte Training...")
     try:
         model.learn(
             total_timesteps=50_000_000,
@@ -127,10 +123,13 @@ def train(constants: ConstantsTuple, run_name: str):
         )
     except KeyboardInterrupt:
         print("Training manuell unterbrochen...")
+    finally:
+        # Wichtig: Envs schließen, um Prozesse zu killen
+        env.close()
+        eval_env.close()
 
     model.save(model_path)
     print("Training beendet und Modell gespeichert.")
-
 
 if __name__ == "__main__":
     main()
