@@ -40,7 +40,7 @@ def main():
         )
         print(f"Training für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
         run_name = f"{str(coherence_time).replace('.', '_')}"
-        
+
         # Train funktion aufrufen
         train(constants, run_name, num_cpu=NUM_CORES_PER_RUN)
 

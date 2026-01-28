@@ -2,6 +2,7 @@ import csv
 import os
 import resource
 import time
+from collections import Counter
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,16 +44,21 @@ def save_average_f(times, results, filename="sweep_results.csv"):
     print(f"Daten an {filename} angehängt.")
 
 
-def save_actions(action, coherence_time, model, filename = "action_prob.csv"):
+def save_action_distribution(action_counts, coherence_time, model, filename="action_prob.csv"):
     file_exists = os.path.isfile(filename)
 
+    total_actions = sum(action_counts.values())
+    
     with open(filename, mode="a", newline="") as file:
         writer = csv.writer(file)
 
-        # Header nur schreiben, wenn Datei neu ist
+        # Header only if file is new
         if not file_exists:
-            writer.writerow(["action", "coherence_time", "model"])
-        writer.writerow([action, coherence_time, model])
+            writer.writerow(["model", "coherence_time", "action", "count", "percentage"])
+        
+        for action_name, count in action_counts.items():
+            percentage = (count / total_actions) * 100 if total_actions > 0 else 0
+            writer.writerow([model, coherence_time, action_name, count, percentage])
 
 
 
@@ -125,21 +131,29 @@ def run_parameter_sweep():
                 # FixedActionAgent(Action.PMD)
             ]
 
+
             # Evaluation Loop
             for policy in policies:
                 if policy.name not in batch_results:
                     batch_results[policy.name] = []
 
                 total_reward = 0.0
+                action_counts = Counter()
+                
                 for _ in range(N_EPISODES):
                     obs, _ = env.reset()
                     done = False
                     while not done:
                         action = policy.predict(obs)
-                        save_actions(Action(action).name, current_constants.coherence_time, policy.name)
+                        action_name = Action(action).name
+                        action_counts[action_name] += 1
+                        # save_actions(Action(action).name, current_constants.coherence_time, policy.name)
                         obs, reward, terminated, truncated, _ = env.step(action)
                         total_reward += reward
                         done = terminated or truncated
+                
+                # Save aggregated action stats for this policy & coherence_time
+                save_action_distribution(action_counts, current_constants.coherence_time, policy.name)
 
                 avg_reward = total_reward / N_EPISODES
                 batch_results[policy.name].append(avg_reward)

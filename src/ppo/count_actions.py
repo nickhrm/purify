@@ -4,31 +4,24 @@ import io
 df = pd.read_csv("action_prob.csv")
 
 # ---------------------------------------------------------
-# VARIANTE A: Detaillierte Liste (Count + Prozent)
+# VARIANTE A: Detaillierte Liste (Direkt aus CSV)
 # ---------------------------------------------------------
-counts = df.groupby(['model', 'coherence_time', 'action']).size().to_frame('count').reset_index()
-
-# 1. Wir berechnen die Summe pro (Model + Coherence Time) Gruppe
-# transform('sum') sorgt dafür, dass die Summe in jeder Zeile der Gruppe steht
-group_totals = counts.groupby(['model', 'coherence_time'])['count'].transform('sum')
-
-# 2. Berechnung des Anteils
-counts['percentage'] = (counts['count'] / group_totals) * 100
-
+# Da die Datei nun bereits aggregiert ist ("count" und "percentage"),
+# können wir das DataFrame direkt ausgeben oder leicht sortieren.
 print("--- Liste mit Prozenten ---")
-print(counts)
+print(df[['model', 'coherence_time', 'action', 'count', 'percentage']])
 
 
 # ---------------------------------------------------------
-# VARIANTE B: Übersichtliche Tabelle (Nur Prozente)
+# VARIANTE B: Übersichtliche Tabelle (Pivotieren der Prozente)
 # ---------------------------------------------------------
-# pd.crosstab ist perfekt hierfür, da es 'normalize' eingebaut hat
-pivot_percent = pd.crosstab(
-    index=[df['model'], df['coherence_time']], 
-    columns=df['action'], 
-    normalize='index' # 'index' bedeutet: Zeilensumme = 100% (bzw. 1.0)
-) * 100
+# Wir nutzen pivot_table statt crosstab, da wir die Werte bereits haben (percentage).
+pivot_percent = df.pivot_table(
+    index=['model', 'coherence_time'], 
+    columns='action', 
+    values='percentage',
+    fill_value=0  # Fehlende Actions mit 0% auffüllen
+)
 
-print("\n--- Prozent-Tabelle (Crosstab) ---")
-# Optional: Runden auf 2 Nachkommastellen für schönere Ausgabe
+print("\n--- Prozent-Tabelle (Pivot) ---")
 print(pivot_percent.round(2))
