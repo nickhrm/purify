@@ -1,5 +1,7 @@
 import os
 
+from ppo.custom_stop_callback import CustomStopCallback
+
 # --- SCHRITT 1: Threading begrenzen (Muss GANZ oben stehen) ---
 # Verhindert, dass Numpy/Torch pro Prozess alle 20 Cores blockieren.
 os.environ["OMP_NUM_THREADS"] = "1" 
@@ -10,7 +12,6 @@ import torch
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import (
     EvalCallback,
-    StopTrainingOnNoModelImprovement,
 )
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
@@ -51,26 +52,26 @@ def train(constants: ConstantsTuple, run_name: str, num_cpu: int):
     # Erstelle die vektorisierte Umgebung
     # SubprocVecEnv ist korrekt für rechenintensive Simulationen
     env = make_vec_env(
-        lambda: TrainingEnv(tupleAdapter(constants)), 
+        lambda: TrainingEnv(tupleAdapter(constants)),
         n_envs=num_cpu,
         vec_env_cls=SubprocVecEnv,
     )
 
     # Eval Env braucht nur 1 Core (oder du nutzt auch hier Subproc für Isolation)
     eval_env = make_vec_env(
-        lambda: TrainingEnv(tupleAdapter(constants)), 
+        lambda: TrainingEnv(tupleAdapter(constants)),
         n_envs=1,
         vec_env_cls=SubprocVecEnv
     )
 
     model_path = f"results/agent_{run_name}.zip"
 
-    stop_train_callback = StopTrainingOnNoModelImprovement(
-        max_no_improvement_evals=12, min_evals=20, verbose=1
+    stop_train_callback = CustomStopCallback(
+        max_no_improvement_evals=12,
+        min_evals=20,
+        verbose=1,
+        param_label=run_name
     )
-
-    # Eval Frequenz anpassen: Wir sammeln jetzt viel schneller Schritte!
-    # Wir wollen immer noch alle X 'echten' Schritte evaluieren.
     desired_total_steps_per_eval = 200000
     actual_eval_freq = max(1, desired_total_steps_per_eval // num_cpu)
 
@@ -89,7 +90,6 @@ def train(constants: ConstantsTuple, run_name: str, num_cpu: int):
         activation_fn=torch.nn.Tanh,
     )
 
-    # --- SCHRITT 3: n_steps anpassen ---
     # Ziel: Buffergröße (n_envs * n_steps) sollte ähnlich bleiben (~8192).
     # Bei 18 CPUs ist 512 eine gute Wahl (18 * 512 = 9216 Steps pro Update).
     n_steps_per_env = 512
