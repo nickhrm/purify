@@ -60,23 +60,23 @@ def run_parameter_sweep():
     # Dein Test-Szenario
     test_config = {
         "0_001" : [0.001],
-        #  "0_002" : [0.002],
-        # "0_003" : [0.003],
-        # "0_004" : [0.004],
-        # "0_005" : [0.005],
-        # "0_006" : [0.006],
-        # "0_007" : [0.007],
-        # "0_008" : [0.008],
-        # "0_009" : [0.009],
-        # "0_01" : [0.010],
-        # "0_02" : [0.020],
-        # "0_03" : [0.030],
-        # "0_04" : [0.040],
-        # "0_05": [0.05],
-        # "0_06": [0.06],
-        #"0_07": [0.07],
-        # "0_08": [0.08],
-        # "0_09": [0.09],
+        "0_002" : [0.002],
+        "0_003" : [0.003],
+        "0_004" : [0.004],
+        "0_005" : [0.005],
+        "0_006" : [0.006],
+        "0_007" : [0.007],
+        "0_008" : [0.008],
+        "0_009" : [0.009],
+        "0_01" : [0.010],
+        "0_02" : [0.020],
+        "0_03" : [0.030],
+        "0_04" : [0.040],
+        "0_05": [0.05],
+        "0_06": [0.06],
+        "0_07": [0.07],
+        "0_08": [0.08],
+        "0_09": [0.09],
         #  "0_1": [0.1],
 
 
@@ -98,7 +98,7 @@ def run_parameter_sweep():
         print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
 
         # Pfad dynamisch zusammenbauen
-        model_path = f"best_models_5gps_00_03_00/{model_folder}/best_model.zip"
+        model_path = f"best_models_5gps_03_00_00/{model_folder}/best_model.zip"
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
 
@@ -112,7 +112,7 @@ def run_parameter_sweep():
                 lambda_strategy=LambdaSrategy.USE_CONSTANTS,
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
-                lambdas=(0.0, 0.3, 0.0),
+                lambdas=(0.3, 0.0, 0.0),
             )
             env = TrainingEnv(current_constants)
 
