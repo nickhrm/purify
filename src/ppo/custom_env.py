@@ -12,11 +12,10 @@ from purify.node import Node
 
 
 class TrainingEnv(gym.Env):
-    def __init__(self, config: dict | None = None):
+    def __init__(self, constants:ConstantsTuple):
         super().__init__()
-        config = config or {}
         self.time = Time()
-        self.constants: ConstantsTuple = config["constants"]
+        self.constants = constants
 
         print("constants")
         print(self.constants)

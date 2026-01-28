@@ -4,8 +4,8 @@ from ppo.custom_stop_callback import CustomStopCallback
 
 # --- SCHRITT 1: Threading begrenzen (Muss GANZ oben stehen) ---
 # Verhindert, dass Numpy/Torch pro Prozess alle 20 Cores blockieren.
-os.environ["OMP_NUM_THREADS"] = "1" 
-os.environ["MKL_NUM_THREADS"] = "1" 
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 import torch
@@ -17,7 +17,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from ppo.custom_env import TrainingEnv
-from purify.constants_tuple import ConstantsTuple, tupleAdapter
+from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import LambdaSrategy
 
 
@@ -25,11 +25,11 @@ def main():
     # Liste deiner Coherence Times
     coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
 
-    
+
     # --- SCHRITT 2: Nutze fast alle Cores für EIN Modell ---
     # Bei 20 Cores Server: 18 Worker, 1 Main Process, 1 OS Reserve
     NUM_CORES_PER_RUN = 18
-    
+
     for coherence_time in coherence_times:
         constants = ConstantsTuple(
             coherence_time=coherence_time,
@@ -52,14 +52,14 @@ def train(constants: ConstantsTuple, run_name: str, num_cpu: int):
     # Erstelle die vektorisierte Umgebung
     # SubprocVecEnv ist korrekt für rechenintensive Simulationen
     env = make_vec_env(
-        lambda: TrainingEnv(tupleAdapter(constants)),
+        lambda: TrainingEnv(constants),
         n_envs=num_cpu,
         vec_env_cls=SubprocVecEnv,
     )
 
     # Eval Env braucht nur 1 Core (oder du nutzt auch hier Subproc für Isolation)
     eval_env = make_vec_env(
-        lambda: TrainingEnv(tupleAdapter(constants)),
+        lambda: TrainingEnv(constants),
         n_envs=1,
         vec_env_cls=SubprocVecEnv
     )
