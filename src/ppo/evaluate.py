@@ -47,7 +47,7 @@ def run_parameter_sweep():
     # Dein Test-Szenario
     test_config = {
         # "0_001" : [0.001],
-        # "0_002" : [0.002],
+         "0_002" : [0.002],
         # "0_003" : [0.003],
         # "0_004" : [0.004],
         # "0_005" : [0.005],
@@ -64,7 +64,7 @@ def run_parameter_sweep():
         #"0_07": [0.07],
         # "0_08": [0.08],
         # "0_09": [0.09],
-         "0_1": [0.1],
+        #  "0_1": [0.1],
 
 
 
@@ -105,8 +105,8 @@ def run_parameter_sweep():
             env = TrainingEnv(tupleAdapter(current_constants))
 
             policies = [
-                # SB3Agent(model_path, env),
-                RLlibAgent(rllib_path)
+                SB3Agent(model_path, env),
+                # RLlibAgent(rllib_path)
                 # FixedActionAgent(Action.REPLACE),
                 # FixedActionAgent(Action.PROT_1),
                 # FixedActionAgent(Action.PROT_2),

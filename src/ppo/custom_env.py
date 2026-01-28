@@ -52,7 +52,7 @@ class TrainingEnv(gym.Env):
 
         return np.array(
             [f_mem, request_is_waiting, time_since_last_request, l1, l2, l3],
-            dtype=np.float32,
+            dtype=np.float64,
         )
 
     def reset(self, seed=None, options=None):
