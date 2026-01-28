@@ -1,5 +1,4 @@
 
-from purify.my_enums import Action
 
 ENTANGLEMENT_GENERATION_COUNT = 300000
 

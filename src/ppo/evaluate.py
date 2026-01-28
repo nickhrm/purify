@@ -9,12 +9,12 @@ from ray.rllib.utils.actor_manager import CallResult
 
 # Deine Imports
 from ppo.custom_env import TrainingEnv
-from ppo.policy_wrapper import SB3Agent
+from ppo.policy_wrapper import SB3Agent, FixedActionAgent
 from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import Action, LambdaSrategy
 
 
-def save_to_csv(times, results, filename="sweep_results.csv"):
+def save_average_f(times, results, filename="sweep_results.csv"):
     """
     Speichert die Ergebnisse im Format: coherence_time, fidelity, model.
     Hängt Daten an, wenn die Datei schon existiert (Append-Modus).
@@ -43,11 +43,24 @@ def save_to_csv(times, results, filename="sweep_results.csv"):
     print(f"Daten an {filename} angehängt.")
 
 
+def save_actions(action, coherence_time, model, filename = "action_prob.csv"):
+    file_exists = os.path.isfile(filename)
+
+    with open(filename, mode="a", newline="") as file:
+        writer = csv.writer(file)
+
+        # Header nur schreiben, wenn Datei neu ist
+        if not file_exists:
+            writer.writerow(["action", "coherence_time", "model"])
+        writer.writerow([action, coherence_time, model])
+
+
+
 def run_parameter_sweep():
     # Dein Test-Szenario
     test_config = {
-        # "0_001" : [0.001],
-         "0_002" : [0.002],
+        "0_001" : [0.001],
+        #  "0_002" : [0.002],
         # "0_003" : [0.003],
         # "0_004" : [0.004],
         # "0_005" : [0.005],
@@ -85,7 +98,7 @@ def run_parameter_sweep():
         print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
 
         # Pfad dynamisch zusammenbauen
-        model_path = f"best_models_real_gps/{model_folder}/best_model.zip"
+        model_path = f"best_models_5gps_00_03_00/{model_folder}/best_model.zip"
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
 
@@ -99,7 +112,7 @@ def run_parameter_sweep():
                 lambda_strategy=LambdaSrategy.USE_CONSTANTS,
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
-                lambdas=(0.3, 0.0, 0.0),
+                lambdas=(0.0, 0.3, 0.0),
             )
             env = TrainingEnv(current_constants)
 
@@ -123,7 +136,7 @@ def run_parameter_sweep():
                     done = False
                     while not done:
                         action = policy.predict(obs)
-                        print(Action(action))
+                        save_actions(Action(action).name, current_constants.coherence_time, policy.name)
                         obs, reward, terminated, truncated, _ = env.step(action)
                         total_reward += reward
                         done = terminated or truncated
@@ -133,7 +146,7 @@ def run_parameter_sweep():
 
         # 3. SPEICHERN: Nach jedem Modell-Block schreiben wir in die CSV
         # times_list sind die X-Werte, batch_results die Y-Werte für diesen Block
-        save_to_csv(times_list, batch_results, CSV_FILENAME)
+        save_average_f(times_list, batch_results, CSV_FILENAME)
 
     print("\nSweep beendet.")
 
