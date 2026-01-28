@@ -4,9 +4,9 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 from gymnasium.spaces.box import Box
+
 from purify.constants_tuple import ConstantsTuple
-from purify.my_constants import AVAILABLE_ACTIONS
-from purify.my_enums import Event, Action
+from purify.my_enums import Action, Event
 from purify.my_time import Time
 from purify.node import Node
 
@@ -28,10 +28,10 @@ class TrainingEnv(gym.Env):
             low=np.array([0, 0, 0, 0, 0, 0]),
             high=np.array([1, 1, 2, 1, 1, 1]),
             shape=(6,),
-            dtype=np.float32,
+            dtype=np.float64,
         )
 
-        self.action_space = spaces.Discrete(len(AVAILABLE_ACTIONS))
+        self.action_space = spaces.Discrete(len(Action))
 
         # Interne Tracking-Variablen für das Look-Ahead
         self.last_generated_entanglement = None
@@ -79,7 +79,7 @@ class TrainingEnv(gym.Env):
         if self.current_event == Event.ENTANGLEMENT_GENERATION:
             if self.last_generated_entanglement is not None:
                 self.node.handle_existing_entanglement(
-                    self.last_generated_entanglement, AVAILABLE_ACTIONS[action]
+                    self.last_generated_entanglement, Action(action)
                 )
             self.last_generated_entanglement = None
 
