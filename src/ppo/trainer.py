@@ -22,7 +22,8 @@ from purify.my_enums import LambdaSrategy
 
 def main():
     # Liste deiner Coherence Times
-    coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005]
+    coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
+
     
     # --- SCHRITT 2: Nutze fast alle Cores für EIN Modell ---
     # Bei 20 Cores Server: 18 Worker, 1 Main Process, 1 OS Reserve
