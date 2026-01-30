@@ -44,7 +44,7 @@ def main():
 
 def train(constants: ConstantsTuple,  num_cpu: int):
 
-    model_path = f"results/all/{constants.folder_name()}/{constants.subfolder_name()}/"
+    model_path = f"results/all/{constants.folder_name()}/{constants.subfolder_name()}"
 
     log_dir = f"logs/{constants.folder_name()}"
     os.makedirs(log_dir, exist_ok=True)

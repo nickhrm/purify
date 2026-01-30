@@ -1,16 +1,10 @@
 import csv
 import os
-import resource
-import time
 from collections import Counter
-
-import matplotlib.pyplot as plt
-import numpy as np
-from ray.rllib.utils.actor_manager import CallResult
 
 # Deine Imports
 from ppo.custom_env import TrainingEnv
-from ppo.policy_wrapper import FixedActionAgent, SB3Agent, RandomAgent
+from ppo.policy_wrapper import SB3Agent
 from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import Action, LambdaSrategy
 
@@ -104,7 +98,7 @@ def run_parameter_sweep():
         print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
 
         # Pfad dynamisch zusammenbauen
-        model_path = f"best_models_2gps_03_00_00/{model_folder}/best_model.zip"
+        model_path = f"results/best/2gps_03_00_00/{model_folder}/best_model.zip"
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
 
@@ -119,7 +113,7 @@ def run_parameter_sweep():
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
                 lambdas=(0.3, 0.0, 0.0),
-                actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3, Action.PMD)
+                actions=(Action.REPLACE, Action.PMD)
             )
             env = TrainingEnv(current_constants)
 
