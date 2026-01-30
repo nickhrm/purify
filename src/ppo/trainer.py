@@ -18,16 +18,14 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple
-from purify.my_enums import LambdaSrategy, Action
+from purify.my_enums import Action, LambdaSrategy
 
 
+# 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 
 def main():
-    # Liste deiner Coherence Times
-    coherence_times = [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
+    coherence_times = [0.07, 0.08, 0.09, 0.1]
 
 
-    # --- SCHRITT 2: Nutze fast alle Cores für EIN Modell ---
-    # Bei 20 Cores Server: 18 Worker, 1 Main Process, 1 OS Reserve
     NUM_CORES_PER_RUN = 18
 
     for coherence_time in coherence_times:
@@ -41,16 +39,14 @@ def main():
         )
         print(f"Training für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
 
-        # Train funktion aufrufen
         train(constants, num_cpu=NUM_CORES_PER_RUN)
 
 
-def train(constants: ConstantsTuple,  num_cpu: int,):
+def train(constants: ConstantsTuple,  num_cpu: int):
 
-    folder_name = f"{len(Action)}gps_{constants.lambdas}"
-    run_name = f"{str(constants.coherence_time).replace('.', '_')}"
+    model_path = f"results/all/{constants.folder_name()}/{constants.subfolder_name()}/"
 
-    log_dir = f"./ppo_results_{folder_name}/"
+    log_dir = f"logs/{constants.folder_name()}"
     os.makedirs(log_dir, exist_ok=True)
 
     # Erstelle die vektorisierte Umgebung
@@ -68,13 +64,13 @@ def train(constants: ConstantsTuple,  num_cpu: int,):
         vec_env_cls=SubprocVecEnv
     )
 
-    model_path = f"results_{folder_name}/agent_{run_name}.zip"
+    best_model_dir = f"results/best/{constants.folder_name()}/{constants.subfolder_name()}/"
 
     stop_train_callback = CustomStopCallback(
         max_no_improvement_evals=12,
         min_evals=20,
         verbose=1,
-        param_label=run_name
+        param_label=constants.subfolder_name()
     )
     desired_total_steps_per_eval = 200000
     actual_eval_freq = max(1, desired_total_steps_per_eval // num_cpu)
@@ -84,7 +80,7 @@ def train(constants: ConstantsTuple,  num_cpu: int,):
         eval_freq=actual_eval_freq,
         n_eval_episodes=50,
         callback_after_eval=stop_train_callback,
-        best_model_save_path=f"./best_models_{folder_name}/{run_name}/",
+        best_model_save_path=best_model_dir,
         verbose=1,
         deterministic=True,
     )
@@ -102,7 +98,7 @@ def train(constants: ConstantsTuple,  num_cpu: int,):
         print(f"Lade existierendes Modell: {model_path}")
         model = PPO.load(model_path, env=env, device="cpu")
     else:
-        print(f"Starte neues Training für {run_name}...")
+        print(f"Starte neues Training für {constants.folder_name()}, {constants.subfolder_name()}...")
         model = PPO(
             "MlpPolicy",
             env,

@@ -11,9 +11,9 @@ class ConstantsTuple(NamedTuple):
     lambdas: tuple[float, float, float]
     actions: tuple[Action, ...]
 
-    def folder_name(self):
-        return f"{len(self.actions)}_gps_{str(self.lambdas[0]).replace(".","")}_{str(self.lambdas[1]).replace(".","")}_{str(self.lambdas[0]).replace(".","")}"
+    def folder_name(self) -> str:
+        return f"{len(self.actions)}gps_{str(self.lambdas[0]).replace(".","")}_{str(self.lambdas[1]).replace(".","")}_{str(self.lambdas[2]).replace(".","")}"
 
 
-    def subfolder_name(self):
+    def subfolder_name(self) -> str:
         return f"{str(self.coherence_time).replace('.', '_')}"

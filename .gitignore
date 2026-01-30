@@ -18,3 +18,4 @@ wheels/
 
 /ppo_results
 /ppo_results_rllib/**
+/logs
