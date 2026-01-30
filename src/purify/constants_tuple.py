@@ -9,4 +9,5 @@ class ConstantsTuple(NamedTuple):
     waiting_time_sensitivity:float
     lambda_strategy: LambdaSrategy
     lambdas: tuple[float, float, float]
+    
 

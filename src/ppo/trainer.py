@@ -18,7 +18,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple
-from purify.my_enums import LambdaSrategy
+from purify.my_enums import LambdaSrategy, Action
 
 
 def main():
@@ -39,14 +39,17 @@ def main():
             waiting_time_sensitivity=1,
         )
         print(f"Training für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
-        run_name = f"{str(coherence_time).replace('.', '_')}"
 
         # Train funktion aufrufen
-        train(constants, run_name, num_cpu=NUM_CORES_PER_RUN)
+        train(constants, num_cpu=NUM_CORES_PER_RUN)
 
 
-def train(constants: ConstantsTuple, run_name: str, num_cpu: int):
-    log_dir = "./ppo_results/"
+def train(constants: ConstantsTuple,  num_cpu: int,):
+
+    folder_name = f"{len(Action)}gps_{constants.lambdas}"
+    run_name = f"{str(constants.coherence_time).replace('.', '_')}"
+
+    log_dir = f"./ppo_results_{folder_name}/"
     os.makedirs(log_dir, exist_ok=True)
 
     # Erstelle die vektorisierte Umgebung
@@ -64,7 +67,7 @@ def train(constants: ConstantsTuple, run_name: str, num_cpu: int):
         vec_env_cls=SubprocVecEnv
     )
 
-    model_path = f"results/agent_{run_name}.zip"
+    model_path = f"results_{folder_name}/agent_{run_name}.zip"
 
     stop_train_callback = CustomStopCallback(
         max_no_improvement_evals=12,
@@ -80,7 +83,7 @@ def train(constants: ConstantsTuple, run_name: str, num_cpu: int):
         eval_freq=actual_eval_freq,
         n_eval_episodes=20,
         callback_after_eval=stop_train_callback,
-        best_model_save_path=f"./best_models/{run_name}/",
+        best_model_save_path=f"./best_models_{folder_name}/{run_name}/",
         verbose=1,
         deterministic=True,
     )
