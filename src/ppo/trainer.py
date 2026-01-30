@@ -37,6 +37,7 @@ def main():
             lambdas=(0.3, 0.0, 0.0),
             pumping_probability=1,
             waiting_time_sensitivity=1,
+            actions=(Action.REPLACE, Action.PMD)
         )
         print(f"Training für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
 
@@ -81,7 +82,7 @@ def train(constants: ConstantsTuple,  num_cpu: int,):
     eval_callback = EvalCallback(
         eval_env,
         eval_freq=actual_eval_freq,
-        n_eval_episodes=20,
+        n_eval_episodes=50,
         callback_after_eval=stop_train_callback,
         best_model_save_path=f"./best_models_{folder_name}/{run_name}/",
         verbose=1,

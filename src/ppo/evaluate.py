@@ -10,7 +10,7 @@ from ray.rllib.utils.actor_manager import CallResult
 
 # Deine Imports
 from ppo.custom_env import TrainingEnv
-from ppo.policy_wrapper import FixedActionAgent, SB3Agent
+from ppo.policy_wrapper import FixedActionAgent, SB3Agent, RandomAgent
 from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import Action, LambdaSrategy
 
@@ -65,25 +65,25 @@ def save_action_distribution(action_counts, coherence_time, model, filename="act
 def run_parameter_sweep():
     # Dein Test-Szenario
     test_config = {
-        "0_001" : [0.001],
-        "0_002" : [0.002],
-        "0_003" : [0.003],
-        "0_004" : [0.004],
-        "0_005" : [0.005],
-        "0_006" : [0.006],
-        "0_007" : [0.007],
-        "0_008" : [0.008],
-        "0_009" : [0.009],
-        "0_01" : [0.010],
-        "0_02" : [0.020],
-        "0_03" : [0.030],
-        "0_04" : [0.040],
-        "0_05": [0.05],
-        "0_06": [0.06],
+        # "0_001" : [0.001],
+        # "0_002" : [0.002],
+        # "0_003" : [0.003],
+        # "0_004" : [0.004],
+        # "0_005" : [0.005],
+        # "0_006" : [0.006],
+        # "0_007" : [0.007],
+        # "0_008" : [0.008],
+        # "0_009" : [0.009],
+        # "0_01" : [0.010],
+        # "0_02" : [0.020],
+        # "0_03" : [0.030],
+        # "0_04" : [0.040],
+        # "0_05": [0.05],
+        # "0_06": [0.06],
         "0_07": [0.07],
-        "0_08": [0.08],
-        "0_09": [0.09],
-         "0_1": [0.1],
+        # "0_08": [0.08],
+        # "0_09": [0.09],
+        #  "0_1": [0.1],
 
 
 
@@ -104,7 +104,7 @@ def run_parameter_sweep():
         print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
 
         # Pfad dynamisch zusammenbauen
-        model_path = f"best_models_5gps_00_03_00/{model_folder}/best_model.zip"
+        model_path = f"best_models_2gps_03_00_00/{model_folder}/best_model.zip"
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
 
@@ -118,7 +118,8 @@ def run_parameter_sweep():
                 lambda_strategy=LambdaSrategy.USE_CONSTANTS,
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
-                lambdas=(0.0, 0.3, 0.0),
+                lambdas=(0.3, 0.0, 0.0),
+                actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3, Action.PMD)
             )
             env = TrainingEnv(current_constants)
 
@@ -139,7 +140,6 @@ def run_parameter_sweep():
 
                 total_reward = 0.0
                 action_counts = Counter()
-                
                 for _ in range(N_EPISODES):
                     obs, _ = env.reset()
                     done = False
@@ -151,7 +151,6 @@ def run_parameter_sweep():
                         obs, reward, terminated, truncated, _ = env.step(action)
                         total_reward += reward
                         done = terminated or truncated
-                
                 # Save aggregated action stats for this policy & coherence_time
                 save_action_distribution(action_counts, current_constants.coherence_time, policy.name)
 

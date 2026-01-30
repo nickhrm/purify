@@ -30,7 +30,7 @@ class TrainingEnv(gym.Env):
             dtype=np.float64,
         )
 
-        self.action_space = spaces.Discrete(len(Action))
+        self.action_space = spaces.Discrete(len(self.constants.actions))
 
         # Interne Tracking-Variablen für das Look-Ahead
         self.last_generated_entanglement = None
@@ -75,10 +75,12 @@ class TrainingEnv(gym.Env):
         terminated = False
         truncated = False
 
+        chosen_action: Action = self.constants.actions[action]
+
         if self.current_event == Event.ENTANGLEMENT_GENERATION:
             if self.last_generated_entanglement is not None:
                 self.node.handle_existing_entanglement(
-                    self.last_generated_entanglement, Action(action)
+                    self.last_generated_entanglement, chosen_action
                 )
             self.last_generated_entanglement = None
 
