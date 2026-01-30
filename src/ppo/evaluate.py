@@ -10,7 +10,7 @@ from ray.rllib.utils.actor_manager import CallResult
 
 # Deine Imports
 from ppo.custom_env import TrainingEnv
-from ppo.policy_wrapper import SB3Agent, FixedActionAgent
+from ppo.policy_wrapper import FixedActionAgent, SB3Agent
 from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import Action, LambdaSrategy
 
@@ -48,14 +48,14 @@ def save_action_distribution(action_counts, coherence_time, model, filename="act
     file_exists = os.path.isfile(filename)
 
     total_actions = sum(action_counts.values())
-    
+
     with open(filename, mode="a", newline="") as file:
         writer = csv.writer(file)
 
         # Header only if file is new
         if not file_exists:
             writer.writerow(["model", "coherence_time", "action", "count", "percentage"])
-        
+
         for action_name, count in action_counts.items():
             percentage = (count / total_actions) * 100 if total_actions > 0 else 0
             writer.writerow([model, coherence_time, action_name, count, percentage])
@@ -83,7 +83,7 @@ def run_parameter_sweep():
         "0_07": [0.07],
         "0_08": [0.08],
         "0_09": [0.09],
-        #  "0_1": [0.1],
+         "0_1": [0.1],
 
 
 
@@ -104,7 +104,7 @@ def run_parameter_sweep():
         print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
 
         # Pfad dynamisch zusammenbauen
-        model_path = f"best_models_5gps_03_00_00/{model_folder}/best_model.zip"
+        model_path = f"best_models_5gps_00_03_00/{model_folder}/best_model.zip"
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
 
