@@ -23,19 +23,19 @@ from purify.my_enums import Action, LambdaSrategy
 
 # 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 
 def main():
-    coherence_times = [0.07, 0.08, 0.09, 0.1]
+    coherence_times = [0.002, 0.09, 0.06, 0.01]
 
 
-    NUM_CORES_PER_RUN = 18
+    NUM_CORES_PER_RUN = 4
 
     for coherence_time in coherence_times:
         constants = ConstantsTuple(
             coherence_time=coherence_time,
-            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            lambda_strategy=LambdaSrategy.FIXED,
             lambdas=(0.3, 0.0, 0.0),
             pumping_probability=1,
             waiting_time_sensitivity=1,
-            actions=(Action.REPLACE, Action.PMD)
+            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3)
         )
         print(f"Training für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
 
@@ -49,15 +49,12 @@ def train(constants: ConstantsTuple,  num_cpu: int):
     log_dir = f"logs/{constants.folder_name()}"
     os.makedirs(log_dir, exist_ok=True)
 
-    # Erstelle die vektorisierte Umgebung
-    # SubprocVecEnv ist korrekt für rechenintensive Simulationen
     env = make_vec_env(
         lambda: TrainingEnv(constants),
         n_envs=num_cpu,
         vec_env_cls=SubprocVecEnv,
     )
 
-    # Eval Env braucht nur 1 Core (oder du nutzt auch hier Subproc für Isolation)
     eval_env = make_vec_env(
         lambda: TrainingEnv(constants),
         n_envs=1,

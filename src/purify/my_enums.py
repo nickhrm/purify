@@ -18,4 +18,5 @@ class LambdaSrategy(Enum):
     USE_CONSTANTS = 1
     RANDOM_WITH_LARGEST_LAMBDA = 2
     RANDOM = 3
+    FIXED = 4
 

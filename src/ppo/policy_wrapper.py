@@ -1,8 +1,6 @@
 import os
 from typing import Any
 
-import gymnasium as gym
-import matplotlib.pyplot as plt
 import numpy as np
 from ray.rllib.algorithms import Algorithm
 from stable_baselines3 import PPO
@@ -32,7 +30,6 @@ class RLlibAgent(PolicyWrapper):
         try:
             path = os.path.join(os.getcwd(), checkpoint_path)
             self.model = Algorithm.from_checkpoint(path)
-            # Pre-fetch module to ensure compatibility
             self.module = self.model.get_module()
             print("loaded Rllib Model")
         except Exception as e:
@@ -45,24 +42,13 @@ class RLlibAgent(PolicyWrapper):
             print("model is none")
             raise ValueError('Model is None')
 
-        # New API Stack Inference (RLModule)
         import torch
-        
-        # Ensure obs is a numpy array and float32
         obs_tensor = torch.from_numpy(np.array(obs, dtype=np.float32)).unsqueeze(0)
-        
         with torch.no_grad():
-            # Run inference
-            # RLModule expects a dict with "obs" key by default for PPO
             input_dict = {"obs": obs_tensor}
             output = self.module.forward_inference(input_dict)
-            
-            # Extract action
-            # output["action_dist_inputs"] contains logits
             logits = output["action_dist_inputs"]
-            # Deterministic: Argmax
             action = torch.argmax(logits, dim=1).item()
-            
         print(action)
         return action
 

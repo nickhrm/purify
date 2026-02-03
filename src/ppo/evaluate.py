@@ -60,7 +60,7 @@ def run_parameter_sweep():
     # Dein Test-Szenario
     test_config = {
         # "0_001" : [0.001],
-        # "0_002" : [0.002],
+        #  "0_002" : [0.002],
         # "0_003" : [0.003],
         # "0_004" : [0.004],
         # "0_005" : [0.005],
@@ -68,16 +68,16 @@ def run_parameter_sweep():
         # "0_007" : [0.007],
         # "0_008" : [0.008],
         # "0_009" : [0.009],
-        # "0_01" : [0.010],
+        #  "0_01" : [0.010],
         # "0_02" : [0.020],
         # "0_03" : [0.030],
         # "0_04" : [0.040],
         # "0_05": [0.05],
-        # "0_06": [0.06],
-        "0_07": [0.07],
-        # "0_08": [0.08],
-        # "0_09": [0.09],
-        #  "0_1": [0.1],
+        #  "0_06": [0.06],
+        #  "0_07": [0.07],
+        "0_08": [0.08],
+         "0_09": [0.09],
+         "0_1": [0.1],
 
 
 
@@ -139,7 +139,7 @@ def run_parameter_sweep():
                     done = False
                     while not done:
                         action = policy.predict(obs)
-                        action_name = Action(action).name
+                        action_name = current_constants.actions[action]
                         action_counts[action_name] += 1
                         # save_actions(Action(action).name, current_constants.coherence_time, policy.name)
                         obs, reward, terminated, truncated, _ = env.step(action)

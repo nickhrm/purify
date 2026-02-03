@@ -1,3 +1,4 @@
+import random
 import logging
 
 import numpy as np
@@ -82,6 +83,8 @@ class Entanglement:
                 return cls._from_random_fidelity_range(
                     time, 0.6, 0.8, constants
                 )
+            case LambdaSrategy.FIXED:
+                return cls._from_fixed(time, constants.coherence_time)
             case _:
                 # Fallback oder Fehlerbehandlung, falls eine Strategie nicht abgedeckt ist
                 raise ValueError(f"Unknown strategy: {constants.lambda_strategy}")
@@ -168,5 +171,25 @@ class Entanglement:
             creation_lambda_1=lambda_values,
             creation_lambda_2=lambda_values,
             creation_lambda_3=lambda_values,
+            decoherence_time=decoherence_time
+        )
+
+    @classmethod
+    def _from_fixed(cls, time: Time, decoherence_time: float):
+        """
+        Interne Methode: Erzeugt Entanglement im Werner-Zustand.
+        Wird aktuell nicht von from_strategy aufgerufen, aber als intern markiert.
+        """
+
+        lambda2 = 0.1 - random.uniform(0, 0.1)
+        lambda3 = 0.1 - lambda2
+
+        return cls(
+            time=time,
+            creation_time=time.get_current_time(),
+            creation_fidelity=0.7,
+            creation_lambda_1=0.2,
+            creation_lambda_2=lambda2,
+            creation_lambda_3=lambda3,
             decoherence_time=decoherence_time
         )

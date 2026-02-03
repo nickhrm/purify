@@ -4,6 +4,7 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 from gymnasium.spaces.box import Box
+from pydantic_core.core_schema import time_schema
 
 from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import Action, Event
@@ -49,10 +50,21 @@ class TrainingEnv(gym.Env):
         else:
             l1, l2, l3 = 0.0, 0.0, 0.0
 
+        # === CHANGE IS HERE ===
+        # Return a dictionary {} for info, not a tuple ()
+        info_dict = {
+            "f_mem": f_mem,
+            "request_is_waiting": request_is_waiting,
+            "time_since_last_request": time_since_last_request,
+            "l1": l1,
+            "l2": l2,
+            "l3": l3
+        }
+
         return np.array(
             [f_mem, request_is_waiting, time_since_last_request, l1, l2, l3],
             dtype=np.float64,
-        )
+        ), info_dict
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -68,7 +80,9 @@ class TrainingEnv(gym.Env):
 
         if self.current_event == Event.ENTANGLEMENT_GENERATION:
             self.last_generated_entanglement = self.node.generate_entanglement()
-        return self._get_obs(), {}
+
+        obs, info = self._get_obs()
+        return obs, info
 
     def step(self, action):
         reward = 0.0
@@ -101,7 +115,6 @@ class TrainingEnv(gym.Env):
             terminated = True
             reward = teleportation_fidelity
 
-        obs = self._get_obs()
-        info = {"event": self.current_event, "reward": reward}
+        obs, info = self._get_obs()
 
         return obs, reward, terminated, truncated, info
