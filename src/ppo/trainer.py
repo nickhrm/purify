@@ -31,8 +31,8 @@ def main():
     for coherence_time in coherence_times:
         constants = ConstantsTuple(
             coherence_time=coherence_time,
-            lambda_strategy=LambdaSrategy.FIXED,
-            lambdas=(0.3, 0.0, 0.0),
+            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            lambdas=(0.0, 0.0, 0.3),
             pumping_probability=1,
             waiting_time_sensitivity=1,
             actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3)
