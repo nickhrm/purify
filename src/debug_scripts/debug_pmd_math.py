@@ -60,9 +60,9 @@ for f_curr in f_values:
     e_good = MockEntanglement(f_curr)
     e_bad = MockEntanglement(F_fresh) # Fresh link has l2=l3=0
     
-    p_success = Purification.pmd_success_probability(e_good, e_bad)
+    p_success = Purification._pmd_success_probability(e_good, e_bad)
     if p_success > 0:
-        f_pumped = Purification.pmd_jump_function(e_good, e_bad)
+        f_pumped = Purification._pmd_jump_function(e_good, e_bad)
     else:
         f_pumped = 0
         

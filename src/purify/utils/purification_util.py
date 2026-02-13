@@ -13,7 +13,7 @@ transformed into a Werner-State using twirling, the lambdas can just be ignored"
 class Purification:
 
     @staticmethod
-    def prot_1_jump_function(e_good: Entanglement, e_bad: Entanglement):
+    def _prot_1_jump_function(e_good: Entanglement, e_bad: Entanglement):
         oben = (
             4 * e_bad.get_current_lambda_1()
             + 3 * e_bad.get_current_lambda_2()
@@ -31,7 +31,7 @@ class Purification:
         return oben / unten
 
     @staticmethod
-    def prot_1_success_probability(e_good: Entanglement, e_bad: Entanglement):
+    def _prot_1_success_probability(e_good: Entanglement, e_bad: Entanglement):
         base = (2 / 3) * (
             1 - 2 * e_bad.get_current_lambda_2() - 2 * e_bad.get_current_lambda_3()
         ) * e_good.get_current_fidelity() + (1 / 3) * (
@@ -42,7 +42,7 @@ class Purification:
 
 
     @staticmethod
-    def prot_2_jump_function(e_good: Entanglement, e_bad: Entanglement):
+    def _prot_2_jump_function(e_good: Entanglement, e_bad: Entanglement):
         oben = (
             3 * e_bad.get_current_lambda_1()
             + 4 * e_bad.get_current_lambda_2()
@@ -59,7 +59,7 @@ class Purification:
         return oben / unten
 
     @staticmethod
-    def prot_2_success_probability(e_good: Entanglement, e_bad: Entanglement):
+    def _prot_2_success_probability(e_good: Entanglement, e_bad: Entanglement):
         base = (2 / 3) * (
             1 - 2 * e_bad.get_current_lambda_3() - 2 * e_bad.get_current_lambda_1()
         ) * e_good.get_current_fidelity() + (1 / 3) * (
@@ -70,7 +70,7 @@ class Purification:
         return base
 
     @staticmethod
-    def prot_3_jump_function(e_good: Entanglement, e_bad: Entanglement):
+    def _prot_3_jump_function(e_good: Entanglement, e_bad: Entanglement):
         oben = (
             3 * e_bad.get_current_lambda_1()
             + 3 * e_bad.get_current_lambda_2()
@@ -87,7 +87,7 @@ class Purification:
         return oben / unten
 
     @staticmethod
-    def prot_3_success_probability(e_good: Entanglement, e_bad: Entanglement):
+    def _prot_3_success_probability(e_good: Entanglement, e_bad: Entanglement):
         base = (2 / 3) * (
             1 - 2 * e_bad.get_current_lambda_1() - 2 * e_bad.get_current_lambda_2()
         ) * e_good.get_current_fidelity() + (1 / 3) * (
@@ -99,7 +99,7 @@ class Purification:
         return base
 
     @staticmethod
-    def pmd_jump_function(e_good: Entanglement, e_bad: Entanglement):
+    def _pmd_jump_function(e_good: Entanglement, e_bad: Entanglement):
         if e_bad.get_current_lambda_2() != 0 or e_bad.get_current_lambda_3() != 0:
             raise Exception("pmd can only be used if lambda 2 and 3 are equal to 0")
 
@@ -107,11 +107,11 @@ class Purification:
         return (
             e_bad.get_current_fidelity()
             * e_good.get_current_fidelity()
-            / Purification.pmd_success_probability(e_good, e_bad)
+            / Purification._pmd_success_probability(e_good, e_bad)
         )
 
     @staticmethod
-    def pmd_success_probability(e_good: Entanglement, e_bad: Entanglement):
+    def _pmd_success_probability(e_good: Entanglement, e_bad: Entanglement):
         if e_bad.get_current_lambda_2() != 0 or e_bad.get_current_lambda_3() != 0:
             raise Exception("pmd can only be used if lambda 2 and 3 are equal to 0")
 
@@ -120,17 +120,23 @@ class Purification:
         ) * (1 - e_good.get_current_fidelity())
 
     @staticmethod
-    def success_probability_from_action(e_good: Entanglement, e_bad: Entanglement, action: Action):
+    def success_probability_from_action(e_good: Entanglement, e_bad: Entanglement, action: Action) -> float:
         # 'self' wurde entfernt, da es eine @staticmethod ist
+
+
+        # if fidelity <= 0.5, than purification is not possible
+        if e_good.get_current_fidelity() <= 0.5 or e_bad.get_current_fidelity() <= 0.5:
+            return 0.0
+
         match action:
             case Action.PROT_1:
-                return Purification.prot_1_success_probability(e_good, e_bad)
+                return Purification._prot_1_success_probability(e_good, e_bad)
             case Action.PROT_2:
-                return Purification.prot_2_success_probability(e_good, e_bad)
+                return Purification._prot_2_success_probability(e_good, e_bad)
             case Action.PROT_3:
-                return Purification.prot_3_success_probability(e_good, e_bad)
+                return Purification._prot_3_success_probability(e_good, e_bad)
             case Action.PMD:
-                return Purification.pmd_success_probability(e_good, e_bad)
+                return Purification._pmd_success_probability(e_good, e_bad)
             case _:
                 raise ValueError(f"Unknown action: {action}")
 
@@ -143,12 +149,12 @@ class Purification:
         """
         match action:
             case Action.PROT_1:
-                return Purification.prot_1_jump_function(e_good, e_bad)
+                return Purification._prot_1_jump_function(e_good, e_bad)
             case Action.PROT_2:
-                return Purification.prot_2_jump_function(e_good, e_bad)
+                return Purification._prot_2_jump_function(e_good, e_bad)
             case Action.PROT_3:
-                return Purification.prot_3_jump_function(e_good, e_bad)
+                return Purification._prot_3_jump_function(e_good, e_bad)
             case Action.PMD:
-                return Purification.pmd_jump_function(e_good, e_bad)
+                return Purification._pmd_jump_function(e_good, e_bad)
             case _:
                 raise ValueError(f"Unknown action: {action}")

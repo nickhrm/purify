@@ -1,5 +1,5 @@
-import random
 import logging
+import random
 
 import numpy as np
 
