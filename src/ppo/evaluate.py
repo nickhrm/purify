@@ -98,7 +98,7 @@ def run_parameter_sweep():
         print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
 
         # Pfad dynamisch zusammenbauen
-        model_path = f"results/best/4gps_trained_indiv/{model_folder}/best_model.zip"
+        model_path = f"results/best/4gps_00_03_00/{model_folder}/best_model.zip"
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
 
@@ -112,8 +112,8 @@ def run_parameter_sweep():
                 lambda_strategy=LambdaSrategy.RANDOM,
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
-                lambdas=(0.3, 0.0, 0.0),
-                actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3, Action.PMD)
+                lambdas=(0.0, 0.3, 0.0),
+                actions=(Action.REPLACE, Action.PROT_1, Action.PROT_3, Action.PROT_2)
             )
             env = TrainingEnv(current_constants)
 
@@ -142,8 +142,8 @@ def run_parameter_sweep():
                         action_counts[action_name] += 1
                         # save_actions(Action(action).name, current_constants.coherence_time, policy.name)
                         obs, reward, terminated, truncated, info = env.step(action)
-                        if(info["time_since_last_request"] != 0):
-                            print(info["time_since_last_request"])
+                        # if(info["time_since_last_request"] != 0):
+                        #     print(info["time_since_last_request"])
                         total_reward += reward
                         done = terminated or truncated
                 # Save aggregated action stats for this policy & coherence_time
