@@ -112,8 +112,8 @@ def run_parameter_sweep():
                 lambda_strategy=LambdaSrategy.RANDOM,
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
-                lambdas=(0.0, 0.0, 0.0),
-                actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3)
+                lambdas=(0.3, 0.0, 0.0),
+                actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3, Action.PMD)
             )
             env = TrainingEnv(current_constants)
 
@@ -125,7 +125,6 @@ def run_parameter_sweep():
                 # FixedActionAgent(Action.PROT_3),
                 # FixedActionAgent(Action.PMD)
             ]
-
 
             # Evaluation Loop
             for policy in policies:
