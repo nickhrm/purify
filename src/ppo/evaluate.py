@@ -109,7 +109,7 @@ def run_parameter_sweep():
             # Environment Setup
             current_constants = ConstantsTuple(
                 coherence_time=t_coh,
-                lambda_strategy=LambdaSrategy.RANDOM,
+                lambda_strategy=LambdaSrategy.USE_CONSTANTS,
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
                 lambdas=(0.0, 0.3, 0.0),
