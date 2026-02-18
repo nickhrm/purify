@@ -59,29 +59,30 @@ def save_action_distribution(action_counts, coherence_time, model, filename="act
 def run_parameter_sweep():
     # Dein Test-Szenario
     test_config = {
-        "0_001" : [0.001],
-        "0_002" : [0.002],
-        "0_003" : [0.003],
-        "0_004" : [0.004],
-        "0_005" : [0.005],
-        "0_006" : [0.006],
-        "0_007" : [0.007],
-        "0_008" : [0.008],
-        "0_009" : [0.009],
+        # "0_001" : [0.001],
+        # "0_002" : [0.002],
+        # "0_003" : [0.003],
+        # "0_004" : [0.004],
+        # "0_005" : [0.005],
+        # "0_006" : [0.006],
+        # "0_007" : [0.007],
+        # "0_008" : [0.008],
+        # "0_009" : [0.009],
         "0_01" : [0.010],
-        "0_02" : [0.020],
-        "0_03" : [0.030],
-        "0_04" : [0.040],
-        "0_05": [0.05],
-        "0_06": [0.06],
-        "0_07": [0.07],
-        "0_08": [0.08],
-        "0_09": [0.09],
-        "0_1": [0.1],
+        # "0_02" : [0.020],
+        # "0_03" : [0.030],
+        # "0_04" : [0.040],
+        # "0_05": [0.05],
+        # "0_06": [0.06],
+        # "0_07": [0.07],
+        # "0_08": [0.08],
+        # "0_09": [0.09],
+        # "0_1": [0.1],
 
 
-
+# 0.02, 0.03, 0.04, 0.06, 0.06, 0.08
     }
+
 
     N_EPISODES = 600
     CSV_FILENAME = "sweep_results.csv"
@@ -98,7 +99,7 @@ def run_parameter_sweep():
         print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
 
         # Pfad dynamisch zusammenbauen
-        model_path = f"results/best/4gps_00_03_00/{model_folder}/best_model.zip"
+        model_path = f"results/best/4gps_00_00_00/{model_folder}/best_model.zip"
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
 
@@ -113,7 +114,7 @@ def run_parameter_sweep():
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
                 lambdas=(0.0, 0.3, 0.0),
-                actions=(Action.REPLACE, Action.PROT_1, Action.PROT_3, Action.PROT_2)
+                actions=(Action.REPLACE, Action.PROT_1,Action.PROT_2, Action.PROT_3)
             )
             env = TrainingEnv(current_constants)
 
@@ -140,14 +141,14 @@ def run_parameter_sweep():
                         action = policy.predict(obs)
                         action_name = current_constants.actions[action]
                         action_counts[action_name] += 1
-                        # save_actions(Action(action).name, current_constants.coherence_time, policy.name)
+                        # save_action_distribution(Action(action).name, current_constants.coherence_time, policy.name)
                         obs, reward, terminated, truncated, info = env.step(action)
                         # if(info["time_since_last_request"] != 0):
                         #     print(info["time_since_last_request"])
                         total_reward += reward
                         done = terminated or truncated
                 # Save aggregated action stats for this policy & coherence_time
-                # save_action_distribution(action_counts, current_constants.coherence_time, policy.name)
+                save_action_distribution(action_counts, current_constants.coherence_time, policy.name)
 
                 avg_reward = total_reward / N_EPISODES
                 batch_results[policy.name].append(avg_reward)

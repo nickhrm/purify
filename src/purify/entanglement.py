@@ -81,7 +81,7 @@ class Entanglement:
                 )
             case LambdaSrategy.RANDOM:
                 return cls._from_random_fidelity_range(
-                    time, 0.6, 0.8, constants
+                    time, 0.7, 0.7, constants
                 )
             case LambdaSrategy.FIXED:
                 return cls._from_fixed(time, constants.coherence_time)

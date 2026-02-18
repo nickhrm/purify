@@ -8,9 +8,9 @@ from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import Action, LambdaSrategy
 
 def analyze_fidelity_dependency(
-    coherence_time=0.05, output_file="fidelity_analysis.csv"
+    coherence_time=0.01, output_file="fidelity_analysis.csv"
 ):
-    model_path = f"results/best/4gps_00_03_00/{str(coherence_time).replace(".", "_")}/best_model.zip"
+    model_path = f"results/best/4gps_00_00_00/{str(coherence_time).replace(".", "_")}/best_model.zip"
 
     # 1. Setup Environment & Agent
     temp_constants = ConstantsTuple(
@@ -38,7 +38,7 @@ def analyze_fidelity_dependency(
 
     # 2. Fidelity-Bereich definieren
     fidelities = [ 0.6, 0.7, 0.8, 0.9, 1.0]
-    waiting_times = [0, 0.01, 0.05, 0.12,]
+    waiting_times = [0]
 
     action_names = [a.name for a in temp_constants.actions]
 

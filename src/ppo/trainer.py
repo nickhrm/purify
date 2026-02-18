@@ -23,19 +23,19 @@ from purify.my_enums import Action, LambdaSrategy
 
 # 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 
 def main():
-    coherence_times = [ 0.002]
+    coherence_times = [0.009]
 
 
-    NUM_CORES_PER_RUN = 10
+    NUM_CORES_PER_RUN = 6
 
     for coherence_time in coherence_times:
         constants = ConstantsTuple(
             coherence_time=coherence_time,
-            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
-            lambdas=(0.3, 0.0, 0.0),
+            lambda_strategy=LambdaSrategy.RANDOM,
+            lambdas=(0.0, 0.0, 0.0),
             pumping_probability=1,
             waiting_time_sensitivity=1,
-            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3, Action.PMD)
+            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,)
         )
         print(f"Training für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
 
@@ -64,12 +64,12 @@ def train(constants: ConstantsTuple,  num_cpu: int):
     best_model_dir = f"results/best/{constants.folder_name()}/{constants.subfolder_name()}/"
 
     stop_train_callback = CustomStopCallback(
-        max_no_improvement_evals=12,
-        min_evals=20,
+        max_no_improvement_evals=38,
+        min_evals=60,
         verbose=1,
         param_label=constants.subfolder_name()
     )
-    desired_total_steps_per_eval = 200000
+    desired_total_steps_per_eval = 50000
     actual_eval_freq = max(1, desired_total_steps_per_eval // num_cpu)
 
     eval_callback = EvalCallback(
@@ -83,13 +83,14 @@ def train(constants: ConstantsTuple,  num_cpu: int):
     )
 
     policy_kwargs = dict(
-        net_arch=dict(pi=[64, 64], vf=[64, 64]),
+        net_arch=dict(pi=[128, 128], vf=[128, 128]),
         activation_fn=torch.nn.Tanh,
     )
 
     # Ziel: Buffergröße (n_envs * n_steps) sollte ähnlich bleiben (~8192).
     # Bei 18 CPUs ist 512 eine gute Wahl (18 * 512 = 9216 Steps pro Update).
-    n_steps_per_env = 512
+    n_steps_per_env = 1024
+    
 
     if os.path.exists(model_path):
         print(f"Lade existierendes Modell: {model_path}")
@@ -101,12 +102,12 @@ def train(constants: ConstantsTuple,  num_cpu: int):
             env,
             policy_kwargs=policy_kwargs,
             n_steps=n_steps_per_env,  # Verringert, da n_envs erhöht wurde
-            batch_size=128,           # Kann evtl. auf 256 erhöht werden bei größerem Puffer
+            batch_size=256,           # Kann evtl. auf 256 erhöht werden bei größerem Puffer
             n_epochs=10,
-            learning_rate=0.0001,
+            learning_rate=0.0003,
             gamma=1,
             gae_lambda=0.95,
-            ent_coef=0.01,
+            ent_coef=0.03,
             device="cpu",
             verbose=1,
             tensorboard_log=log_dir,
