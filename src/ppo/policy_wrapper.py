@@ -2,8 +2,7 @@ import os
 from typing import Any
 
 import numpy as np
-from ray.rllib.algorithms import Algorithm
-from stable_baselines3 import PPO
+from stable_baselines3 import DQN, PPO
 
 # Importiere deine Env-Klasse
 from purify.my_enums import Action
@@ -17,39 +16,9 @@ class PolicyWrapper:
 class SB3Agent(PolicyWrapper):
     def __init__(self, path, env):
         super().__init__("PPO AI")
-        self.model = PPO.load(path, env=env, device="cpu")
+        self.model = DQN.load(path, env=env, device="cpu")
     def predict(self, obs):
         action, _ = self.model.predict(obs, deterministic=True)
-        return action
-
-
-class RLlibAgent(PolicyWrapper):
-    def __init__(self, checkpoint_path, name="RLlib PPO"):
-        super().__init__(name)
-        print(f"Lade Ray Modell aus: {checkpoint_path}")
-        try:
-            path = os.path.join(os.getcwd(), checkpoint_path)
-            self.model = Algorithm.from_checkpoint(path)
-            self.module = self.model.get_module()
-            print("loaded Rllib Model")
-        except Exception as e:
-            print(f"Kritischer Fehler beim Laden von Ray Checkpoint: {e}")
-            self.model = None
-            self.module = None
-
-    def predict(self, obs):
-        if self.module is None:
-            print("model is none")
-            raise ValueError('Model is None')
-
-        import torch
-        obs_tensor = torch.from_numpy(np.array(obs, dtype=np.float32)).unsqueeze(0)
-        with torch.no_grad():
-            input_dict = {"obs": obs_tensor}
-            output = self.module.forward_inference(input_dict)
-            logits = output["action_dist_inputs"]
-            action = torch.argmax(logits, dim=1).item()
-        print(action)
         return action
 
 

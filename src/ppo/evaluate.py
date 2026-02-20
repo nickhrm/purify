@@ -67,8 +67,8 @@ def run_parameter_sweep():
         # "0_006" : [0.006],
         # "0_007" : [0.007],
         # "0_008" : [0.008],
-        # "0_009" : [0.009],
-        "0_01" : [0.010],
+        "0_009" : [0.009],
+        #"0_01" : [0.010],
         # "0_02" : [0.020],
         # "0_03" : [0.030],
         # "0_04" : [0.040],
@@ -99,7 +99,7 @@ def run_parameter_sweep():
         print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
 
         # Pfad dynamisch zusammenbauen
-        model_path = f"results/best/4gps_00_00_00/{model_folder}/best_model.zip"
+        model_path = f"results/dqn_best/4gps_00_03_00/{model_folder}/best_model.zip"
         # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
         batch_results = {}
 

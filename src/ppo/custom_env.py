@@ -26,7 +26,7 @@ class TrainingEnv(gym.Env):
         # [F_mem, request_is_waiting, time_since_last_request, L1_new, L2_new, L3_new]
         self.observation_space = Box(
             low=np.array([0, 0, 0, 0, 0, 0]),
-            high=np.array([1, 1, 2, 1, 1, 1]),
+            high=np.array([1, 1, 1, 1, 1, 1]),
             shape=(6,),
             dtype=np.float64,
         )
@@ -40,7 +40,7 @@ class TrainingEnv(gym.Env):
     def _get_obs(self):
         """Creates the observation state"""
         request_is_waiting = 1.0 if self.node.queue is not None else 0.0
-        time_since_last_request = self.time.get_current_time() - self.time.request_time
+        time_since_last_request = min(1,self.time.get_current_time() - self.time.request_time)
         f_mem = self.node.get_good_memory_fidelity()
 
         if self.last_generated_entanglement is not None:
@@ -97,24 +97,34 @@ class TrainingEnv(gym.Env):
                     self.last_generated_entanglement, chosen_action
                 )
             self.last_generated_entanglement = None
-
-        if not self.time.update():
-            truncated = True
-
-        self.current_event = self.time.last_event()
-
-        if self.current_event == Event.REQUEST_ARRIVAL:
-            self.node.handle_request_arrival()
-
-        if self.current_event == Event.ENTANGLEMENT_GENERATION:
-            self.last_generated_entanglement = self.node.generate_entanglement()
-
+        # Attempt to serve a request immediately after an action completes (in case an entanglement was generated and a request was waiting)
         result = self.node.serve_request()
         if result is not None:
             (teleportation_fidelity, waiting_time) = result
             terminated = True
             reward = teleportation_fidelity
 
+        # Only advance time to the next agent decision if the episode hasn't already terminated
+        if not terminated:
+            if not self.time.update():
+                truncated = True
+    
+            self.current_event = self.time.last_event()
+    
+            if self.current_event == Event.REQUEST_ARRIVAL:
+                self.node.handle_request_arrival()
+    
+            if self.current_event == Event.ENTANGLEMENT_GENERATION:
+                self.last_generated_entanglement = self.node.generate_entanglement()
+    
+            # Attempt to serve a request if a new request just arrived and there is entanglement available in memory
+            result = self.node.serve_request()
+            if result is not None:
+                (teleportation_fidelity, waiting_time) = result
+                terminated = True
+                reward = teleportation_fidelity
+
         obs, info = self._get_obs()
+        # print(obs)
 
         return obs, reward, terminated, truncated, info
