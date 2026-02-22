@@ -16,7 +16,7 @@ class PolicyWrapper:
 class SB3Agent(PolicyWrapper):
     def __init__(self, path, env):
         super().__init__("PPO AI")
-        self.model = DQN.load(path, env=env, device="cpu")
+        self.model = PPO.load(path, env=env, device="cpu")
     def predict(self, obs):
         action, _ = self.model.predict(obs, deterministic=True)
         return action

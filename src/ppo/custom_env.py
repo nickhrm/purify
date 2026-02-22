@@ -108,15 +108,15 @@ class TrainingEnv(gym.Env):
         if not terminated:
             if not self.time.update():
                 truncated = True
-    
+
             self.current_event = self.time.last_event()
-    
+
             if self.current_event == Event.REQUEST_ARRIVAL:
                 self.node.handle_request_arrival()
-    
+
             if self.current_event == Event.ENTANGLEMENT_GENERATION:
                 self.last_generated_entanglement = self.node.generate_entanglement()
-    
+
             # Attempt to serve a request if a new request just arrived and there is entanglement available in memory
             result = self.node.serve_request()
             if result is not None:
