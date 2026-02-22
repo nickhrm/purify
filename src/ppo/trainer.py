@@ -128,54 +128,7 @@ def objective(trial: optuna.Trial, constants: ConstantsTuple, num_cpu: int):
     # Optuna maximiert diesen zurückgegebenen Wert
     return mean_reward
 
-def main():
-    coherence_times = [0.08]
-    NUM_CORES_PER_RUN = 6
-    
-    # Willst du Optuna laufen lassen oder normal trainieren? 
-    # Hier ein Switch:
-    OPTIMIZE_HYPERPARAMS = False 
 
-    for coherence_time in coherence_times:
-        constants = ConstantsTuple(
-            coherence_time=coherence_time,
-            lambda_strategy=LambdaSrategy.RANDOM,
-            lambdas=(0.0, 0.0, 0.0),
-            pumping_probability=1,
-            waiting_time_sensitivity=1,
-            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,)
-        )
-        print(f"Lauf für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
-
-        if OPTIMIZE_HYPERPARAMS:
-            print("Starte Optuna Hyperparameter Optimierung...")
-            # Optuna Study erstellen (Ziel: Maximiere den Return/Reward)
-            study = optuna.create_study(direction="maximize")
-            
-            # Lambda-Funktion, um unsere Argumente an die Objective-Funktion zu übergeben
-            study.optimize(
-                lambda trial: objective(trial, constants, NUM_CORES_PER_RUN), 
-                n_trials=30,  # Anzahl der zu testenden Parameterkombinationen
-                n_jobs=1      # Paralleles Testen von Trials (hier 1, da du in PPO schon Multiprocessing nutzt)
-            )
-
-            print("\n==================================")
-            print("OPTIMIERUNG BEENDET")
-            print("Beste gefundene Parameter:")
-            print(study.best_params)
-            print(f"Bester Reward: {study.best_value}")
-            print("==================================\n")
-            
-            # TODO: Du kannst dir diese Parameter nun kopieren und fest in deine `train()`-Funktion eintragen.
-        else:
-            # Normales Training mit festen Parametern
-            train(constants, NUM_CORES_PER_RUN)
-            # train_dqn(constants)
-
-# [... deine bestehenden Funktionen train() und train_dqn() hier ...]
-
-if __name__ == "__main__":
-    main()
 def train(constants: ConstantsTuple,  num_cpu: int):
 
     model_path = f"results/all/{constants.folder_name()}/{constants.subfolder_name()}"
@@ -261,3 +214,53 @@ def train(constants: ConstantsTuple,  num_cpu: int):
     model.save(model_path)
     print("Training beendet und Modell gespeichert.")
 
+
+
+def main():
+    coherence_times = [0.08]
+    NUM_CORES_PER_RUN = 6
+    
+    # Willst du Optuna laufen lassen oder normal trainieren? 
+    # Hier ein Switch:
+    OPTIMIZE_HYPERPARAMS = False 
+
+    for coherence_time in coherence_times:
+        constants = ConstantsTuple(
+            coherence_time=coherence_time,
+            lambda_strategy=LambdaSrategy.RANDOM,
+            lambdas=(0.0, 0.0, 0.0),
+            pumping_probability=1,
+            waiting_time_sensitivity=1,
+            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,)
+        )
+        print(f"Lauf für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
+
+        if OPTIMIZE_HYPERPARAMS:
+            print("Starte Optuna Hyperparameter Optimierung...")
+            # Optuna Study erstellen (Ziel: Maximiere den Return/Reward)
+            study = optuna.create_study(direction="maximize")
+            
+            # Lambda-Funktion, um unsere Argumente an die Objective-Funktion zu übergeben
+            study.optimize(
+                lambda trial: objective(trial, constants, NUM_CORES_PER_RUN), 
+                n_trials=30,  # Anzahl der zu testenden Parameterkombinationen
+                n_jobs=1      # Paralleles Testen von Trials (hier 1, da du in PPO schon Multiprocessing nutzt)
+            )
+
+            print("\n==================================")
+            print("OPTIMIERUNG BEENDET")
+            print("Beste gefundene Parameter:")
+            print(study.best_params)
+            print(f"Bester Reward: {study.best_value}")
+            print("==================================\n")
+            
+            # TODO: Du kannst dir diese Parameter nun kopieren und fest in deine `train()`-Funktion eintragen.
+        else:
+            # Normales Training mit festen Parametern
+            train(constants, NUM_CORES_PER_RUN)
+            # train_dqn(constants)
+
+# [... deine bestehenden Funktionen train() und train_dqn() hier ...]
+
+if __name__ == "__main__":
+    main()
