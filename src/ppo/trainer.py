@@ -54,18 +54,20 @@ def sample_ppo_params(trial: optuna.Trial):
     n_epochs = trial.suggest_int("n_epochs", 3, 20)
     
     # Netzwerk-Architektur auswählen
-    net_arch_type = trial.suggest_categorical("net_arch", ["small", "medium", "large"])
+    net_arch_type = trial.suggest_categorical("net_arch", ["small", "medium", "large", "xl"])
     if net_arch_type == "small":
         net_arch = dict(pi=[64, 64], vf=[64, 64])
     elif net_arch_type == "medium":
         net_arch = dict(pi=[128, 128], vf=[128, 128])
-    else:
+    elif net_arch_type == "large":
         net_arch = dict(pi=[256, 256], vf=[256, 256])
+    else:
+        net_arch = dict(pi=[512, 512], vf=[512, 512])
+
 
     return {
         "learning_rate": learning_rate,
         "ent_coef": ent_coef,
-        "gamma": 1,
         "batch_size": batch_size,
         "n_steps": n_steps,
         "n_epochs": n_epochs,
@@ -101,6 +103,8 @@ def objective(trial: optuna.Trial, constants: ConstantsTuple, num_cpu: int):
         env,
         **kwargs,
         device="cpu",
+        gae_lambda=1,
+        gamma=1,
         verbose=0 # Verbose auf 0, um die Konsole beim Hyperparameter-Tuning nicht zu fluten
     )
 
@@ -127,7 +131,7 @@ def objective(trial: optuna.Trial, constants: ConstantsTuple, num_cpu: int):
     return mean_reward
 
 
-def train(constants: ConstantsTuple,  num_cpu: int):
+def train(constants: ConstantsTuple, num_cpu: int):
 
     model_path = f"results/all/{constants.folder_name()}/{constants.subfolder_name()}"
 
@@ -215,7 +219,7 @@ def train(constants: ConstantsTuple,  num_cpu: int):
 
 
 def main():
-    coherence_times = [0.01]
+    coherence_times = [0.02]
     NUM_CORES_PER_RUN = 6
     
     # Willst du Optuna laufen lassen oder normal trainieren? 
