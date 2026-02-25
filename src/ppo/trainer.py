@@ -49,7 +49,6 @@ def sample_ppo_params(trial: optuna.Trial):
     """
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
     ent_coef = trial.suggest_float("ent_coef", 0.00001, 0.5, log=True)
-    gae_lambda = trial.suggest_categorical("gae_lambda", [0.8, 0.9, 0.92, 0.95, 0.98, 0.99, 1.0])
     batch_size = trial.suggest_categorical("batch_size", [64, 128, 256, 512])
     n_steps = trial.suggest_categorical("n_steps", [1024, 2048, 4096, 8192])
     n_epochs = trial.suggest_int("n_epochs", 3, 20)
@@ -67,7 +66,6 @@ def sample_ppo_params(trial: optuna.Trial):
         "learning_rate": learning_rate,
         "ent_coef": ent_coef,
         "gamma": 1,
-        "gae_lambda": gae_lambda,
         "batch_size": batch_size,
         "n_steps": n_steps,
         "n_epochs": n_epochs,
@@ -115,7 +113,7 @@ def objective(trial: optuna.Trial, constants: ConstantsTuple, num_cpu: int):
         model.learn(total_timesteps=total_timesteps)
     except Exception as e:
         print(f"Fehler während des Trainings im Trial {trial.number}: {e}")
-        return -10000.0 # Schlechter Wert bei Absturz
+        return 0 # Schlechter Wert bei Absturz
     finally:
         env.close()
 
@@ -190,7 +188,7 @@ def train(constants: ConstantsTuple,  num_cpu: int):
             n_epochs=6,
             learning_rate=0.0002949643558095302,
             gamma=1,
-            gae_lambda=0.99,
+            gae_lambda=1,
             ent_coef=0.003011806764086755,
             device="cpu",
             verbose=1,
@@ -200,7 +198,7 @@ def train(constants: ConstantsTuple,  num_cpu: int):
     print("Starte Training...")
     try:
         model.learn(
-            total_timesteps=50_000_000,
+            total_timesteps=15_000_000,
             reset_num_timesteps=False,
             callback=eval_callback,
         )
@@ -217,12 +215,12 @@ def train(constants: ConstantsTuple,  num_cpu: int):
 
 
 def main():
-    coherence_times = [0.08]
+    coherence_times = [0.01]
     NUM_CORES_PER_RUN = 6
     
     # Willst du Optuna laufen lassen oder normal trainieren? 
     # Hier ein Switch:
-    OPTIMIZE_HYPERPARAMS = False 
+    OPTIMIZE_HYPERPARAMS = True
 
     for coherence_time in coherence_times:
         constants = ConstantsTuple(
