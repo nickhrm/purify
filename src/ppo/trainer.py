@@ -47,23 +47,26 @@ def sample_ppo_params(trial: optuna.Trial):
     Diese Funktion definiert den Suchraum für Optuna.
     Hier wählt Optuna für jeden Trial neue Parameterkombinationen.
     """
-    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
-    ent_coef = trial.suggest_float("ent_coef", 0.00001, 0.5, log=True)
+    learning_rate = trial.suggest_float("learning_rate", 5e-5, 5e-4, log=True)
+    ent_coef = trial.suggest_float("ent_coef", 1e-5, 0.1, log=True)
     batch_size = trial.suggest_categorical("batch_size", [64, 128, 256, 512])
-    n_steps = trial.suggest_categorical("n_steps", [1024, 2048, 4096, 8192])
-    n_epochs = trial.suggest_int("n_epochs", 3, 20)
-    
+    # Für kurze Kohärenzzeiten helfen kleinere n_steps, da Rewards seltener sind
+    n_steps = trial.suggest_categorical("n_steps", [512, 1024, 2048, 4096])
+    n_epochs = trial.suggest_int("n_epochs", 3, 15)
+    clip_range = trial.suggest_float("clip_range", 0.1, 0.4)
+    vf_coef = trial.suggest_float("vf_coef", 0.3, 1.0)
+    max_grad_norm = trial.suggest_float("max_grad_norm", 0.3, 1.0)
+
     # Netzwerk-Architektur auswählen
-    net_arch_type = trial.suggest_categorical("net_arch", ["small", "medium", "large", "xl"])
+    net_arch_type = trial.suggest_categorical("net_arch", ["small", "medium", "large", "deep_medium"])
     if net_arch_type == "small":
         net_arch = dict(pi=[64, 64], vf=[64, 64])
     elif net_arch_type == "medium":
         net_arch = dict(pi=[128, 128], vf=[128, 128])
     elif net_arch_type == "large":
         net_arch = dict(pi=[256, 256], vf=[256, 256])
-    else:
-        net_arch = dict(pi=[512, 512], vf=[512, 512])
-
+    else:  # deep_medium: 3 Schichten helfen bei dieser Zustandsstruktur
+        net_arch = dict(pi=[128, 128, 128], vf=[128, 128, 128])
 
     return {
         "learning_rate": learning_rate,
@@ -71,6 +74,9 @@ def sample_ppo_params(trial: optuna.Trial):
         "batch_size": batch_size,
         "n_steps": n_steps,
         "n_epochs": n_epochs,
+        "clip_range": clip_range,
+        "vf_coef": vf_coef,
+        "max_grad_norm": max_grad_norm,
         "policy_kwargs": dict(
             net_arch=net_arch,
             activation_fn=torch.nn.Tanh,
@@ -111,7 +117,8 @@ def objective(trial: optuna.Trial, constants: ConstantsTuple, num_cpu: int):
     # 4. Modell trainieren
     # Tipp: Für die Optimierung oft eine reduzierte Schrittzahl verwenden (z.B. 2_000_000 statt 50_000_000), 
     # damit Optuna in vernünftiger Zeit Ergebnisse liefert.
-    total_timesteps = 500_000 
+    # 1M Steps für stabilere Evaluation bei kleinen Kohärenzzeiten
+    total_timesteps = 1_000_000
     
     try:
         model.learn(total_timesteps=total_timesteps)
@@ -171,12 +178,14 @@ def train(constants: ConstantsTuple, num_cpu: int):
         deterministic=True,
     )
 
+    # Hyperparameter abgeleitet aus Umgebungsanalyse (kein Optuna nötig):
+    # - 6D Zustandsraum, 4 Aktionen → [128,128] Netz reicht völlig aus
+    # - Sparse Reward (1x/Episode) → n_steps=2048 für genug Statistik pro Update
+    # - coherence_time=0.01 → kurze Episoden, gae_lambda=gamma=1 korrekt
     policy_kwargs = dict(
-        net_arch=dict(pi=[256, 256], vf=[256, 256]),
+        net_arch=dict(pi=[128, 128], vf=[128, 128]),
         activation_fn=torch.nn.Tanh,
     )
-
-
 
     if os.path.exists(best_model_dir):
         print(f"Lade existierendes Modell: {best_model_dir}")
@@ -187,13 +196,16 @@ def train(constants: ConstantsTuple, num_cpu: int):
             "MlpPolicy",
             env,
             policy_kwargs=policy_kwargs,
-            n_steps=1024,
-            batch_size=256,
-            n_epochs=6,
-            learning_rate=0.0002949643558095302,
-            gamma=1,
-            gae_lambda=1,
-            ent_coef=0.003011806764086755,
+            n_steps=2048,       # Mehrere Episoden/Update → stabile Schätzung bei sparse reward
+            batch_size=64,      # Klein → mehr Gradientsteps pro Datensatz
+            n_epochs=10,        # PPO-Standard
+            learning_rate=3e-4, # Adam-Default, robust für stationäre Probleme
+            gamma=1.0,          # Kein Discount (Fidelity-Ziel, kein Zeitdruck)
+            gae_lambda=1.0,     # Kein Bias-Variance-Tradeoff, kurze Episoden
+            ent_coef=0.01,      # Moderate Exploration
+            clip_range=0.2,     # PPO-Standard
+            vf_coef=0.5,        # PPO-Standard
+            max_grad_norm=0.5,  # PPO-Standard
             device="cpu",
             verbose=1,
             tensorboard_log=log_dir,
@@ -219,12 +231,12 @@ def train(constants: ConstantsTuple, num_cpu: int):
 
 
 def main():
-    coherence_times = [0.02]
+    coherence_times = [0.01]
     NUM_CORES_PER_RUN = 6
     
     # Willst du Optuna laufen lassen oder normal trainieren? 
     # Hier ein Switch:
-    OPTIMIZE_HYPERPARAMS = True
+    OPTIMIZE_HYPERPARAMS = False
 
     for coherence_time in coherence_times:
         constants = ConstantsTuple(
@@ -245,8 +257,8 @@ def main():
             # Lambda-Funktion, um unsere Argumente an die Objective-Funktion zu übergeben
             study.optimize(
                 lambda trial: objective(trial, constants, NUM_CORES_PER_RUN), 
-                n_trials=30,  # Anzahl der zu testenden Parameterkombinationen
-                n_jobs=1      # Paralleles Testen von Trials (hier 1, da du in PPO schon Multiprocessing nutzt)
+                n_trials=50,  # Mehr Trials für bessere Abdeckung des Suchraums
+                n_jobs=10      # Paralleles Testen von Trials (hier 1, da du in PPO schon Multiprocessing nutzt)
             )
 
             print("\n==================================")
