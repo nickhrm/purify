@@ -178,12 +178,41 @@ def train(constants: ConstantsTuple, num_cpu: int):
         deterministic=True,
     )
 
-    # Hyperparameter abgeleitet aus Umgebungsanalyse (kein Optuna nötig):
-    # - 6D Zustandsraum, 4 Aktionen → [128,128] Netz reicht völlig aus
-    # - Sparse Reward (1x/Episode) → n_steps=2048 für genug Statistik pro Update
-    # - coherence_time=0.01 → kurze Episoden, gae_lambda=gamma=1 korrekt
+    # ─── Analytisch hergeleitete Hyperparameter für coherence_time=0.08 ──────────
+    #
+    # Umgebungsstatistiken (3000 Episoden, zufällige Policy):
+    #   mean_steps=660, std=475, P95=1566  →  alle Episoden terminieren
+    #   Var(reward)=0.00116  (sehr gering, keine Truncation)
+    #   T2/DELTA_T = 800 Steps  (Kohärenz sehr lang relativ zu Episodenlänge)
+    #
+    # n_steps = 4096:
+    #   Mit gae_lambda=1 brauchen wir vollständige Episoden (MC-Return).
+    #   4096 / 660 ≈ 6 Episoden/Rollout × 6 CPUs → ~36 Episoden pro Update.
+    #   Genug für stabile Return-Schätzung ohne Bootstrapping-Fehler.
+    #
+    # batch_size = 512:
+    #   Buffer = n_steps × num_envs = 4096 × 6 = 24576
+    #   batch_size = 512 → 48 Mini-Batches/Epoche → stabiler, sauberer Gradient.
+    #   Var(r) klein → große Batches OK, kein Extra-Rauschen nötig.
+    #
+    # n_epochs = 10:
+    #   Niedrige Reward-Varianz → Daten werden nicht schnell "veraltet".
+    #   10 Epochen nutzen jeden Rollout maximal aus ohne Policy-Drift.
+    #
+    # learning_rate = linear 3e-4 → 0:
+    #   Startwert 3e-4 bewährt (vorheriger Lauf: 0.000295 war optimal).
+    #   Linearer Decay verhindert Oszillation am Ende des Trainings.
+    #
+    # ent_coef = 0.005:
+    #   4 Aktionen → max H = ln(4)≈1.39. Kleine Entropie reicht für Exploration.
+    #   Nicht zu groß, da der Reward gut informativ ist (keine flachen Plateaus).
+    #
+    # net_arch = [256, 256]:
+    #   6D Input mit nichtlinearen Purifikations-Entscheidungsgrenzen.
+    #   "large" Architektur hat sich im Vorgänger-Lauf als beste erwiesen.
+    # ─────────────────────────────────────────────────────────────────────────────
     policy_kwargs = dict(
-        net_arch=dict(pi=[128, 128], vf=[128, 128]),
+        net_arch=dict(pi=[256, 256], vf=[256, 256]),
         activation_fn=torch.nn.Tanh,
     )
 
@@ -196,16 +225,16 @@ def train(constants: ConstantsTuple, num_cpu: int):
             "MlpPolicy",
             env,
             policy_kwargs=policy_kwargs,
-            n_steps=2048,       # Kleiner → häufigere Updates, besser für kurze Episoden
-            batch_size=64,      # Klein → mehr Gradientsteps pro Datensatz
-            n_epochs=10,        # PPO-Standard
+            n_steps=4096,       # ~6 Episoden/Rollout × 6 CPUs → stabile MC-Returns
+            batch_size=512,     # 24576 Buffer / 512 → 48 Mini-Batches/Epoche
+            n_epochs=10,        # Niedrige Reward-Varianz → viele Epochen sicher
             learning_rate=lambda progress: 3e-4 * progress,  # Linearer Decay: 3e-4 → 0
-            gamma=1.0,          # Kein Discount (Fidelity-Ziel, kein Zeitdruck)
-            gae_lambda=1.0,     # Kein Bias-Variance-Tradeoff, kurze Episoden
-            ent_coef=0.2,
-            clip_range=0.2,     # PPO-Standard
+            gamma=1.0,          # Kein Discount (einmaliger Endreward)
+            gae_lambda=1.0,     # MC-Return (kein Bootstrapping-Bias)
+            ent_coef=0.005,     # Leichte Exploration bei 4 Aktionen
+            clip_range=0.2,     # PPO-Standard, bei kleiner Reward-Varianz ausreichend
             vf_coef=0.5,        # PPO-Standard
-            max_grad_norm=0.5,  # PPO-Standard
+            max_grad_norm=0.5,  # Verhindert exploding gradients
             device="cpu",
             verbose=1,
             tensorboard_log=log_dir,
@@ -231,7 +260,7 @@ def train(constants: ConstantsTuple, num_cpu: int):
 
 
 def main():
-    coherence_times = [0.03]
+    coherence_times = [0.08]
     NUM_CORES_PER_RUN = 6
     
     # Willst du Optuna laufen lassen oder normal trainieren? 
