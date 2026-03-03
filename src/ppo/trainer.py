@@ -202,7 +202,7 @@ def train(constants: ConstantsTuple, num_cpu: int):
             learning_rate=lambda progress: 3e-4 * progress,  # Linearer Decay: 3e-4 → 0
             gamma=1.0,          # Kein Discount (Fidelity-Ziel, kein Zeitdruck)
             gae_lambda=1.0,     # Kein Bias-Variance-Tradeoff, kurze Episoden
-            ent_coef=lambda progress: 0.05 * progress,  # Linearer Decay: 0.05 → 0 (Exploration → Exploitation)
+            ent_coef=0.2,
             clip_range=0.2,     # PPO-Standard
             vf_coef=0.5,        # PPO-Standard
             max_grad_norm=0.5,  # PPO-Standard
@@ -231,7 +231,7 @@ def train(constants: ConstantsTuple, num_cpu: int):
 
 
 def main():
-    coherence_times = [0.02]
+    coherence_times = [0.03]
     NUM_CORES_PER_RUN = 6
     
     # Willst du Optuna laufen lassen oder normal trainieren? 
@@ -241,11 +241,11 @@ def main():
     for coherence_time in coherence_times:
         constants = ConstantsTuple(
             coherence_time=coherence_time,
-            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
-            lambdas=(0.3, 0.0, 0.0),
+            lambda_strategy=LambdaSrategy.RANDOM,
+            lambdas=(0.0, 0.0, 0.0),
             pumping_probability=1,
             waiting_time_sensitivity=1,
-            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,Action.PMD)
+            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,)
         )
         print(f"Lauf für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
 
