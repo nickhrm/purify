@@ -160,12 +160,12 @@ def train(constants: ConstantsTuple, num_cpu: int):
     best_model_dir = f"results/best/{constants.folder_name()}/{constants.subfolder_name()}/"
 
     stop_train_callback = CustomStopCallback(
-        max_no_improvement_evals=160,
+        max_no_improvement_evals=400,
         min_evals=200,
         verbose=1,
         param_label=constants.subfolder_name()
     )
-    desired_total_steps_per_eval = 40000
+    desired_total_steps_per_eval = 20000
     actual_eval_freq = max(1, desired_total_steps_per_eval // num_cpu)
 
     eval_callback = EvalCallback(
@@ -196,13 +196,13 @@ def train(constants: ConstantsTuple, num_cpu: int):
             "MlpPolicy",
             env,
             policy_kwargs=policy_kwargs,
-            n_steps=2048,       # Mehrere Episoden/Update → stabile Schätzung bei sparse reward
+            n_steps=2048,       # Kleiner → häufigere Updates, besser für kurze Episoden
             batch_size=64,      # Klein → mehr Gradientsteps pro Datensatz
             n_epochs=10,        # PPO-Standard
-            learning_rate=3e-4, # Adam-Default, robust für stationäre Probleme
+            learning_rate=lambda progress: 3e-4 * progress,  # Linearer Decay: 3e-4 → 0
             gamma=1.0,          # Kein Discount (Fidelity-Ziel, kein Zeitdruck)
             gae_lambda=1.0,     # Kein Bias-Variance-Tradeoff, kurze Episoden
-            ent_coef=0.01,      # Moderate Exploration
+            ent_coef=lambda progress: 0.05 * progress,  # Linearer Decay: 0.05 → 0 (Exploration → Exploitation)
             clip_range=0.2,     # PPO-Standard
             vf_coef=0.5,        # PPO-Standard
             max_grad_norm=0.5,  # PPO-Standard
@@ -214,7 +214,7 @@ def train(constants: ConstantsTuple, num_cpu: int):
     print("Starte Training...")
     try:
         model.learn(
-            total_timesteps=15_000_000,
+            total_timesteps=30_000_000,
             reset_num_timesteps=False,
             callback=eval_callback,
         )
@@ -231,7 +231,7 @@ def train(constants: ConstantsTuple, num_cpu: int):
 
 
 def main():
-    coherence_times = [0.01]
+    coherence_times = [0.02]
     NUM_CORES_PER_RUN = 6
     
     # Willst du Optuna laufen lassen oder normal trainieren? 
@@ -241,11 +241,11 @@ def main():
     for coherence_time in coherence_times:
         constants = ConstantsTuple(
             coherence_time=coherence_time,
-            lambda_strategy=LambdaSrategy.RANDOM,
-            lambdas=(0.0, 0.0, 0.0),
+            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            lambdas=(0.3, 0.0, 0.0),
             pumping_probability=1,
             waiting_time_sensitivity=1,
-            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,)
+            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,Action.PMD)
         )
         print(f"Lauf für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
 

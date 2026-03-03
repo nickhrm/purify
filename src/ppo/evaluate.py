@@ -74,9 +74,9 @@ def run_parameter_sweep():
         # "0_05": [0.05],
         # "0_06": [0.06],
         # "0_07": [0.07],
-        "0_08": [0.05, 0.04, 0.06, 0.07, 0.08, 0.09, 0.1],
+        # "0_08": [0.05, 0.04, 0.06, 0.07, 0.08, 0.09, 0.1],
         # "0_09": [0.09],
-        # "0_1": [0.1],
+        "0_1": [0.1],
 
 
 # 0.02, 0.03, 0.04, 0.06, 0.06, 0.08
@@ -109,7 +109,7 @@ def run_parameter_sweep():
             # Environment Setup
             current_constants = ConstantsTuple(
                 coherence_time=t_coh,
-                lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+                lambda_strategy=LambdaSrategy.RANDOM,
                 waiting_time_sensitivity=1,
                 pumping_probability=1.0,
                 lambdas=(0.0, 0.3, 0.0),
