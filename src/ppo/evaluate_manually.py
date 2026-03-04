@@ -25,6 +25,8 @@ def analyze_fidelity_dependency(
             Action.PROT_2,
             Action.PROT_3,
         ),
+        min_fidelity=0.7,
+        max_fidelity=0.7,
     )
     env = TrainingEnv(temp_constants)
 

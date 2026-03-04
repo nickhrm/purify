@@ -2,165 +2,126 @@ import csv
 import os
 from collections import Counter
 
-# Deine Imports
+from ppo.case_studies import CASE_STUDIES, CaseStudy
 from ppo.custom_env import TrainingEnv
 from ppo.policy_wrapper import SB3Agent, FixedActionAgent
-from purify.constants_tuple import ConstantsTuple
-from purify.my_enums import Action, LambdaSrategy
+from ppo.trainer import case_study_root, coherence_time_folder
 
 
-def save_average_f(times, results, filename="sweep_results.csv"):
+def save_evaluation_results(case_study_id: int, rows: list[dict]) -> None:
     """
-    Speichert die Ergebnisse im Format: coherence_time, fidelity, model.
-    Hängt Daten an, wenn die Datei schon existiert (Append-Modus).
+    Schreibt / hängt Evaluierungsergebnisse an
+    results/case_study_{id}/evaluation.csv an.
     """
+    root = case_study_root(case_study_id)
+    os.makedirs(root, exist_ok=True)
+    filename = os.path.join(root, "evaluation.csv")
     file_exists = os.path.isfile(filename)
 
-    # mode='a' für Append
-    with open(filename, mode="a", newline="") as file:
-        writer = csv.writer(file)
-
-        # Header nur schreiben, wenn Datei neu ist
+    with open(filename, mode="a", newline="") as f:
+        fieldnames = ["case_study_id", "coherence_time", "model", "avg_reward"]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         if not file_exists:
-            writer.writerow(["coherence_time", "fidelity", "model"])
+            writer.writeheader()
+        writer.writerows(rows)
 
-        # Iteriere über alle Modelle in diesem Batch
-        for model_name, fidelities in results.items():
-            # Sicherstellen, dass wir Daten haben
-            if not fidelities:
-                continue
-
-            # Wir nutzen zip, um Zeit und Fidelity zu paaren
-            # times muss hier exakt so lang sein wie fidelities
-            for t, fid in zip(times, fidelities):
-                writer.writerow([t, fid, model_name])
-
-    print(f"Daten an {filename} angehängt.")
+    print(f"Ergebnisse gespeichert: {filename}")
 
 
-def save_action_distribution(action_counts, coherence_time, model, filename="action_prob.csv"):
+def save_action_distribution(
+    action_counts: Counter,
+    coherence_time: float,
+    model_name: str,
+    case_study_id: int,
+    filename: str = "action_prob.csv",
+) -> None:
     file_exists = os.path.isfile(filename)
-
     total_actions = sum(action_counts.values())
 
-    with open(filename, mode="a", newline="") as file:
-        writer = csv.writer(file)
-
-        # Header only if file is new
+    with open(filename, mode="a", newline="") as f:
+        writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["model", "coherence_time", "action", "count", "percentage"])
-
+            writer.writerow(["case_study_id", "model", "coherence_time", "action", "count", "percentage"])
         for action_name, count in action_counts.items():
             percentage = (count / total_actions) * 100 if total_actions > 0 else 0
-            writer.writerow([model, coherence_time, action_name, count, percentage])
+            writer.writerow([case_study_id, model_name, coherence_time, action_name, count, percentage])
 
 
+# ─── Haupt-Evaluierungs-Funktion ──────────────────────────────────────────────
 
-def run_parameter_sweep():
-    # Dein Test-Szenario
-    test_config = {
-        # "0_001" : [0.001],
-        # "0_002" : [0.002],
-        # "0_003" : [0.003],
-        # "0_004" : [0.004],
-        # "0_005" : [0.005],
-        # "0_006" : [0.006],
-        # "0_007" : [0.007],
-        # "0_008" : [0.008],
-        # "0_009" : [0.009],
-        # "0_01" : [0.02],
-        # "0_03" : [0.030],
-        # "0_04" : [0.040],
-        # "0_05": [0.05],
-        # "0_06": [0.06],
-        # "0_07": [0.07],
-        "0_08_v1": [0.04],
-        # "0_09": [0.09],
-        # "0_1": [0.1],
+def evaluate_case_study(case_study_id: int, n_episodes: int = 1200) -> None:
+    """
+    Evaluiert alle Kohärenzzeiten einer Case Study.
+    Pro coherence_time werden sowohl best_model.zip als auch end_model.zip getestet
+    (falls vorhanden).
 
+    Ergebnisse landen in:
+      results/case_study_{id}/evaluation.csv
+    """
+    case_study = CASE_STUDIES[case_study_id]
+    print(f"\n{'═' * 55}")
+    print(f"  Evaluiere Case Study {case_study_id}")
+    print(f"  Kohärenzzeiten: {case_study.coherence_times}")
+    print(f"  Episoden pro Modell: {n_episodes}")
+    print(f"{'═' * 55}\n")
 
-# 0.02, 0.03, 0.04, 0.06, 0.06, 0.08
-    }
+    all_rows: list[dict] = []
 
+    for coherence_time in case_study.coherence_times:
+        constants = case_study.make_constants(coherence_time)
+        ct_folder = coherence_time_folder(case_study_id, coherence_time)
+        ct_str = CaseStudy.coherence_time_str(coherence_time)
+        print(f"\n--- T_coh = {coherence_time} ({ct_str}) ---")
 
-    N_EPISODES = 1200
-    CSV_FILENAME = "sweep_results.csv"
+        # Kandidaten: best_model und end_model
+        model_candidates = {
+            "best_model": os.path.join(ct_folder, "best_model.zip"),
+            "end_model": os.path.join(ct_folder, "end_model.zip"),
+        }
 
-    # Falls die Datei vom vorherigen Run noch da ist und stört,
-    # könnte man sie hier löschen. Wenn du sammeln willst, lass es so.
-    # if os.path.exists(CSV_FILENAME):
-    #     os.remove(CSV_FILENAME)
+        env = TrainingEnv(constants)
 
-    print(f"Starte Sweep über {len(test_config)} Modell-Konfigurationen...")
+        for model_label, model_path in model_candidates.items():
+            if not os.path.exists(model_path):
+                print(f"  ⚠️  {model_label} nicht gefunden, übersprungen: {model_path}")
+                continue
 
-    # 1. ÄUSSERE SCHLEIFE: Iteriere über die Modelle (Keys)
-    for model_folder, times_list in test_config.items():
-        print(f"\n--- Teste Modell aus Ordner: {model_folder} ---")
+            print(f"  Evaluiere {model_label}...", end="", flush=True)
+            agent = SB3Agent(model_path, env)
+            action_counts = Counter()
+            total_reward = 0.0
 
-        # Pfad dynamisch zusammenbauen
-        model_path = f"results/all/4gps_00_00_00/{model_folder}.zip"
-        # Temporärer Speicher für DIESEN Batch (nur dieses Modell + Baselines für diese Zeiten)
-        batch_results = {}
+            for _ in range(n_episodes):
+                obs, _ = env.reset()
+                done = False
+                while not done:
+                    action = agent.predict(obs)
+                    action_name = constants.actions[action]
+                    action_counts[action_name] += 1
+                    obs, reward, terminated, truncated, _ = env.step(action)
+                    total_reward += reward
+                    done = terminated or truncated
 
-        # 2. INNERE SCHLEIFE: Iteriere über die Zeiten für dieses Modell
-        for t_coh in times_list:
-            print(f"  Evaluating T_coh = {t_coh}...", end="\r")
+            avg_reward = total_reward / n_episodes
+            print(f"  avg_reward = {avg_reward:.4f}")
 
-            # Environment Setup
-            current_constants = ConstantsTuple(
-                coherence_time=t_coh,
-                lambda_strategy=LambdaSrategy.USE_CONSTANTS,
-                waiting_time_sensitivity=1,
-                pumping_probability=1.0,
-                lambdas=(0.0, 0.0, 0.3),
-                actions=(Action.REPLACE, Action.PROT_1,Action.PROT_2, Action.PROT_3,),
-                min_fidelity=0.7,
-                max_fidelity=0.7,
+            save_action_distribution(
+                action_counts,
+                coherence_time,
+                model_label,
+                case_study_id,
             )
-            env = TrainingEnv(current_constants)
 
-            policies = [
-                SB3Agent(model_path, env),
-                # FixedActionAgent(Action.REPLACE),
-                # FixedActionAgent(Action.PROT_1),
-                # FixedActionAgent(Action.PROT_2),
-                # FixedActionAgent(Action.PROT_3),
-                # FixedActionAgent(Action.PMD)
-            ]
+            all_rows.append({
+                "case_study_id": case_study_id,
+                "coherence_time": coherence_time,
+                "model": model_label,
+                "avg_reward": avg_reward,
+            })
 
-            # Evaluation Loop
-            for policy in policies:
-                if policy.name not in batch_results:
-                    batch_results[policy.name] = []
-
-                total_reward = 0.0
-                action_counts = Counter()
-                for _ in range(N_EPISODES):
-                    obs, _ = env.reset()
-                    done = False
-                    while not done:
-                        action = policy.predict(obs)
-                        action_name = current_constants.actions[action]
-                        action_counts[action_name] += 1
-                        # save_action_distribution(Action(action).name, current_constants.coherence_time, policy.name)
-                        obs, reward, terminated, truncated, info = env.step(action)
-                        # if(info["time_since_last_request"] != 0):
-                        #     print(info["time_since_last_request"])
-                        total_reward += reward
-                        done = terminated or truncated
-                # Save aggregated action stats for this policy & coherence_time
-                save_action_distribution(action_counts, current_constants.coherence_time, policy.name)
-
-                avg_reward = total_reward / N_EPISODES
-                batch_results[policy.name].append(avg_reward)
-
-        # 3. SPEICHERN: Nach jedem Modell-Block schreiben wir in die CSV
-        # times_list sind die X-Werte, batch_results die Y-Werte für diesen Block
-        save_average_f(times_list, batch_results, CSV_FILENAME)
-
-    print("\nSweep beendet.")
+    save_evaluation_results(case_study_id, all_rows)
+    print(f"\n✅ Evaluierung Case Study {case_study_id} abgeschlossen.")
 
 
 if __name__ == "__main__":
-    run_parameter_sweep()
-
+    evaluate_case_study(case_study_id=1, n_episodes=1200)

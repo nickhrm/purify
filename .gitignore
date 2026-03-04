@@ -13,8 +13,6 @@ wheels/
 /results
 *.csv
 
-*.zip
-
 
 /ppo_results
 /ppo_results_rllib/**
