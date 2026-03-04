@@ -15,6 +15,8 @@ class HyperparamsTuple:
     clip_range: float
     vf_coef: float
     max_grad_norm: float
+    pi_layers: list[int]
+    vf_layers: list[int]
 
     def to_dict(self) -> dict:
         return {
@@ -28,5 +30,5 @@ class HyperparamsTuple:
             "clip_range": self.clip_range,
             "vf_coef": self.vf_coef,
             "max_grad_norm": self.max_grad_norm,
-            "policy_kwargs": {"net_arch": {"pi": [256, 256], "vf": [256, 256]}, "activation_fn": "Tanh"}
+            "policy_kwargs": {"net_arch": {"pi": self.pi_layers, "vf": self.vf_layers}, "activation_fn": "Tanh"}
         }

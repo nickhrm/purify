@@ -161,7 +161,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
         model = PPO(
             "MlpPolicy",
             env,
-            policy_kwargs=dict(net_arch=dict(pi=[256, 256], vf=[256, 256]), activation_fn=torch.nn.Tanh),
+            policy_kwargs=dict(net_arch=dict(pi=h.pi_layers, vf=h.vf_layers), activation_fn=torch.nn.Tanh),
             n_steps=h.n_steps,
             batch_size=h.batch_size,
             n_epochs=h.n_epochs,
