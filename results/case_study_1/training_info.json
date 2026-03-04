@@ -1,0 +1,49 @@
+{
+  "case_study_id": 1,
+  "created_at": "2026-03-04T13:06:49",
+  "note": "coherence_time ist nicht hier gespeichert – sie variiert je Unterordner.",
+  "constants": {
+    "pumping_probability": 1,
+    "waiting_time_sensitivity": 1,
+    "lambda_strategy": "RANDOM",
+    "lambdas": [
+      0.3,
+      0.0,
+      0.0
+    ],
+    "actions": [
+      "REPLACE",
+      "PROT_1",
+      "PROT_2",
+      "PROT_3"
+    ],
+    "min_fidelity": 0.7,
+    "max_fidelity": 0.7
+  },
+  "coherence_times": [],
+  "hyperparams": {
+    "n_steps": 1024,
+    "batch_size": 256,
+    "n_epochs": 6,
+    "learning_rate": 0.00029496,
+    "gamma": 1.0,
+    "gae_lambda": 0.99,
+    "ent_coef": 0.003011806764086755,
+    "clip_range": 0.2,
+    "vf_coef": 0.5,
+    "max_grad_norm": 0.5,
+    "policy_kwargs": {
+      "net_arch": {
+        "pi": [
+          256,
+          256
+        ],
+        "vf": [
+          256,
+          256
+        ]
+      },
+      "activation_fn": "Tanh"
+    }
+  }
+}
