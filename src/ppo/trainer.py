@@ -229,7 +229,9 @@ def main():
             lambdas=(0.3, 0.0, 0.0),
             pumping_probability=1,
             waiting_time_sensitivity=1,
-            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,Action.PMD)
+            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,Action.PMD),
+            min_fidelity=0.7,
+            max_fidelity=0.7,
         )
         print(f"Lauf für coherence time: {coherence_time} mit {NUM_CORES_PER_RUN} Cores")
         train(constants, NUM_CORES_PER_RUN)

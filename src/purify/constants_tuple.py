@@ -6,10 +6,21 @@ from purify.my_enums import LambdaSrategy, Action
 class ConstantsTuple(NamedTuple):
     coherence_time: float
     pumping_probability: float
-    waiting_time_sensitivity:float
+    waiting_time_sensitivity: float
     lambda_strategy: LambdaSrategy
+
+    # Nur relevant für LambdaSrategy.USE_CONSTANTS und RANDOM_WITH_LARGEST_LAMBDA:
+    # Bei USE_CONSTANTS werden alle drei Werte direkt als λ₁, λ₂, λ₃ verwendet.
+    # Bei RANDOM_WITH_LARGEST_LAMBDA wird nur lambdas[0] (λ₁) genutzt;
+    # λ₂ und λ₃ werden zufällig aus dem verbleibenden Raum generiert.
     lambdas: tuple[float, float, float]
+
     actions: tuple[Action, ...]
+
+    # Nur relevant für LambdaSrategy.RANDOM:
+    # Definiert den Bereich, aus dem die initiale Fidelity gleichverteilt gezogen wird.
+    min_fidelity: float
+    max_fidelity: float
 
     def folder_name(self) -> str:
         return f"{len(self.actions)}gps_{str(self.lambdas[0]).replace(".","")}_{str(self.lambdas[1]).replace(".","")}_{str(self.lambdas[2]).replace(".","")}"
