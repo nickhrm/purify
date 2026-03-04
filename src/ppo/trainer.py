@@ -130,7 +130,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
         max_no_improvement_evals=400,
         min_evals=200,
         verbose=1,
-        param_label=CaseStudy.coherence_time_str(coherence_time),
+        param_label=f"CS{case_study_id}-{CaseStudy.coherence_time_str(coherence_time)}",
     )
 
     actual_eval_freq = max(1, 20_000 // num_cpu)
@@ -206,7 +206,7 @@ def main():
     # Beispiel Laptop: COHERENCE_TIMES = [0.09]
     # ──────────────────────────────────────────────────────────────────────────
     CASE_STUDY_ID = 1
-    COHERENCE_TIMES = CASE_STUDIES[CASE_STUDY_ID].coherence_times  # alle; nach Bedarf kürzen
+    COHERENCE_TIMES = [0.01, 0.02, 0.03, ]
     NUM_CORES_PER_RUN = 6
 
     for coherence_time in COHERENCE_TIMES:
