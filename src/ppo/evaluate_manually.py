@@ -10,7 +10,7 @@ from purify.my_enums import Action, LambdaSrategy
 def analyze_fidelity_dependency(
     coherence_time=0.05, output_file="fidelity_analysis.csv"
 ):
-    model_path = f"results/all/4gps_00_00_00/0_08.zip"
+    model_path = f"results/case_study_1/T0_01/best_model.zip"
 
     # 1. Setup Environment & Agent
     temp_constants = ConstantsTuple(
@@ -50,7 +50,7 @@ def analyze_fidelity_dependency(
         for fid in fidelities:
             # 3. KÜNSTLICHE OBSERVATION
             # Dein definierter State-Vektor
-            obs = np.array([fid, 0.0, waiting_time, 0.3, 0.0, 0.0], dtype=np.float32)
+            obs = np.array([fid, 0.0, waiting_time, 0.3, 0.0, 0.0], dtype=np.float64)
 
             # 4. PROBABILITIES EXTRAHIEREN
             obs_tensor = torch.as_tensor(obs).unsqueeze(0).to(model.device)
