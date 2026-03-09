@@ -68,4 +68,32 @@ CASE_STUDIES: dict[int, CaseStudy] = {
         ),
         coherence_times=[0.01, 0.05, 0.09],
     ),
+    2: CaseStudy(
+        id=2,
+        constants=ConstantsTuple(
+            coherence_time=0.0,   # Platzhalter – wird per make_constants() überschrieben
+            pumping_probability=1,
+            waiting_time_sensitivity=1,
+            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            lambdas=(0.0, 0.3, 0.0),
+            actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3,),
+            min_fidelity=0.7,
+            max_fidelity=0.7,
+        ),
+        hyperparams=HyperparamsTuple(
+            n_steps=1024,
+            batch_size=256,
+            n_epochs=6,
+            learning_rate=2.9496e-4,
+            gamma=1.0,
+            gae_lambda=0.99,
+            ent_coef=0.003011806764086755,
+            clip_range=0.2,
+            vf_coef=0.5,
+            max_grad_norm=0.5,
+            pi_layers=[256, 256],
+            vf_layers=[256, 256],
+        ),
+        coherence_times=[0.02, 0.03, 0.04, 0.06, 0.07, 0.08, 0.1],
+    ),
 }
