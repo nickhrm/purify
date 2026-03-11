@@ -22,7 +22,6 @@ class Node:
     def __init__(self, time: Time, constants: ConstantsTuple) -> None:
         self.time = time
         self.good_memory: Entanglement | None = None
-        self.bad_memory: Entanglement | None = None
         self.queue: Qubit | None = None
         self.constants: ConstantsTuple = constants
 
@@ -50,13 +49,6 @@ class Node:
             < entanglement.get_current_fidelity()
         ):
             self.good_memory = entanglement
-        else:
-            if (
-                self.bad_memory is None
-                or self.bad_memory.get_current_fidelity()
-                < entanglement.get_current_fidelity()
-            ):
-                self.bad_memory = entanglement
 
     def _pump(self, new_entanglement: Entanglement, action: Action):
         good_memory = cast(Entanglement, self.good_memory)
@@ -76,8 +68,6 @@ class Node:
         else:
             self.good_memory = None
             logger.info("Purification failed")
-
-        self.bad_memory = None
 
     def generate_entanglement(self) -> Entanglement | None:
         generation_successful = bernouli_with_probability_is_successfull(P_G)
@@ -120,10 +110,6 @@ class Node:
             self.queue = None
             # discard link in good_memory
             self.good_memory = None
-            # put bad_memory entanglement in good_memory
-            if self.bad_memory is not None:
-                self.good_memory = self.bad_memory
-                self.bad_memory = None
             return (teleportation_fidelity, waiting_time)
 
     def get_good_memory_fidelity(self) -> float:
