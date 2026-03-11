@@ -25,32 +25,33 @@ class Node:
         self.queue: Qubit | None = None
         self.constants: ConstantsTuple = constants
 
-    def handle_existing_entanglement(
-        self, entanglement: Entanglement, action: Action
-    ) -> None:
-        """Verarbeitet ein bereits generiertes Paar basierend auf der Agenten-Action."""
-        if entanglement is None:
-            return
+    def needs_agent_decision(self) -> bool:
+        """True when good_memory is occupied and the agent must choose
+        between REPLACE and PUMP for the newly arrived entanglement.
+        False when good_memory is empty – the entanglement is stored
+        automatically without any meaningful choice."""
+        return self.good_memory is not None
 
-        # If good memory is empty, just put new entanglement there
-        if self.good_memory is None:
-            self.good_memory = entanglement
+    def store_first_entanglement(self, entanglement: Entanglement) -> None:
+        """Store entanglement when good_memory is empty (no agent decision needed).
+        Precondition: needs_agent_decision() is False."""
+        assert self.good_memory is None, "store_first_entanglement called with occupied memory"
+        self.good_memory = entanglement
 
-        elif action == Action.REPLACE:
+    def apply_action(self, entanglement: Entanglement, action: Action) -> None:
+        """Apply the agent's chosen action against the existing good_memory.
+        Precondition: needs_agent_decision() is True."""
+        assert self.good_memory is not None, "apply_action called with empty memory"
+        if action == Action.REPLACE:
             self._keep_best(entanglement)
-
         else:
             self._pump(entanglement, action)
 
-    def _keep_best(self, entanglement) -> None:
-        if (
-            self.good_memory is None
-            or self.good_memory.get_current_fidelity()
-            < entanglement.get_current_fidelity()
-        ):
+    def _keep_best(self, entanglement: Entanglement) -> None:
+        if self.good_memory.get_current_fidelity() < entanglement.get_current_fidelity():
             self.good_memory = entanglement
 
-    def _pump(self, new_entanglement: Entanglement, action: Action):
+    def _pump(self, new_entanglement: Entanglement, action: Action) -> None:
         good_memory = cast(Entanglement, self.good_memory)
         success_probability = Purification.success_probability_from_action(
             good_memory, new_entanglement, action
@@ -64,10 +65,10 @@ class Node:
                 self.time, fidelity_after_pumping, self.constants.coherence_time
             )
             logger.info("purification was successful")
-
         else:
             self.good_memory = None
             logger.info("Purification failed")
+
 
     def generate_entanglement(self) -> Entanglement | None:
         generation_successful = bernouli_with_probability_is_successfull(P_G)
@@ -78,7 +79,7 @@ class Node:
             logger.info("Entanglement Generation Failed")
             return None
 
-    def handle_request_arrival(self):
+    def put_request_in_queue(self):
         # fill queue if empty
         if self.queue is None:
             self.queue = Qubit(self.time, self.constants)
@@ -86,7 +87,7 @@ class Node:
             # if queue was already full, request is dropped
             logger.info("Serving request failed. queue was already full")
 
-    def serve_request(self) -> tuple[float, float] | None:
+    def serve_request_if_available(self) -> tuple[float, float] | None:
         if self.queue is None:
             return None
 
@@ -100,15 +101,12 @@ class Node:
                 self.queue.get_waiting_time(),
                 self.queue.get_current_fidelity(),
             )
-            # write_results_csv(
-            #     teleportation_fidelity, self.queue.get_waiting_time(), self.constants
-            # )
 
             waiting_time = self.queue.get_waiting_time()
 
             # remove qubit from queue, because it was served
             self.queue = None
-            # discard link in good_memory
+            # discard link in good_memory, because it was used
             self.good_memory = None
             return (teleportation_fidelity, waiting_time)
 

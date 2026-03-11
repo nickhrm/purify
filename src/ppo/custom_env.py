@@ -75,17 +75,26 @@ class TrainingEnv(gym.Env):
         self.last_generated_entanglement = None
         self.current_event = None
 
-        # Advance internally until the first ENTANGLEMENT_GENERATION so the
-        # agent is only ever queried when there is an entanglement to act on.
+        # Advance internally until the agent has a real decision to make:
+        # i.e. an entanglement arrived AND good_memory is already occupied.
         while True:
             if not self.time.update():
-                break  # Time exhausted before any entanglement – edge case
+                break  # Time exhausted before any meaningful decision – edge case
             self.current_event = self.time.last_event()
             if self.current_event == Event.REQUEST_ARRIVAL:
-                self.node.handle_request_arrival()
+                self.node.put_request_in_queue()
             elif self.current_event == Event.ENTANGLEMENT_GENERATION:
-                self.last_generated_entanglement = self.node.generate_entanglement()
-                break
+                entanglement = self.node.generate_entanglement()
+                if entanglement is None:
+                    # Generation failed – no decision possible, keep waiting
+                    continue
+                if self.node.needs_agent_decision():
+                    # Agent has a real choice: REPLACE vs PUMP
+                    self.last_generated_entanglement = entanglement
+                    break
+                else:
+                    # good_memory is empty – store automatically, no choice needed
+                    self.node.store_first_entanglement(entanglement)
 
         obs, info = self._get_obs()
         return obs, info
@@ -95,26 +104,22 @@ class TrainingEnv(gym.Env):
         terminated = False
         truncated = False
 
-        # Invariant: agent is only called when current_event == ENTANGLEMENT_GENERATION,
-        # so the chosen action always has a causal effect on the simulation.
+        # Invariant: agent is only called when needs_agent_decision() is True,
+        # i.e. an entanglement arrived AND good_memory is already occupied.
         chosen_action: Action = self.constants.actions[action]
-
-        if self.last_generated_entanglement is not None:
-            self.node.handle_existing_entanglement(
-                self.last_generated_entanglement, chosen_action
-            )
+        self.node.apply_action(self.last_generated_entanglement, chosen_action)
         self.last_generated_entanglement = None
 
         # Try to serve a request immediately after the action
-        result = self.node.serve_request()
+        result = self.node.serve_request_if_available()
         if result is not None:
             (teleportation_fidelity, waiting_time) = result
             terminated = True
             reward = teleportation_fidelity
 
-        # Advance internally through non-entanglement events until the next
-        # ENTANGLEMENT_GENERATION (or episode end). The agent is NOT consulted
-        # for REQUEST_ARRIVAL or other intermediate events.
+        # Advance internally through events until the agent has a real decision.
+        # The agent is NOT consulted for REQUEST_ARRIVAL, failed generations,
+        # or when good_memory is empty (no meaningful choice).
         if not terminated:
             while True:
                 if not self.time.update():
@@ -124,9 +129,9 @@ class TrainingEnv(gym.Env):
                 self.current_event = self.time.last_event()
 
                 if self.current_event == Event.REQUEST_ARRIVAL:
-                    self.node.handle_request_arrival()
+                    self.node.put_request_in_queue()
                     # A new request may immediately be serveable with existing memory
-                    result = self.node.serve_request()
+                    result = self.node.serve_request_if_available()
                     if result is not None:
                         (teleportation_fidelity, waiting_time) = result
                         terminated = True
@@ -134,8 +139,24 @@ class TrainingEnv(gym.Env):
                         break
 
                 elif self.current_event == Event.ENTANGLEMENT_GENERATION:
-                    self.last_generated_entanglement = self.node.generate_entanglement()
-                    break  # Hand control back to the agent
+                    entanglement = self.node.generate_entanglement()
+                    if entanglement is None:
+                        # Generation failed – keep advancing
+                        continue
+                    if self.node.needs_agent_decision():
+                        # Agent has a real choice: REPLACE vs PUMP
+                        self.last_generated_entanglement = entanglement
+                        break
+                    else:
+                        # good_memory is empty – store automatically, no choice needed
+                        self.node.store_first_entanglement(entanglement)
+                        # Check if we can now serve a waiting request
+                        result = self.node.serve_request_if_available()
+                        if result is not None:
+                            (teleportation_fidelity, waiting_time) = result
+                            terminated = True
+                            reward = teleportation_fidelity
+                            break
 
         obs, info = self._get_obs()
         return obs, reward, terminated, truncated, info
