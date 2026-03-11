@@ -37,12 +37,12 @@ class Node:
             self.good_memory = entanglement
 
         elif action == Action.REPLACE:
-            self._replace(entanglement)
+            self._keep_best(entanglement)
 
         else:
             self._pump(entanglement, action)
 
-    def _replace(self, entanglement) -> None:
+    def _keep_best(self, entanglement) -> None:
         if (
             self.good_memory is None
             or self.good_memory.get_current_fidelity()
