@@ -206,7 +206,7 @@ def main():
     # Beispiel Laptop: COHERENCE_TIMES = [0.09]
     # ──────────────────────────────────────────────────────────────────────────
     CASE_STUDY_ID = 1
-    COHERENCE_TIMES = [0.02, 0.03, 0.005, 0.006, 0.007, 0.009]  # alle; nach Bedarf kürzen
+    COHERENCE_TIMES = CASE_STUDIES[CASE_STUDY_ID].coherence_times
     NUM_CORES_PER_RUN = 6
 
     for coherence_time in COHERENCE_TIMES:
