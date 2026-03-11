@@ -12,7 +12,7 @@ wheels/
 *.log
 *.csv
 
-
+/results
 /ppo_results
 /ppo_results_rllib/**
 /logs
