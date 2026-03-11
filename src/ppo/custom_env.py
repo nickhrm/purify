@@ -75,11 +75,17 @@ class TrainingEnv(gym.Env):
         self.last_generated_entanglement = None
         self.current_event = None
 
-        self.time.update()
-        self.current_event = self.time.last_event()
-
-        if self.current_event == Event.ENTANGLEMENT_GENERATION:
-            self.last_generated_entanglement = self.node.generate_entanglement()
+        # Advance internally until the first ENTANGLEMENT_GENERATION so the
+        # agent is only ever queried when there is an entanglement to act on.
+        while True:
+            if not self.time.update():
+                break  # Time exhausted before any entanglement – edge case
+            self.current_event = self.time.last_event()
+            if self.current_event == Event.REQUEST_ARRIVAL:
+                self.node.handle_request_arrival()
+            elif self.current_event == Event.ENTANGLEMENT_GENERATION:
+                self.last_generated_entanglement = self.node.generate_entanglement()
+                break
 
         obs, info = self._get_obs()
         return obs, info
@@ -89,42 +95,47 @@ class TrainingEnv(gym.Env):
         terminated = False
         truncated = False
 
+        # Invariant: agent is only called when current_event == ENTANGLEMENT_GENERATION,
+        # so the chosen action always has a causal effect on the simulation.
         chosen_action: Action = self.constants.actions[action]
 
-        if self.current_event == Event.ENTANGLEMENT_GENERATION:
-            if self.last_generated_entanglement is not None:
-                self.node.handle_existing_entanglement(
-                    self.last_generated_entanglement, chosen_action
-                )
-            self.last_generated_entanglement = None
-        # Attempt to serve a request immediately after an action completes (in case an entanglement was generated and a request was waiting)
+        if self.last_generated_entanglement is not None:
+            self.node.handle_existing_entanglement(
+                self.last_generated_entanglement, chosen_action
+            )
+        self.last_generated_entanglement = None
+
+        # Try to serve a request immediately after the action
         result = self.node.serve_request()
         if result is not None:
             (teleportation_fidelity, waiting_time) = result
             terminated = True
             reward = teleportation_fidelity
 
-        # Only advance time to the next agent decision if the episode hasn't already terminated
+        # Advance internally through non-entanglement events until the next
+        # ENTANGLEMENT_GENERATION (or episode end). The agent is NOT consulted
+        # for REQUEST_ARRIVAL or other intermediate events.
         if not terminated:
-            if not self.time.update():
-                truncated = True
+            while True:
+                if not self.time.update():
+                    truncated = True
+                    break
 
-            self.current_event = self.time.last_event()
+                self.current_event = self.time.last_event()
 
-            if self.current_event == Event.REQUEST_ARRIVAL:
-                self.node.handle_request_arrival()
+                if self.current_event == Event.REQUEST_ARRIVAL:
+                    self.node.handle_request_arrival()
+                    # A new request may immediately be serveable with existing memory
+                    result = self.node.serve_request()
+                    if result is not None:
+                        (teleportation_fidelity, waiting_time) = result
+                        terminated = True
+                        reward = teleportation_fidelity
+                        break
 
-            if self.current_event == Event.ENTANGLEMENT_GENERATION:
-                self.last_generated_entanglement = self.node.generate_entanglement()
-
-            # Attempt to serve a request if a new request just arrived and there is entanglement available in memory
-            result = self.node.serve_request()
-            if result is not None:
-                (teleportation_fidelity, waiting_time) = result
-                terminated = True
-                reward = teleportation_fidelity
+                elif self.current_event == Event.ENTANGLEMENT_GENERATION:
+                    self.last_generated_entanglement = self.node.generate_entanglement()
+                    break  # Hand control back to the agent
 
         obs, info = self._get_obs()
-        # print(obs)
-
         return obs, reward, terminated, truncated, info
