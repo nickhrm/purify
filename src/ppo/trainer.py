@@ -130,7 +130,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
         max_no_improvement_evals=400,
         min_evals=200,
         verbose=1,
-        param_label=CaseStudy.coherence_time_str(coherence_time),
+        param_label=f"CS{case_study_id}-{CaseStudy.coherence_time_str(coherence_time)}",
     )
 
     actual_eval_freq = max(1, 20_000 // num_cpu)
