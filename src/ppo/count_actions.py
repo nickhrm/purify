@@ -17,7 +17,7 @@ print(df[['model', 'coherence_time', 'action', 'count', 'percentage']])
 # ---------------------------------------------------------
 # Wir nutzen pivot_table statt crosstab, da wir die Werte bereits haben (percentage).
 pivot_percent = df.pivot_table(
-    index=['model', 'coherence_time'], 
+    index=['model', 'coherence_time'],
     columns='action', 
     values='percentage',
     fill_value=0  # Fehlende Actions mit 0% auffüllen
