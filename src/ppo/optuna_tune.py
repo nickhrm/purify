@@ -32,11 +32,11 @@ from ppo.custom_env import TrainingEnv
 # ─── Konfiguration ────────────────────────────────────────────────────────────
 
 DEFAULT_CASE_STUDY_ID  = 1
-DEFAULT_COHERENCE_TIME = 0.05   # eine repräsentative Kohärenzzeit zum Tunen
-DEFAULT_N_TRIALS       = 50     # Anzahl Optuna-Trials
+DEFAULT_COHERENCE_TIME = 0.08   # eine repräsentative Kohärenzzeit zum Tunen
+DEFAULT_N_TRIALS       = 80     # Anzahl Optuna-Trials
 DEFAULT_EVAL_EPISODES  = 30     # Episoden pro Evaluation im Trial
-DEFAULT_TIMESTEPS      = 300_000  # Trainingsschritte pro Trial
-DEFAULT_NUM_CPU        = 12      # parallele Envs während des Tunings
+DEFAULT_TIMESTEPS      = 500_000  # Trainingsschritte pro Trial
+DEFAULT_NUM_CPU        = 6      # parallele Envs während des Tunings
 STUDY_NAME             = "ppo_hyperopt"
 STORAGE_URL            = None   # z.B. "sqlite:///optuna_study.db" für Persistenz
 
@@ -61,15 +61,15 @@ def make_objective(
         n_steps = trial.suggest_categorical(
             "n_steps", [256, 512, 1024, 2048, 4096]
         )
-        # batch_size muss n_steps * num_cpu teilen
+        # Suggest from a fixed list so Optuna's CategoricalDistribution stays
+        # consistent across trials (dynamic value spaces are not supported).
+        # We then snap down to the largest value that divides total_steps.
+        _BATCH_CHOICES = [32, 64, 128, 256, 512, 1024]
         total_steps = n_steps * num_cpu
-        batch_candidates = [
-            b for b in [32, 64, 128, 256, 512, 1024]
-            if total_steps % b == 0 and b <= total_steps
-        ]
-        if not batch_candidates:
-            batch_candidates = [min(64, total_steps)]
-        batch_size = trial.suggest_categorical("batch_size", batch_candidates)
+        batch_size_hint = trial.suggest_categorical("batch_size", _BATCH_CHOICES)
+        # Find the largest valid divisor ≤ the suggested hint
+        valid = [b for b in _BATCH_CHOICES if total_steps % b == 0 and b <= batch_size_hint]
+        batch_size = valid[-1] if valid else min(_BATCH_CHOICES[0], total_steps)
 
         n_epochs      = trial.suggest_int("n_epochs", 3, 15)
         learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
