@@ -21,7 +21,7 @@ from purify.my_enums import Action
 # === Konfiguration ============================================================
 
 # Die ID der Case Study (muss in CASE_STUDIES existieren).
-CASE_STUDY_ID: int = 1
+CASE_STUDY_ID: int = 6
 
 # Aktionen, die nacheinander evaluiert werden sollen.
 FIXED_ACTIONS: list[Action] = [
