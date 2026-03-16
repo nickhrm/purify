@@ -32,10 +32,10 @@ from ppo.custom_env import TrainingEnv
 # ─── Konfiguration ────────────────────────────────────────────────────────────
 
 DEFAULT_CASE_STUDY_ID  = 1
-DEFAULT_COHERENCE_TIME = 0.08   # eine repräsentative Kohärenzzeit zum Tunen
-DEFAULT_N_TRIALS       = 80     # Anzahl Optuna-Trials
+DEFAULT_COHERENCE_TIME = 0.008   # eine repräsentative Kohärenzzeit zum Tunen
+DEFAULT_N_TRIALS       = 60     # Anzahl Optuna-Trials
 DEFAULT_EVAL_EPISODES  = 30     # Episoden pro Evaluation im Trial
-DEFAULT_TIMESTEPS      = 500_000  # Trainingsschritte pro Trial
+DEFAULT_TIMESTEPS      = 400_000  # Trainingsschritte pro Trial
 DEFAULT_NUM_CPU        = 6      # parallele Envs während des Tunings
 STUDY_NAME             = "ppo_hyperopt"
 STORAGE_URL            = None   # z.B. "sqlite:///optuna_study.db" für Persistenz
