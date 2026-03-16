@@ -1,3 +1,4 @@
+from pygments.token import String
 from dataclasses import dataclass
 
 from purify.constants_tuple import ConstantsTuple
@@ -17,6 +18,7 @@ class CaseStudy:
     """
 
     id: int
+    notes: String
     constants: ConstantsTuple
     hyperparams: HyperparamsTuple
     coherence_times: list[float]
@@ -43,6 +45,7 @@ class CaseStudy:
 CASE_STUDIES: dict[int, CaseStudy] = {
     1: CaseStudy(
         id=1,
+        notes="Standard Entanglement",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
             pumping_probability=1,
@@ -73,18 +76,18 @@ CASE_STUDIES: dict[int, CaseStudy] = {
             vf_layers=[256, 256],
         ),
         coherence_times=[
-            0.004,
-            0.005,
-            0.006,
-            0.007,
-            0.008,
-            0.009,
-            0.01,
-            0.02,
-            0.03,
-            0.04,
-            0.05,
-            0.06,
+            # 0.004,
+            # 0.005,
+            # 0.006,
+            # 0.007,
+            # 0.008,
+            # 0.009,
+            # 0.01,
+            # 0.02,
+            # 0.03,
+            # 0.04,
+            # 0.05,
+            # 0.06,
             0.07,
             0.08,
             0.09,
@@ -92,6 +95,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
     ),
     2: CaseStudy(
         id=2,
+        notes="Standard Entanglement",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
             pumping_probability=1,
@@ -141,6 +145,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
     ),
     3: CaseStudy(
         id=3,
+        notes="Standard Entanglement",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
             pumping_probability=1,
@@ -191,6 +196,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
     ),
     4: CaseStudy(
         id=4,
+        notes="4-GPS Random",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
             pumping_probability=1,
@@ -240,6 +246,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
     ),
     5: CaseStudy(
         id=5,
+        notes="Mit PMD",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
             pumping_probability=1,
@@ -290,6 +297,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
     ),
     6: CaseStudy(
         id=6,
+        notes="lambdas 0.2, 0.1, 0.0",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
             pumping_probability=1,
@@ -340,6 +348,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
     ),
     7: CaseStudy(
         id=7,
+        notes="Neue Hyperparameter ausprobieren",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
             pumping_probability=1,
@@ -371,6 +380,43 @@ CASE_STUDIES: dict[int, CaseStudy] = {
         ),
         coherence_times=[
             0.08,
+        ],
+    ),
+    8: CaseStudy(
+        id=8,
+        notes="Standard entangelemnts, aber training für kleine coherence time mit parametern von 0.008 optuna",
+        constants=ConstantsTuple(
+            coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
+            pumping_probability=1,
+            waiting_time_sensitivity=1,
+            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            lambdas=(0.3, 0.0, 0.0),
+            actions=(
+                Action.REPLACE,
+                Action.PROT_1,
+                Action.PROT_2,
+                Action.PROT_3,
+            ),
+            min_fidelity=0.7,
+            max_fidelity=0.7,
+        ),
+        hyperparams=HyperparamsTuple(
+            n_steps=2048,
+            batch_size=256,
+            n_epochs=9,
+            learning_rate= 3.55006612192314e-05,
+            gamma=1.0,
+            gae_lambda=0.99,
+            ent_coef=0.4962618370958482,
+            clip_range=0.2,
+            vf_coef=0.5,
+            max_grad_norm=0.5,
+            pi_layers=[128, 128],
+            vf_layers=[128, 128],
+        ),
+        coherence_times=[
+            0.008,
+            0.01,
         ],
     ),
 }
