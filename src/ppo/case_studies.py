@@ -186,6 +186,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
             0.07,
             0.08,
             0.09,
+            0.1,
         ],
     ),
     4: CaseStudy(
