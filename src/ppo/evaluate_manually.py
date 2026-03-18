@@ -10,7 +10,7 @@ from purify.my_enums import Action, LambdaSrategy
 def analyze_fidelity_dependency(
     coherence_time=0.05, output_file="fidelity_analysis.csv"
 ):
-    model_path = f"results/case_study_1/T0_01/best_model.zip"
+    model_path = f"results/case_study_3/T0_05/best_model.zip"
 
     # 1. Setup Environment & Agent
     temp_constants = ConstantsTuple(
@@ -18,7 +18,7 @@ def analyze_fidelity_dependency(
         lambda_strategy=LambdaSrategy.USE_CONSTANTS,
         waiting_time_sensitivity=1,
         pumping_probability=1.0,
-        lambdas=(0.0, 0.3, 0.0),
+        lambdas=(0.0, 0.0, 0.3),
         actions=(
             Action.REPLACE,
             Action.PROT_1,
@@ -39,17 +39,18 @@ def analyze_fidelity_dependency(
     policy = model.policy
 
     # 2. Fidelity-Bereich definieren
-    fidelities = [ 0.6, 0.7, 0.8, 0.9, 1.0]
+    fidelities = [0.6, 0.7, 0.8, 0.9, 1.0]
     waiting_times = [0, 0.01, 0.05, 0.12]
 
     action_names = [a.name for a in temp_constants.actions]
 
     results = []
 
+    # Äußere Schleife
     for waiting_time in waiting_times:
+        # Innere Schleife
         for fid in fidelities:
             # 3. KÜNSTLICHE OBSERVATION
-            # Dein definierter State-Vektor
             obs = np.array([fid, 0.0, waiting_time, 0.3, 0.0, 0.0], dtype=np.float64)
 
             # 4. PROBABILITIES EXTRAHIEREN
@@ -64,7 +65,7 @@ def analyze_fidelity_dependency(
                 "fidelity": fid,
                 "best_action": best_action_name,
                 "coherence_time": coherence_time,
-                "model_path": model_path, # Hilfreich beim Appenden, um Daten zuzuordnen
+                "model_path": model_path, 
                 "waiting_time": waiting_time
             }
             for i, p in enumerate(probs):
@@ -72,17 +73,17 @@ def analyze_fidelity_dependency(
 
             results.append(row)
 
-        # 5. APPEND-LOGIK
-        df = pd.DataFrame(results)
-        
-        # Prüfen, ob Datei existiert
-        file_exists = os.path.isfile(output_file)
-        
-        # mode='a' hängt an, header=False wenn die Datei schon existiert
-        df.to_csv(output_file, mode='a', index=False, header=not file_exists)
-        
-        print(f"Daten für T_coh={coherence_time} an {output_file} angehängt.")
+    # 5. APPEND-LOGIK (Jetzt AUSSERHALB der Schleifen)
+    # Wird erst ausgeführt, wenn beide Schleifen komplett fertig sind
+    df = pd.DataFrame(results)
+    
+    # Prüfen, ob Datei existiert
+    file_exists = os.path.isfile(output_file)
+    
+    # mode='a' hängt an, header=False wenn die Datei schon existiert
+    df.to_csv(output_file, mode='a', index=False, header=not file_exists)
+    
+    print(f"Daten für T_coh={coherence_time} an {output_file} angehängt. (Insgesamt {len(df)} Zeilen geschrieben.)")
 
 if __name__ == "__main__":
-    # Du kannst hier jetzt z.B. eine Liste von Zeiten durchlaufen lassen
-        analyze_fidelity_dependency()
+    analyze_fidelity_dependency()
