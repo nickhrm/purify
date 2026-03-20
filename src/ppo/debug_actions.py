@@ -24,8 +24,8 @@ from purify.utils.purification_util import Purification
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
 COHERENCE_TIME = 0.05
-CASE_STUDY_ID  = 4
-N_EPISODES     = 5          # Wenige Episoden, dafür vollständig geloggt
+CASE_STUDY_ID  = 2
+N_EPISODES     = 2          # Wenige Episoden, dafür vollständig geloggt
 MODEL_PATH     = f"results/case_study_{CASE_STUDY_ID}/T0_05/best_model.zip"
 OUTPUT_FILE    = "debug_action_log.csv"
 # ──────────────────────────────────────────────────────────────────────────────
@@ -37,7 +37,7 @@ def run_debug():
         pumping_probability=1,
         waiting_time_sensitivity=1,
         lambda_strategy=LambdaSrategy.USE_CONSTANTS,
-        lambdas=(0.0, 0.0, 0.3),
+        lambdas=(0.0, 0.3, 0.0),
         actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3),
         min_fidelity=0.7,
         max_fidelity=0.7,

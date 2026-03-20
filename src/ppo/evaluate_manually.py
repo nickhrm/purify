@@ -8,17 +8,23 @@ from purify.constants_tuple import ConstantsTuple
 from purify.my_enums import Action, LambdaSrategy
 
 def analyze_fidelity_dependency(
-    coherence_time=0.05, output_file="fidelity_analysis.csv"
+    case_study_id,
+    coherence_time,
+    lambdas,
+    output_file="fidelity_analysis.csv"
 ):
-    model_path = f"results/case_study_3/T0_05/best_model.zip"
+    # 1. Dynamischer Model-Pfad basierend auf Parameter
+    # Wandelt z.B. 0.05 in "0_05" um
+    ct_str = str(coherence_time).replace('.', '_')
+    model_path = f"results/case_study_{case_study_id}/T{ct_str}/best_model.zip"
 
-    # 1. Setup Environment & Agent
+    # 2. Setup Environment & Agent
     temp_constants = ConstantsTuple(
         coherence_time=coherence_time,
         lambda_strategy=LambdaSrategy.USE_CONSTANTS,
         waiting_time_sensitivity=1,
         pumping_probability=1.0,
-        lambdas=(0.0, 0.0, 0.3),
+        lambdas=lambdas, # <-- Nutzt die übergebenen Lambdas
         actions=(
             Action.REPLACE,
             Action.PROT_1,
@@ -38,7 +44,7 @@ def analyze_fidelity_dependency(
     model = agent.model
     policy = model.policy
 
-    # 2. Fidelity-Bereich definieren
+    # 3. Fidelity-Bereich definieren
     fidelities = [0.6, 0.7, 0.8, 0.9, 1.0]
     waiting_times = [0, 0.01, 0.05, 0.12]
 
@@ -50,10 +56,17 @@ def analyze_fidelity_dependency(
     for waiting_time in waiting_times:
         # Innere Schleife
         for fid in fidelities:
-            # 3. KÜNSTLICHE OBSERVATION
-            obs = np.array([fid, 0.0, waiting_time, 0.3, 0.0, 0.0], dtype=np.float64)
+            # 4. KÜNSTLICHE OBSERVATION (Dynamisch mit temp_constants.lambdas)
+            obs = np.array([
+                fid, 
+                0.0, 
+                waiting_time, 
+                temp_constants.lambdas[0], 
+                temp_constants.lambdas[1], 
+                temp_constants.lambdas[2]
+            ], dtype=np.float64)
 
-            # 4. PROBABILITIES EXTRAHIEREN
+            # 5. PROBABILITIES EXTRAHIEREN
             obs_tensor = torch.as_tensor(obs).unsqueeze(0).to(model.device)
             with torch.no_grad():
                 distribution = policy.get_distribution(obs_tensor)
@@ -73,8 +86,7 @@ def analyze_fidelity_dependency(
 
             results.append(row)
 
-    # 5. APPEND-LOGIK (Jetzt AUSSERHALB der Schleifen)
-    # Wird erst ausgeführt, wenn beide Schleifen komplett fertig sind
+    # 6. APPEND-LOGIK
     df = pd.DataFrame(results)
     
     # Prüfen, ob Datei existiert
@@ -83,7 +95,12 @@ def analyze_fidelity_dependency(
     # mode='a' hängt an, header=False wenn die Datei schon existiert
     df.to_csv(output_file, mode='a', index=False, header=not file_exists)
     
-    print(f"Daten für T_coh={coherence_time} an {output_file} angehängt. (Insgesamt {len(df)} Zeilen geschrieben.)")
+    print(f"Daten für T_coh={coherence_time} (Lambdas={lambdas}) an {output_file} angehängt. (Insgesamt {len(df)} Zeilen geschrieben.)")
 
 if __name__ == "__main__":
-    analyze_fidelity_dependency()
+    # Beispielaufrufe: So kannst du ganz einfach alle durchlaufen lassen!
+    analyze_fidelity_dependency(case_study_id=3, coherence_time=0.003, lambdas=(0.0, 0.0, 0.3))
+    
+    # Für die anderen Case Studies müsstest du nur das hier aufrufen:
+    # analyze_fidelity_dependency(case_study_id=1, coherence_time=0.05, lambdas=(0.3, 0.0, 0.0))
+    # analyze_fidelity_dependency(case_study_id=2, coherence_time=0.05, lambdas=(0.0, 0.3, 0.0))

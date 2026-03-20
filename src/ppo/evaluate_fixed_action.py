@@ -21,7 +21,7 @@ from purify.my_enums import Action
 # === Konfiguration ============================================================
 
 # Die ID der Case Study (muss in CASE_STUDIES existieren).
-CASE_STUDY_ID: int = 6
+CASE_STUDY_ID: int = 1
 
 # Aktionen, die nacheinander evaluiert werden sollen.
 FIXED_ACTIONS: list[Action] = [
@@ -32,7 +32,7 @@ FIXED_ACTIONS: list[Action] = [
 ]
 
 # Anzahl der Episoden pro Kohaerenzzeit und Aktion.
-N_EPISODES: int = 3000
+N_EPISODES: int = 3500
 
 # Eigene Kohaerenzzeiten – ueberschreibt die Zeiten aus der Case Study.
 # Leer lassen ([]), um die Zeiten der jeweiligen Case Study zu verwenden.
