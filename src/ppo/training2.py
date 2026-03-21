@@ -405,7 +405,7 @@ def main() -> None:
     # ──────────────────────────────────────────────────────────────────────────
     # Konfiguration – hier anpassen:
     # ──────────────────────────────────────────────────────────────────────────
-    CASE_STUDY_ID   = 9
+    CASE_STUDY_ID   = 11
     COHERENCE_TIMES = CASE_STUDIES[CASE_STUDY_ID].coherence_times
     NUM_CORES       = 6
     N_RUNS_CFG      = N_RUNS         # Anzahl Trainings-Wiederholungen
