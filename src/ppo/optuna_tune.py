@@ -31,9 +31,9 @@ from ppo.custom_env import TrainingEnv
 
 # ─── Konfiguration ────────────────────────────────────────────────────────────
 
-DEFAULT_CASE_STUDY_ID  = 1
-DEFAULT_COHERENCE_TIME = 0.008   # eine repräsentative Kohärenzzeit zum Tunen
-DEFAULT_N_TRIALS       = 60     # Anzahl Optuna-Trials
+DEFAULT_CASE_STUDY_ID  = 13
+DEFAULT_COHERENCE_TIME = 0.02  # eine repräsentative Kohärenzzeit zum Tunen
+DEFAULT_N_TRIALS       = 30     # Anzahl Optuna-Trials
 DEFAULT_EVAL_EPISODES  = 30     # Episoden pro Evaluation im Trial
 DEFAULT_TIMESTEPS      = 400_000  # Trainingsschritte pro Trial
 DEFAULT_NUM_CPU        = 6      # parallele Envs während des Tunings
