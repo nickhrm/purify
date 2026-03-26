@@ -1,3 +1,4 @@
+from sqlalchemy import false
 import os
 import json
 from datetime import datetime
@@ -141,7 +142,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
         callback_after_eval=stop_callback,
         best_model_save_path=ct_folder,   # → best_model.zip landet hier
         verbose=1,
-        deterministic=True,
+        deterministic=False,
     )
 
     best_model_path = os.path.join(ct_folder, "best_model.zip")
@@ -183,6 +184,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
             total_timesteps=30_000_000,
             reset_num_timesteps=False,
             callback=eval_callback,
+            
         )
     except KeyboardInterrupt:
         print("Training manuell unterbrochen...")

@@ -18,7 +18,7 @@ class SB3Agent(PolicyWrapper):
         super().__init__("PPO AI")
         self.model = PPO.load(path, env=env, device="cpu")
     def predict(self, obs):
-        action, _ = self.model.predict(obs, deterministic=True)
+        action, _ = self.model.predict(obs, deterministic=False)
         return action
 
 

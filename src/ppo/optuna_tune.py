@@ -116,7 +116,7 @@ def make_objective(
                 model,
                 eval_env,
                 n_eval_episodes=n_eval_episodes,
-                deterministic=True,
+                deterministic=False,
             )
         except Exception as e:
             print(f"[Trial {trial.number}] Fehler: {e}")

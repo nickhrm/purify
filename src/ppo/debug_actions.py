@@ -69,7 +69,7 @@ def run_debug():
                 dist  = policy.get_distribution(obs_tensor)
                 probs = dist.distribution.probs.cpu().numpy()[0]
 
-            action_idx, _ = model.predict(obs, deterministic=True)
+            action_idx, _ = model.predict(obs, deterministic=False)
             action_idx    = int(action_idx)
             action_name   = action_names[action_idx]
 
