@@ -31,17 +31,18 @@ from ppo.custom_env import TrainingEnv
 
 # ─── Konfiguration ────────────────────────────────────────────────────────────
 
-DEFAULT_CASE_STUDY_ID  = 13
-DEFAULT_COHERENCE_TIME = 0.02  # eine repräsentative Kohärenzzeit zum Tunen
-DEFAULT_N_TRIALS       = 30     # Anzahl Optuna-Trials
-DEFAULT_EVAL_EPISODES  = 30     # Episoden pro Evaluation im Trial
-DEFAULT_TIMESTEPS      = 400_000  # Trainingsschritte pro Trial
-DEFAULT_NUM_CPU        = 6      # parallele Envs während des Tunings
-STUDY_NAME             = "ppo_hyperopt"
-STORAGE_URL            = None   # z.B. "sqlite:///optuna_study.db" für Persistenz
+DEFAULT_CASE_STUDY_ID = 13
+DEFAULT_COHERENCE_TIME = 0.007  # eine repräsentative Kohärenzzeit zum Tunen
+DEFAULT_N_TRIALS = 30  # Anzahl Optuna-Trials
+DEFAULT_EVAL_EPISODES = 50  # Episoden pro Evaluation im Trial
+DEFAULT_TIMESTEPS = 400_000  # Trainingsschritte pro Trial
+DEFAULT_NUM_CPU = 12  # parallele Envs während des Tunings
+STUDY_NAME = "ppo_hyperopt"
+STORAGE_URL = None  # z.B. "sqlite:///optuna_study.db" für Persistenz
 
 
 # ─── Objective ────────────────────────────────────────────────────────────────
+
 
 def make_objective(
     case_study_id: int,
@@ -53,14 +54,21 @@ def make_objective(
     """Gibt eine Optuna-Objective-Funktion zurück (Closure über die Konfig)."""
 
     case_study = CASE_STUDIES[case_study_id]
-    constants  = case_study.make_constants(coherence_time)
-    h          = case_study.hyperparams   # Basiswerte für fixe Parameter
+    constants = case_study.make_constants(coherence_time)
+    h = case_study.hyperparams  # Basiswerte für fixe Parameter
+
+    best_reward = float("-inf")
+    out_dir = "results/optuna"
+    os.makedirs(out_dir, exist_ok=True)
+    best_model_path = os.path.join(
+        out_dir,
+        f"best_model_cs{case_study_id}_T{str(coherence_time).replace('.', '_')}.zip",
+    )
 
     def objective(trial: optuna.Trial) -> float:
+        nonlocal best_reward
         # ── Suchraum ──────────────────────────────────────────────────────────
-        n_steps = trial.suggest_categorical(
-            "n_steps", [256, 512, 1024, 2048, 4096]
-        )
+        n_steps = trial.suggest_categorical("n_steps", [256, 512, 1024, 2048, 4096])
         # Suggest from a fixed list so Optuna's CategoricalDistribution stays
         # consistent across trials (dynamic value spaces are not supported).
         # We then snap down to the largest value that divides total_steps.
@@ -68,13 +76,15 @@ def make_objective(
         total_steps = n_steps * num_cpu
         batch_size_hint = trial.suggest_categorical("batch_size", _BATCH_CHOICES)
         # Find the largest valid divisor ≤ the suggested hint
-        valid = [b for b in _BATCH_CHOICES if total_steps % b == 0 and b <= batch_size_hint]
+        valid = [
+            b for b in _BATCH_CHOICES if total_steps % b == 0 and b <= batch_size_hint
+        ]
         batch_size = valid[-1] if valid else min(_BATCH_CHOICES[0], total_steps)
 
-        n_epochs      = trial.suggest_int("n_epochs", 3, 15)
+        n_epochs = trial.suggest_int("n_epochs", 3, 15)
         learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
-        gae_lambda    = trial.suggest_float("gae_lambda", 0.9, 1.0)
-        ent_coef      = trial.suggest_float("ent_coef", 1e-8, 0.1, log=True)
+        gae_lambda = trial.suggest_float("gae_lambda", 0.9, 1.0)
+        ent_coef = trial.suggest_float("ent_coef", 1e-8, 0.1, log=True)
 
         # ── Envs aufbauen ─────────────────────────────────────────────────────
         env = make_vec_env(
@@ -118,6 +128,12 @@ def make_objective(
                 n_eval_episodes=n_eval_episodes,
                 deterministic=False,
             )
+            if isinstance(mean_reward, float) and mean_reward > best_reward:
+                best_reward = mean_reward
+                model.save(best_model_path)
+                print(
+                    f"[Trial {trial.number}] Neues bestes Modell gespeichert ({mean_reward:.4f} > {best_reward:.4f})"
+                )
         except Exception as e:
             print(f"[Trial {trial.number}] Fehler: {e}")
             mean_reward = float("-inf")
@@ -138,6 +154,7 @@ def make_objective(
 
 
 # ─── Study ────────────────────────────────────────────────────────────────────
+
 
 def run_study(
     case_study_id: int,
@@ -193,7 +210,7 @@ def run_study(
     # ── Als HyperparamsTuple-Snippet ausgeben ─────────────────────────────────
     p = best.params
     cs = CASE_STUDIES[case_study_id]
-    h  = cs.hyperparams
+    h = cs.hyperparams
     print("  📋 HyperparamsTuple-Snippet (zum Eintragen in case_studies.py):")
     print(f"  HyperparamsTuple(")
     print(f"      n_steps       = {p['n_steps']},")
@@ -212,6 +229,7 @@ def run_study(
 
     # ── Optional: Ergebnisse als JSON speichern ────────────────────────────────
     import json
+
     out_dir = "results/optuna"
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(
@@ -235,33 +253,46 @@ def run_study(
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Optuna Hyperparameter-Tuning für PPO (purify)"
     )
     parser.add_argument(
-        "--case-study", type=int, default=DEFAULT_CASE_STUDY_ID,
-        help=f"Case Study ID (default: {DEFAULT_CASE_STUDY_ID})"
+        "--case-study",
+        type=int,
+        default=DEFAULT_CASE_STUDY_ID,
+        help=f"Case Study ID (default: {DEFAULT_CASE_STUDY_ID})",
     )
     parser.add_argument(
-        "--coherence-time", type=float, default=DEFAULT_COHERENCE_TIME,
-        help=f"Kohärenzzeit zum Tunen (default: {DEFAULT_COHERENCE_TIME})"
+        "--coherence-time",
+        type=float,
+        default=DEFAULT_COHERENCE_TIME,
+        help=f"Kohärenzzeit zum Tunen (default: {DEFAULT_COHERENCE_TIME})",
     )
     parser.add_argument(
-        "--trials", type=int, default=DEFAULT_N_TRIALS,
-        help=f"Anzahl Optuna-Trials (default: {DEFAULT_N_TRIALS})"
+        "--trials",
+        type=int,
+        default=DEFAULT_N_TRIALS,
+        help=f"Anzahl Optuna-Trials (default: {DEFAULT_N_TRIALS})",
     )
     parser.add_argument(
-        "--eval-episodes", type=int, default=DEFAULT_EVAL_EPISODES,
-        help=f"Eval-Episoden pro Trial (default: {DEFAULT_EVAL_EPISODES})"
+        "--eval-episodes",
+        type=int,
+        default=DEFAULT_EVAL_EPISODES,
+        help=f"Eval-Episoden pro Trial (default: {DEFAULT_EVAL_EPISODES})",
     )
     parser.add_argument(
-        "--timesteps", type=int, default=DEFAULT_TIMESTEPS,
-        help=f"Trainingsschritte pro Trial (default: {DEFAULT_TIMESTEPS})"
+        "--timesteps",
+        type=int,
+        default=DEFAULT_TIMESTEPS,
+        help=f"Trainingsschritte pro Trial (default: {DEFAULT_TIMESTEPS})",
     )
     parser.add_argument(
-        "--num-cpu", type=int, default=DEFAULT_NUM_CPU,
-        help=f"Parallele Envs (default: {DEFAULT_NUM_CPU})"
+        "--num-cpu",
+        type=int,
+        default=DEFAULT_NUM_CPU,
+        help=f"Parallele Envs (default: {DEFAULT_NUM_CPU})",
     )
     args = parser.parse_args()
 

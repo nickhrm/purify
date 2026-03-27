@@ -15,10 +15,8 @@ from ppo.custom_stop_callback import CustomStopCallback
 from purify.constants_tuple import ConstantsTuple
 
 
-
-
-
 # ─── Pfad-Helfer ───────────────────────────────────────────────────────────────
+
 
 def case_study_root(case_study_id: int) -> str:
     return f"results/case_study_{case_study_id}"
@@ -30,6 +28,7 @@ def coherence_time_folder(case_study_id: int, coherence_time: float) -> str:
 
 
 # ─── training_info.json ────────────────────────────────────────────────────────
+
 
 def save_training_info(case_study: CaseStudy) -> None:
     """
@@ -92,6 +91,7 @@ def print_training_info(info: dict) -> None:
 
 # ─── Training ─────────────────────────────────────────────────────────────────
 
+
 def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
     """
     Trainiert ein Modell für eine bestimmte Case Study und coherence_time.
@@ -140,7 +140,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
         eval_freq=actual_eval_freq,
         n_eval_episodes=70,
         callback_after_eval=stop_callback,
-        best_model_save_path=ct_folder,   # → best_model.zip landet hier
+        best_model_save_path=ct_folder,  # → best_model.zip landet hier
         verbose=1,
         deterministic=False,
     )
@@ -157,12 +157,17 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
         else:
             print("⚠️  Keine training_info.json gefunden (altes Modell).")
     else:
-        print(f"Starte neues Training: Case Study {case_study_id}, T_coh={coherence_time}")
+        print(
+            f"Starte neues Training: Case Study {case_study_id}, T_coh={coherence_time}"
+        )
         h = case_study.hyperparams
         model = PPO(
             "MlpPolicy",
             env,
-            policy_kwargs=dict(net_arch=dict(pi=h.pi_layers, vf=h.vf_layers), activation_fn=torch.nn.Tanh),
+            policy_kwargs=dict(
+                net_arch=dict(pi=h.pi_layers, vf=h.vf_layers),
+                activation_fn=torch.nn.Tanh,
+            ),
             n_steps=h.n_steps,
             batch_size=h.batch_size,
             n_epochs=h.n_epochs,
@@ -184,7 +189,6 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
             total_timesteps=30_000_000,
             reset_num_timesteps=False,
             callback=eval_callback,
-            
         )
     except KeyboardInterrupt:
         print("Training manuell unterbrochen...")
@@ -199,6 +203,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 
+
 def main():
     # ──────────────────────────────────────────────────────────────────────────
     # Hier konfigurierst du, welche Case Study und welche Kohärenzzeiten
@@ -207,13 +212,15 @@ def main():
     # Beispiel PC:    COHERENCE_TIMES = [0.01, 0.05]
     # Beispiel Laptop: COHERENCE_TIMES = [0.09]
     # ──────────────────────────────────────────────────────────────────────────
-    CASE_STUDY_ID = 5
+    CASE_STUDY_ID = 15
     COHERENCE_TIMES = CASE_STUDIES[CASE_STUDY_ID].coherence_times
     NUM_CORES_PER_RUN = 6
 
     for coherence_time in COHERENCE_TIMES:
         print(f"\n{'═' * 55}")
-        print(f"  Case Study {CASE_STUDY_ID} | T_coh = {coherence_time} | {NUM_CORES_PER_RUN} Cores")
+        print(
+            f"  Case Study {CASE_STUDY_ID} | T_coh = {coherence_time} | {NUM_CORES_PER_RUN} Cores"
+        )
         print(f"{'═' * 55}")
         train(CASE_STUDY_ID, coherence_time, NUM_CORES_PER_RUN)
 

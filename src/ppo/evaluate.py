@@ -124,4 +124,4 @@ def evaluate_case_study(case_study_id: int, n_episodes: int = 1200) -> None:
 
 
 if __name__ == "__main__":
-    evaluate_case_study(case_study_id=4, n_episodes=2500)
+    evaluate_case_study(case_study_id=14, n_episodes=2500)
