@@ -217,7 +217,7 @@ def train_single_run(
         callback_after_eval    = stop_callback,
         best_model_save_path   = run_best_dir,
         verbose                = 1,
-        deterministic          = False,
+        deterministic          = case_study.deterministic,
     )
 
     h = hyperparams
@@ -267,7 +267,7 @@ def train_single_run(
         mean_reward, std_reward = evaluate_policy(
             best_model, eval_env2,
             n_eval_episodes=N_EVAL_EPISODES,
-            deterministic=False,
+            deterministic=case_study.deterministic,
         )
         eval_env2.close()
         print(f"  ✅ {label}: mean_reward = {mean_reward:.4f}  (std = {std_reward:.4f})")
@@ -284,7 +284,7 @@ def train_single_run(
         mean_reward, std_reward = evaluate_policy(
             model, eval_env2,
             n_eval_episodes=N_EVAL_EPISODES,
-            deterministic=False,
+            deterministic=case_study.deterministic,
         )
         eval_env2.close()
         print(f"  ⚠️  {label}: mean_reward = {mean_reward:.4f}  (std = {std_reward:.4f})")
