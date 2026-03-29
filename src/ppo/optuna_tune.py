@@ -126,7 +126,7 @@ def make_objective(
                 model,
                 eval_env,
                 n_eval_episodes=n_eval_episodes,
-                deterministic=False,
+                deterministic=case_study.deterministic,
             )
             if isinstance(mean_reward, float) and mean_reward > best_reward:
                 best_reward = mean_reward

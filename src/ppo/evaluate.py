@@ -41,13 +41,32 @@ def save_action_distribution(
     with open(filename, mode="a", newline="") as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["case_study_id", "model", "coherence_time", "action", "count", "percentage"])
+            writer.writerow(
+                [
+                    "case_study_id",
+                    "model",
+                    "coherence_time",
+                    "action",
+                    "count",
+                    "percentage",
+                ]
+            )
         for action_name, count in action_counts.items():
             percentage = (count / total_actions) * 100 if total_actions > 0 else 0
-            writer.writerow([case_study_id, model_name, coherence_time, action_name, count, percentage])
+            writer.writerow(
+                [
+                    case_study_id,
+                    model_name,
+                    coherence_time,
+                    action_name,
+                    count,
+                    percentage,
+                ]
+            )
 
 
 # ─── Haupt-Evaluierungs-Funktion ──────────────────────────────────────────────
+
 
 def evaluate_case_study(case_study_id: int, n_episodes: int = 1200) -> None:
     """
@@ -87,7 +106,7 @@ def evaluate_case_study(case_study_id: int, n_episodes: int = 1200) -> None:
                 continue
 
             print(f"  Evaluiere {model_label}...", end="", flush=True)
-            agent = SB3Agent(model_path, env)
+            agent = SB3Agent(model_path, env, deterministic=case_study.deterministic)
             action_counts = Counter()
             total_reward = 0.0
 
@@ -112,16 +131,18 @@ def evaluate_case_study(case_study_id: int, n_episodes: int = 1200) -> None:
                 case_study_id,
             )
 
-            all_rows.append({
-                "case_study_id": case_study_id,
-                "coherence_time": coherence_time,
-                "model": model_label,
-                "avg_reward": avg_reward,
-            })
+            all_rows.append(
+                {
+                    "case_study_id": case_study_id,
+                    "coherence_time": coherence_time,
+                    "model": model_label,
+                    "avg_reward": avg_reward,
+                }
+            )
 
     save_evaluation_results(case_study_id, all_rows)
     print(f"\n✅ Evaluierung Case Study {case_study_id} abgeschlossen.")
 
 
 if __name__ == "__main__":
-    evaluate_case_study(case_study_id=14, n_episodes=2500)
+    evaluate_case_study(case_study_id=13, n_episodes=1400)

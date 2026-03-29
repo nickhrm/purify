@@ -22,6 +22,7 @@ class CaseStudy:
     constants: ConstantsTuple
     hyperparams: HyperparamsTuple
     coherence_times: list[float]
+    deterministic: bool = True
 
     def make_constants(self, coherence_time: float) -> ConstantsTuple:
         """Gibt ein neues ConstantsTuple zurück, bei dem coherence_time gesetzt ist."""
@@ -646,6 +647,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
             min_fidelity=0.7,
             max_fidelity=0.7,
         ),
+        deterministic=False,
         hyperparams=HyperparamsTuple(
             n_steps=256,
             batch_size=1024,

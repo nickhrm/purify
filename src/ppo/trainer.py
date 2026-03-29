@@ -142,7 +142,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
         callback_after_eval=stop_callback,
         best_model_save_path=ct_folder,  # → best_model.zip landet hier
         verbose=1,
-        deterministic=False,
+        deterministic=case_study.deterministic,
     )
 
     best_model_path = os.path.join(ct_folder, "best_model.zip")

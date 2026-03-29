@@ -14,11 +14,12 @@ class PolicyWrapper:
     def predict(self, obs) -> Any: raise NotImplementedError
 
 class SB3Agent(PolicyWrapper):
-    def __init__(self, path, env):
+    def __init__(self, path, env, deterministic: bool = True):
         super().__init__("PPO AI")
         self.model = PPO.load(path, env=env, device="cpu")
+        self.deterministic = deterministic
     def predict(self, obs):
-        action, _ = self.model.predict(obs, deterministic=False)
+        action, _ = self.model.predict(obs, deterministic=self.deterministic)
         return action
 
 
