@@ -785,8 +785,8 @@ CASE_STUDIES: dict[int, CaseStudy] = {
             0.1,
         ],
     ),
-    16: CaseStudy(
-        id=16,
+    17: CaseStudy(
+        id=17,
         notes="Standard Entanglement",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
@@ -819,6 +819,9 @@ CASE_STUDIES: dict[int, CaseStudy] = {
             vf_layers=[256, 256],
         ),
         coherence_times=[
+            # 0.001,
+            # 0.002,
+            # 0.003,
             # 0.004,
             # 0.005,
             # 0.006,
@@ -834,6 +837,59 @@ CASE_STUDIES: dict[int, CaseStudy] = {
             # 0.07,
             0.08,
             # 0.09,
+            # 0.1
+        ],
+    ),
+    18: CaseStudy(
+        id=18,
+        notes="Standard Entanglement",
+        constants=ConstantsTuple(
+            coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
+            pumping_probability=1,
+            waiting_time_sensitivity=1,
+            lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+            lambdas=(0.3, 0.0, 0.0),
+            actions=(
+                Action.REPLACE,
+                Action.PMD,
+            ),
+            min_fidelity=0.7,
+            max_fidelity=0.7,
+        ),
+        hyperparams=HyperparamsTuple(
+            n_steps=1024,
+            batch_size=256,
+            n_epochs=6,
+            learning_rate=2.9496e-4,
+            gamma=1.0,
+            gae_lambda=0.99,
+            ent_coef=0.003011806764086755,
+            clip_range=0.2,
+            vf_coef=0.5,
+            max_grad_norm=0.5,
+            pi_layers=[256, 256],
+            vf_layers=[256, 256],
+        ),
+        coherence_times=[
+            0.001,
+            0.002,
+            # 0.003, trained
+            0.004,
+            # 0.005, trained
+            0.006,
+            # 0.007, trained
+            # 0.008, trained
+            0.009,
+            # 0.01, trained
+            0.02,
+            # 0.03, , trained
+            0.04,
+            # 0.05, trained
+            0.06,
+            # 0.07, trained
+            # 0.08, trained
+            0.09,
+            # 0.1 , trained
         ],
     ),
 }
