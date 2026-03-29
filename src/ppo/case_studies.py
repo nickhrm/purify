@@ -910,6 +910,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
             min_fidelity=0.7,
             max_fidelity=0.7,
         ),
+        deterministic=False,
         hyperparams=HyperparamsTuple(
             n_steps=1024,
             batch_size=256,
