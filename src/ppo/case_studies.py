@@ -636,7 +636,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
     ),
     13: CaseStudy(
         id=13,
-        notes="2-GPS PMD",
+        notes="2-GPS PMD, nicht deterministisch",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
             pumping_probability=1,
@@ -737,7 +737,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
     ),
     15: CaseStudy(
         id=15,
-        notes="5-GPS mit params für 0.007",
+        notes="5-GPS nicht-deterministisch, params von optuna für t_c 0.01",
         constants=ConstantsTuple(
             coherence_time=0.0,  # Platzhalter – wird per make_constants() überschrieben
             pumping_probability=1,
@@ -754,6 +754,7 @@ CASE_STUDIES: dict[int, CaseStudy] = {
             min_fidelity=0.7,
             max_fidelity=0.7,
         ),
+        deterministic=False,
         hyperparams=HyperparamsTuple(
             n_steps=512,
             batch_size=128,
