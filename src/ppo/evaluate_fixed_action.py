@@ -21,14 +21,11 @@ from purify.my_enums import Action
 # === Konfiguration ============================================================
 
 # Die ID der Case Study (muss in CASE_STUDIES existieren).
-CASE_STUDY_ID: int = 1
+CASE_STUDY_ID: int = 5
 
 # Aktionen, die nacheinander evaluiert werden sollen.
 FIXED_ACTIONS: list[Action] = [
-    Action.REPLACE,
-    Action.PROT_1,
-    Action.PROT_2,
-    Action.PROT_3,
+    Action.PMD
 ]
 
 # Anzahl der Episoden pro Kohaerenzzeit und Aktion.
