@@ -1,6 +1,6 @@
-from sqlalchemy import false
-import os
+import argparse
 import json
+import os
 from datetime import datetime
 
 import torch
@@ -12,8 +12,6 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 from ppo.case_studies import CASE_STUDIES, CaseStudy
 from ppo.custom_env import TrainingEnv
 from ppo.custom_stop_callback import CustomStopCallback
-from purify.constants_tuple import ConstantsTuple
-
 
 # ─── Pfad-Helfer ───────────────────────────────────────────────────────────────
 
@@ -68,7 +66,7 @@ def load_training_info(case_study_id: int) -> dict | None:
     info_path = os.path.join(case_study_root(case_study_id), "training_info.json")
     if not os.path.exists(info_path):
         return None
-    with open(info_path, "r", encoding="utf-8") as f:
+    with open(info_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -92,10 +90,16 @@ def print_training_info(info: dict) -> None:
 # ─── Training ─────────────────────────────────────────────────────────────────
 
 
-def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
+def train(
+    case_study_id: int,
+    coherence_time: float,
+    num_cpu: int,
+    seed: int | None = None,
+) -> None:
     """
     Trainiert ein Modell für eine bestimmte Case Study und coherence_time.
     Jedes Gerät ruft diese Funktion für seine Teilmenge der Kohärenzzeiten auf.
+    Mit gesetztem `seed` sind Umgebungen und PPO-Initialisierung reproduzierbar.
 
     Ordnerstruktur:
       results/case_study_{id}/
@@ -120,11 +124,13 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
         lambda: TrainingEnv(constants),
         n_envs=num_cpu,
         vec_env_cls=SubprocVecEnv,
+        seed=seed,
     )
     eval_env = make_vec_env(
         lambda: TrainingEnv(constants),
         n_envs=1,
         vec_env_cls=SubprocVecEnv,
+        seed=None if seed is None else seed + num_cpu,
     )
 
     stop_callback = CustomStopCallback(
@@ -157,9 +163,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
         else:
             print("⚠️  Keine training_info.json gefunden (altes Modell).")
     else:
-        print(
-            f"Starte neues Training: Case Study {case_study_id}, T_coh={coherence_time}"
-        )
+        print(f"Starte neues Training: Case Study {case_study_id}, T_coh={coherence_time}")
         h = case_study.hyperparams
         model = PPO(
             "MlpPolicy",
@@ -178,6 +182,7 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
             clip_range=h.clip_range,
             vf_coef=h.vf_coef,
             max_grad_norm=h.max_grad_norm,
+            seed=seed,
             device="cpu",
             verbose=1,
             tensorboard_log=log_dir,
@@ -205,24 +210,45 @@ def train(case_study_id: int, coherence_time: float, num_cpu: int) -> None:
 
 
 def main():
-    # ──────────────────────────────────────────────────────────────────────────
-    # Hier konfigurierst du, welche Case Study und welche Kohärenzzeiten
-    # auf DIESEM Gerät trainiert werden sollen.
-    #
-    # Beispiel PC:    COHERENCE_TIMES = [0.01, 0.05]
-    # Beispiel Laptop: COHERENCE_TIMES = [0.09]
-    # ──────────────────────────────────────────────────────────────────────────
-    CASE_STUDY_ID = 13
-    COHERENCE_TIMES = CASE_STUDIES[CASE_STUDY_ID].coherence_times
-    NUM_CORES_PER_RUN = 6
+    parser = argparse.ArgumentParser(
+        description="PPO-Training für eine Case Study.",
+        epilog="Beispiel: train --case-study 1 --coherence-times 0.01 0.05 --cores 6",
+    )
+    parser.add_argument(
+        "--case-study",
+        type=int,
+        required=True,
+        choices=sorted(CASE_STUDIES),
+        help="ID der Case Study (siehe ppo/case_studies.py)",
+    )
+    parser.add_argument(
+        "--coherence-times",
+        type=float,
+        nargs="+",
+        default=None,
+        metavar="T",
+        help="Zu trainierende Kohärenzzeiten; Default: alle der Case Study",
+    )
+    parser.add_argument("--cores", type=int, default=6, help="Anzahl paralleler Envs (Default: 6)")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed für reproduzierbare Läufe (Default: zufällig)",
+    )
+    args = parser.parse_args()
 
-    for coherence_time in COHERENCE_TIMES:
+    coherence_times = (
+        args.coherence_times
+        if args.coherence_times is not None
+        else CASE_STUDIES[args.case_study].coherence_times
+    )
+
+    for coherence_time in coherence_times:
         print(f"\n{'═' * 55}")
-        print(
-            f"  Case Study {CASE_STUDY_ID} | T_coh = {coherence_time} | {NUM_CORES_PER_RUN} Cores"
-        )
+        print(f"  Case Study {args.case_study} | T_coh = {coherence_time} | {args.cores} Cores")
         print(f"{'═' * 55}")
-        train(CASE_STUDY_ID, coherence_time, NUM_CORES_PER_RUN)
+        train(args.case_study, coherence_time, args.cores, seed=args.seed)
 
 
 if __name__ == "__main__":

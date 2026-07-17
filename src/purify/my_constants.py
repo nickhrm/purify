@@ -1,12 +1,8 @@
-
-
-ENTANGLEMENT_GENERATION_COUNT = 300000
-
 LENGTH = 20000
 C = 2e8
 
 # time between entanglemement interrival in [sec]
-DELTA_T = LENGTH/C
+DELTA_T = LENGTH / C
 # Success probability of entangelement generation
 P_G = 0.3047
 
@@ -17,5 +13,4 @@ ETA = -0.00015
 
 QUBIT_ENTANGLEMENT_FACTOR = 100
 
-QUBIT_ARRIVAL_SCALE = P_G/(QUBIT_ENTANGLEMENT_FACTOR * DELTA_T)
-
+QUBIT_ARRIVAL_SCALE = P_G / (QUBIT_ENTANGLEMENT_FACTOR * DELTA_T)

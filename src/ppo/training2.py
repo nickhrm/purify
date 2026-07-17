@@ -30,9 +30,7 @@ Verwendung
 import json
 import os
 import shutil
-import tempfile
 from datetime import datetime
-from pathlib import Path
 
 import torch
 from stable_baselines3 import PPO
@@ -46,13 +44,9 @@ from ppo.custom_env import TrainingEnv
 from ppo.custom_stop_callback import CustomStopCallback
 from ppo.hyperparams_tuple import HyperparamsTuple
 from ppo.trainer import (
-    case_study_root,
     coherence_time_folder,
     save_training_info,
-    load_training_info,
-    print_training_info,
 )
-
 
 # ─── Konfiguration ────────────────────────────────────────────────────────────
 
@@ -60,21 +54,22 @@ from ppo.trainer import (
 N_RUNS: int = 3
 
 # Optuna-Suche
-OPTUNA_TRIALS: int      = 30         # Trials (weniger als optuna_tune.py default=60)
-OPTUNA_TIMESTEPS: int   = 300_000    # Schritte pro Optuna-Trial
-FORCE_TUNE: bool        = False      # True: Optuna auch dann ausführen, wenn JSON existiert
+OPTUNA_TRIALS: int = 30  # Trials (weniger als optuna_tune.py default=60)
+OPTUNA_TIMESTEPS: int = 300_000  # Schritte pro Optuna-Trial
+FORCE_TUNE: bool = False  # True: Optuna auch dann ausführen, wenn JSON existiert
 
 # Trainings-Limits pro Run
-MAX_TRAIN_STEPS: int    = 8_000_000  # Maximale Gesamtschritte (vorher 30M)
+MAX_TRAIN_STEPS: int = 8_000_000  # Maximale Gesamtschritte (vorher 30M)
 
 # Early-Stopping (aggressiver als trainer.py)
-EVAL_FREQ: int          = 10_000     # Wie oft evaluiert wird (in Env-Schritten)
-NO_IMPROVE_EVALS: int   = 80         # Geduld: so viele schlechte Evals → Abbruch
-MIN_EVALS: int          = 50         # Warmup: Early-Stopping startet erst danach
-N_EVAL_EPISODES: int    = 70         # Episoden pro Evaluation
+EVAL_FREQ: int = 10_000  # Wie oft evaluiert wird (in Env-Schritten)
+NO_IMPROVE_EVALS: int = 80  # Geduld: so viele schlechte Evals → Abbruch
+MIN_EVALS: int = 50  # Warmup: Early-Stopping startet erst danach
+N_EVAL_EPISODES: int = 70  # Episoden pro Evaluation
 
 
 # ─── Optuna-Integration ───────────────────────────────────────────────────────
+
 
 def _optuna_json_path(case_study_id: int, coherence_time: float) -> str:
     """Pfad zur gecachten Optuna-JSON-Datei."""
@@ -84,7 +79,7 @@ def _optuna_json_path(case_study_id: int, coherence_time: float) -> str:
 
 def _hyperparams_from_json(json_path: str, case_study_id: int) -> HyperparamsTuple:
     """Liest Optuna-JSON und baut daraus ein HyperparamsTuple (fixe Werte aus CaseStudy)."""
-    with open(json_path, "r", encoding="utf-8") as f:
+    with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
 
     params = data["best_params"]
@@ -92,26 +87,26 @@ def _hyperparams_from_json(json_path: str, case_study_id: int) -> HyperparamsTup
 
     # batch_size: Optuna speichert den „hint", wir müssen sicherstellen, dass er gültig ist
     num_cpu_hint = data.get("num_cpu", 6)
-    n_steps      = int(params["n_steps"])
-    total_steps  = n_steps * num_cpu_hint
-    batch_hint   = int(params["batch_size"])
+    n_steps = int(params["n_steps"])
+    total_steps = n_steps * num_cpu_hint
+    batch_hint = int(params["batch_size"])
     _BATCH_CHOICES = [32, 64, 128, 256, 512, 1024]
     valid = [b for b in _BATCH_CHOICES if total_steps % b == 0 and b <= batch_hint]
     batch_size = valid[-1] if valid else min(_BATCH_CHOICES[0], total_steps)
 
     return HyperparamsTuple(
-        n_steps       = n_steps,
-        batch_size    = batch_size,
-        n_epochs      = int(params["n_epochs"]),
-        learning_rate = float(params["learning_rate"]),
-        gamma         = h_base.gamma,
-        gae_lambda    = float(params["gae_lambda"]),
-        ent_coef      = float(params["ent_coef"]),
-        clip_range    = h_base.clip_range,
-        vf_coef       = h_base.vf_coef,
-        max_grad_norm = h_base.max_grad_norm,
-        pi_layers     = h_base.pi_layers,
-        vf_layers     = h_base.vf_layers,
+        n_steps=n_steps,
+        batch_size=batch_size,
+        n_epochs=int(params["n_epochs"]),
+        learning_rate=float(params["learning_rate"]),
+        gamma=h_base.gamma,
+        gae_lambda=float(params["gae_lambda"]),
+        ent_coef=float(params["ent_coef"]),
+        clip_range=h_base.clip_range,
+        vf_coef=h_base.vf_coef,
+        max_grad_norm=h_base.max_grad_norm,
+        pi_layers=h_base.pi_layers,
+        vf_layers=h_base.vf_layers,
     )
 
 
@@ -120,8 +115,8 @@ def load_or_tune_hyperparams(
     coherence_time: float,
     num_cpu: int,
     force_tune: bool = FORCE_TUNE,
-    n_trials: int    = OPTUNA_TRIALS,
-    timesteps: int   = OPTUNA_TIMESTEPS,
+    n_trials: int = OPTUNA_TRIALS,
+    timesteps: int = OPTUNA_TIMESTEPS,
 ) -> HyperparamsTuple:
     """
     Gibt HyperparamsTuple zurück:
@@ -133,21 +128,24 @@ def load_or_tune_hyperparams(
     if not force_tune and os.path.exists(json_path):
         print(f"\n  📂 Lade gecachte Optuna-Ergebnisse: {json_path}")
         hp = _hyperparams_from_json(json_path, case_study_id)
-        print(f"     n_steps={hp.n_steps}  batch={hp.batch_size}  "
-              f"epochs={hp.n_epochs}  lr={hp.learning_rate:.2e}  "
-              f"gae={hp.gae_lambda:.4f}  ent={hp.ent_coef:.2e}")
+        print(
+            f"     n_steps={hp.n_steps}  batch={hp.batch_size}  "
+            f"epochs={hp.n_epochs}  lr={hp.learning_rate:.2e}  "
+            f"gae={hp.gae_lambda:.4f}  ent={hp.ent_coef:.2e}"
+        )
         return hp
 
     # ── Frische Optuna-Suche ──────────────────────────────────────────────────
     print(f"\n  🔍 Starte Optuna-Suche ({n_trials} Trials × {timesteps:,} Steps) …")
     from ppo.optuna_tune import run_study  # lokaler Import um Kreisimport zu vermeiden
+
     run_study(
-        case_study_id   = case_study_id,
-        coherence_time  = coherence_time,
-        n_trials        = n_trials,
-        n_eval_episodes = 30,
-        total_timesteps = timesteps,
-        num_cpu         = num_cpu,
+        case_study_id=case_study_id,
+        coherence_time=coherence_time,
+        n_trials=n_trials,
+        n_eval_episodes=30,
+        total_timesteps=timesteps,
+        num_cpu=num_cpu,
     )
     # run_study() speichert die JSON selbst (→ results/optuna/…)
     hp = _hyperparams_from_json(json_path, case_study_id)
@@ -156,13 +154,14 @@ def load_or_tune_hyperparams(
 
 # ─── Einzelner Trainingslauf ──────────────────────────────────────────────────
 
+
 def train_single_run(
-    case_study_id:  int,
+    case_study_id: int,
     coherence_time: float,
-    hyperparams:    HyperparamsTuple,
-    num_cpu:        int,
-    run_id:         int,
-    save_dir:       str,
+    hyperparams: HyperparamsTuple,
+    num_cpu: int,
+    run_id: int,
+    save_dir: str,
 ) -> tuple[PPO, float]:
     """
     Führt einen einzelnen Trainingslauf durch.
@@ -178,10 +177,11 @@ def train_single_run(
     print(f"  {'─' * 52}")
 
     case_study = CASE_STUDIES[case_study_id]
-    constants  = case_study.make_constants(coherence_time)
+    constants = case_study.make_constants(coherence_time)
 
     log_dir = os.path.join(
-        "logs", f"case_study_{case_study_id}",
+        "logs",
+        f"case_study_{case_study_id}",
         CaseStudy.coherence_time_str(coherence_time),
         f"run{run_id}",
     )
@@ -203,51 +203,51 @@ def train_single_run(
     )
 
     stop_callback = CustomStopCallback(
-        max_no_improvement_evals = NO_IMPROVE_EVALS,
-        min_evals                = MIN_EVALS,
-        verbose                  = 1,
-        param_label              = label,
+        max_no_improvement_evals=NO_IMPROVE_EVALS,
+        min_evals=MIN_EVALS,
+        verbose=1,
+        param_label=label,
     )
 
     actual_eval_freq = max(1, EVAL_FREQ // num_cpu)
     eval_callback = EvalCallback(
         eval_env,
-        eval_freq              = actual_eval_freq,
-        n_eval_episodes        = N_EVAL_EPISODES,
-        callback_after_eval    = stop_callback,
-        best_model_save_path   = run_best_dir,
-        verbose                = 1,
-        deterministic          = case_study.deterministic,
+        eval_freq=actual_eval_freq,
+        n_eval_episodes=N_EVAL_EPISODES,
+        callback_after_eval=stop_callback,
+        best_model_save_path=run_best_dir,
+        verbose=1,
+        deterministic=case_study.deterministic,
     )
 
     h = hyperparams
     model = PPO(
         "MlpPolicy",
         env,
-        policy_kwargs = dict(
-            net_arch     = dict(pi=h.pi_layers, vf=h.vf_layers),
-            activation_fn= torch.nn.Tanh,
+        policy_kwargs=dict(
+            net_arch=dict(pi=h.pi_layers, vf=h.vf_layers),
+            activation_fn=torch.nn.Tanh,
         ),
-        n_steps       = h.n_steps,
-        batch_size    = h.batch_size,
-        n_epochs      = h.n_epochs,
-        learning_rate = h.learning_rate,
-        gamma         = h.gamma,
-        gae_lambda    = h.gae_lambda,
-        ent_coef      = h.ent_coef,
-        clip_range    = h.clip_range,
-        vf_coef       = h.vf_coef,
-        max_grad_norm = h.max_grad_norm,
-        device        = "cpu",
-        verbose       = 1,
-        tensorboard_log = log_dir,
+        n_steps=h.n_steps,
+        batch_size=h.batch_size,
+        n_epochs=h.n_epochs,
+        learning_rate=h.learning_rate,
+        gamma=h.gamma,
+        gae_lambda=h.gae_lambda,
+        ent_coef=h.ent_coef,
+        clip_range=h.clip_range,
+        vf_coef=h.vf_coef,
+        max_grad_norm=h.max_grad_norm,
+        device="cpu",
+        verbose=1,
+        tensorboard_log=log_dir,
     )
 
     try:
         model.learn(
-            total_timesteps    = MAX_TRAIN_STEPS,
-            reset_num_timesteps= True,
-            callback           = eval_callback,
+            total_timesteps=MAX_TRAIN_STEPS,
+            reset_num_timesteps=True,
+            callback=eval_callback,
         )
     except KeyboardInterrupt:
         print(f"  ⚠️  {label}: Training manuell unterbrochen.")
@@ -265,7 +265,8 @@ def train_single_run(
         )
         best_model = PPO.load(best_run_path, env=eval_env2, device="cpu")
         mean_reward, std_reward = evaluate_policy(
-            best_model, eval_env2,
+            best_model,
+            eval_env2,
             n_eval_episodes=N_EVAL_EPISODES,
             deterministic=case_study.deterministic,
         )
@@ -282,7 +283,8 @@ def train_single_run(
         )
         model.set_env(eval_env2)
         mean_reward, std_reward = evaluate_policy(
-            model, eval_env2,
+            model,
+            eval_env2,
             n_eval_episodes=N_EVAL_EPISODES,
             deterministic=case_study.deterministic,
         )
@@ -293,12 +295,13 @@ def train_single_run(
 
 # ─── Haupt-Trainingsfunktion ──────────────────────────────────────────────────
 
+
 def train(
-    case_study_id:  int,
+    case_study_id: int,
     coherence_time: float,
-    num_cpu:        int,
-    n_runs:         int   = N_RUNS,
-    force_tune:     bool  = FORCE_TUNE,
+    num_cpu: int,
+    n_runs: int = N_RUNS,
+    force_tune: bool = FORCE_TUNE,
 ) -> None:
     """
     Führt den vollständigen training2-Workflow für eine Kohärenzzeit durch:
@@ -307,7 +310,6 @@ def train(
       3. Bestes Modell → best_model.zip
       4. Zusammenfassung → training2_info.json
     """
-    ct_str    = CaseStudy.coherence_time_str(coherence_time)
     ct_folder = coherence_time_folder(case_study_id, coherence_time)
     os.makedirs(ct_folder, exist_ok=True)
 
@@ -317,10 +319,10 @@ def train(
 
     # ── 1. Hyperparameter ─────────────────────────────────────────────────────
     hyperparams = load_or_tune_hyperparams(
-        case_study_id  = case_study_id,
-        coherence_time = coherence_time,
-        num_cpu        = num_cpu,
-        force_tune     = force_tune,
+        case_study_id=case_study_id,
+        coherence_time=coherence_time,
+        num_cpu=num_cpu,
+        force_tune=force_tune,
     )
 
     # einmalig training_info.json schreiben (aus trainer.py wiederverwendet)
@@ -328,17 +330,17 @@ def train(
 
     # ── 2. Multi-Run ──────────────────────────────────────────────────────────
     run_results: list[tuple[int, float]] = []  # (run_id, mean_reward)
-    best_reward  = float("-inf")
-    best_run_id  = -1
+    best_reward = float("-inf")
+    best_run_id = -1
 
     for run_id in range(1, n_runs + 1):
         model, mean_reward = train_single_run(
-            case_study_id  = case_study_id,
-            coherence_time = coherence_time,
-            hyperparams    = hyperparams,
-            num_cpu        = num_cpu,
-            run_id         = run_id,
-            save_dir       = ct_folder,
+            case_study_id=case_study_id,
+            coherence_time=coherence_time,
+            hyperparams=hyperparams,
+            num_cpu=num_cpu,
+            run_id=run_id,
+            save_dir=ct_folder,
         )
         run_results.append((run_id, mean_reward))
 
@@ -372,25 +374,25 @@ def train(
 
     # JSON-Zusammenfassung
     info = {
-        "case_study_id":  case_study_id,
+        "case_study_id": case_study_id,
         "coherence_time": coherence_time,
-        "created_at":     datetime.now().isoformat(timespec="seconds"),
-        "workflow":       "training2 (Optuna-first, best-of-N)",
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "workflow": "training2 (Optuna-first, best-of-N)",
         "config": {
-            "n_runs":           n_runs,
-            "max_train_steps":  MAX_TRAIN_STEPS,
-            "eval_freq":        EVAL_FREQ,
+            "n_runs": n_runs,
+            "max_train_steps": MAX_TRAIN_STEPS,
+            "eval_freq": EVAL_FREQ,
             "no_improve_evals": NO_IMPROVE_EVALS,
-            "min_evals":        MIN_EVALS,
-            "n_eval_episodes":  N_EVAL_EPISODES,
+            "min_evals": MIN_EVALS,
+            "n_eval_episodes": N_EVAL_EPISODES,
         },
-        "hyperparams":    hyperparams.to_dict(),
-        "runs":           [
+        "hyperparams": hyperparams.to_dict(),
+        "runs": [
             {"run_id": rid, "mean_reward": r, "is_best": rid == best_run_id}
             for rid, r in run_results
         ],
-        "best_run_id":    best_run_id,
-        "best_reward":    best_reward,
+        "best_run_id": best_run_id,
+        "best_reward": best_reward,
     }
     info_path = os.path.join(ct_folder, "training2_info.json")
     with open(info_path, "w", encoding="utf-8") as f:
@@ -401,24 +403,25 @@ def train(
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     # ──────────────────────────────────────────────────────────────────────────
     # Konfiguration – hier anpassen:
     # ──────────────────────────────────────────────────────────────────────────
-    CASE_STUDY_ID   = 11
+    CASE_STUDY_ID = 11
     COHERENCE_TIMES = CASE_STUDIES[CASE_STUDY_ID].coherence_times
-    NUM_CORES       = 6
-    N_RUNS_CFG      = N_RUNS         # Anzahl Trainings-Wiederholungen
-    FORCE_TUNE_CFG  = FORCE_TUNE     # Optuna immer neu ausführen?
+    NUM_CORES = 6
+    N_RUNS_CFG = N_RUNS  # Anzahl Trainings-Wiederholungen
+    FORCE_TUNE_CFG = FORCE_TUNE  # Optuna immer neu ausführen?
     # ──────────────────────────────────────────────────────────────────────────
 
     for coherence_time in COHERENCE_TIMES:
         train(
-            case_study_id  = CASE_STUDY_ID,
-            coherence_time = coherence_time,
-            num_cpu        = NUM_CORES,
-            n_runs         = N_RUNS_CFG,
-            force_tune     = FORCE_TUNE_CFG,
+            case_study_id=CASE_STUDY_ID,
+            coherence_time=coherence_time,
+            num_cpu=NUM_CORES,
+            n_runs=N_RUNS_CFG,
+            force_tune=FORCE_TUNE_CFG,
         )
 
 

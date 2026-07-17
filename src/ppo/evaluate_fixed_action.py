@@ -24,9 +24,7 @@ from purify.my_enums import Action
 CASE_STUDY_ID: int = 5
 
 # Aktionen, die nacheinander evaluiert werden sollen.
-FIXED_ACTIONS: list[Action] = [
-    Action.PMD
-]
+FIXED_ACTIONS: list[Action] = [Action.PMD]
 
 # Anzahl der Episoden pro Kohaerenzzeit und Aktion.
 N_EPISODES: int = 3500
@@ -34,25 +32,25 @@ N_EPISODES: int = 3500
 # Eigene Kohaerenzzeiten – ueberschreibt die Zeiten aus der Case Study.
 # Leer lassen ([]), um die Zeiten der jeweiligen Case Study zu verwenden.
 COHERENCE_TIMES: list[float] = [
-            0.001,
-            0.002,
-            0.003,
-            0.004,
-            0.005,
-            0.006,
-            0.007,
-            0.008,
-            0.009,
-            0.01,
-            0.02,
-            0.03,
-            0.04,
-            0.05,
-            0.06,
-            0.07,
-            0.08,
-            0.09,
-            0.1,
+    0.001,
+    0.002,
+    0.003,
+    0.004,
+    0.005,
+    0.006,
+    0.007,
+    0.008,
+    0.009,
+    0.01,
+    0.02,
+    0.03,
+    0.04,
+    0.05,
+    0.06,
+    0.07,
+    0.08,
+    0.09,
+    0.1,
 ]
 
 # =============================================================================
@@ -68,7 +66,13 @@ def _save_results(rows: list[dict], case_study_id: int) -> None:
     file_exists = os.path.isfile(path)
 
     with open(path, mode="a", newline="") as f:
-        fieldnames = ["case_study_id", "coherence_time", "fixed_action", "avg_reward", "n_episodes"]
+        fieldnames = [
+            "case_study_id",
+            "coherence_time",
+            "fixed_action",
+            "avg_reward",
+            "n_episodes",
+        ]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         if not file_exists:
             writer.writeheader()

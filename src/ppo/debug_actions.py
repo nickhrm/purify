@@ -12,22 +12,22 @@ Ausgabe: debug_action_log.csv
 """
 
 import os
-import torch
-import numpy as np
+
 import pandas as pd
+import torch
 from stable_baselines3 import PPO
 
 from ppo.custom_env import TrainingEnv
 from purify.constants_tuple import ConstantsTuple
-from purify.my_enums import Action, LambdaSrategy
+from purify.my_enums import Action, LambdaStrategy
 from purify.utils.purification_util import Purification
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
 COHERENCE_TIME = 0.05
-CASE_STUDY_ID  = 2
-N_EPISODES     = 2          # Wenige Episoden, dafür vollständig geloggt
-MODEL_PATH     = f"results/case_study_{CASE_STUDY_ID}/T0_05/best_model.zip"
-OUTPUT_FILE    = "debug_action_log.csv"
+CASE_STUDY_ID = 2
+N_EPISODES = 2  # Wenige Episoden, dafür vollständig geloggt
+MODEL_PATH = f"results/case_study_{CASE_STUDY_ID}/T0_05/best_model.zip"
+OUTPUT_FILE = "debug_action_log.csv"
 # ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -36,7 +36,7 @@ def run_debug():
         coherence_time=COHERENCE_TIME,
         pumping_probability=1,
         waiting_time_sensitivity=1,
-        lambda_strategy=LambdaSrategy.USE_CONSTANTS,
+        lambda_strategy=LambdaStrategy.USE_CONSTANTS,
         lambdas=(0.0, 0.3, 0.0),
         actions=(Action.REPLACE, Action.PROT_1, Action.PROT_2, Action.PROT_3),
         min_fidelity=0.7,
@@ -66,45 +66,53 @@ def run_debug():
             # ── Action + Probabilities vom Modell ──────────────────────────
             obs_tensor = torch.as_tensor(obs).unsqueeze(0).float()
             with torch.no_grad():
-                dist  = policy.get_distribution(obs_tensor)
+                dist = policy.get_distribution(obs_tensor)
                 probs = dist.distribution.probs.cpu().numpy()[0]
 
             action_idx, _ = model.predict(obs, deterministic=False)
-            action_idx    = int(action_idx)
-            action_name   = action_names[action_idx]
+            action_idx = int(action_idx)
+            action_name = action_names[action_idx]
 
             # ── PROT_3 spezifische Zusatzinfos berechnen ───────────────────
             # (nur wenn good_memory vorhanden, was zu diesem Zeitpunkt immer
             #  True ist — der Agent wird nur bei needs_agent_decision() aufgerufen)
             node = env.node
-            prot3_gain      = None
-            prot3_prob      = None
-            prot1_gain      = None
-            prot1_prob      = None
+            prot3_gain = None
+            prot3_prob = None
+            prot1_gain = None
+            prot1_prob = None
             keep_best_delta = None  # wie viel besser/schlechter ist das neue Entanglement
 
             if env.last_generated_entanglement is not None and node.good_memory is not None:
-                e_good  = node.good_memory
-                e_new   = env.last_generated_entanglement
-                f_good  = e_good.get_current_fidelity()
-                f_new   = e_new.get_current_fidelity()
+                e_good = node.good_memory
+                e_new = env.last_generated_entanglement
+                f_good = e_good.get_current_fidelity()
+                f_new = e_new.get_current_fidelity()
                 keep_best_delta = f_new - f_good  # positiv → neues ist besser
 
                 # PROT_3
                 try:
-                    prot3_f_after = Purification.jump_function_from_action(e_good, e_new, Action.PROT_3)
-                    prot3_p       = Purification.success_probability_from_action(e_good, e_new, Action.PROT_3)
-                    prot3_gain    = prot3_f_after - f_good
-                    prot3_prob    = prot3_p
+                    prot3_f_after = Purification.jump_function_from_action(
+                        e_good, e_new, Action.PROT_3
+                    )
+                    prot3_p = Purification.success_probability_from_action(
+                        e_good, e_new, Action.PROT_3
+                    )
+                    prot3_gain = prot3_f_after - f_good
+                    prot3_prob = prot3_p
                 except Exception:
                     pass
 
                 # PROT_1
                 try:
-                    prot1_f_after = Purification.jump_function_from_action(e_good, e_new, Action.PROT_1)
-                    prot1_p       = Purification.success_probability_from_action(e_good, e_new, Action.PROT_1)
-                    prot1_gain    = prot1_f_after - f_good
-                    prot1_prob    = prot1_p
+                    prot1_f_after = Purification.jump_function_from_action(
+                        e_good, e_new, Action.PROT_1
+                    )
+                    prot1_p = Purification.success_probability_from_action(
+                        e_good, e_new, Action.PROT_1
+                    )
+                    prot1_gain = prot1_f_after - f_good
+                    prot1_prob = prot1_p
                 except Exception:
                     pass
 
@@ -114,32 +122,38 @@ def run_debug():
             if reward > 0:
                 episode_reward = reward
 
-            records.append({
-                "episode":          episode,
-                "step":             step_in_episode,
-                # Observation
-                "f_mem":            round(float(f_mem), 4),
-                "request_waiting":  int(req_waiting),
-                "t_req":            round(float(t_req), 4),
-                "l1":               round(float(l1), 4),
-                "l2":               round(float(l2), 4),
-                "l3":               round(float(l3), 4),
-                # Entscheidung
-                "action":           action_name,
-                # Probabilities
-                "p_REPLACE":        round(float(probs[0]), 4),
-                "p_PROT_1":         round(float(probs[1]), 4),
-                "p_PROT_2":         round(float(probs[2]), 4),
-                "p_PROT_3":         round(float(probs[3]), 4),
-                # Purification-Kalkulation
-                "keep_best_delta":  round(float(keep_best_delta), 4) if keep_best_delta is not None else None,
-                "prot1_gain":       round(float(prot1_gain), 4)      if prot1_gain      is not None else None,
-                "prot1_prob":       round(float(prot1_prob), 4)       if prot1_prob      is not None else None,
-                "prot3_gain":       round(float(prot3_gain), 4)       if prot3_gain      is not None else None,
-                "prot3_prob":       round(float(prot3_prob), 4)       if prot3_prob      is not None else None,
-                # Ergebnis
-                "teleport_fidelity": round(float(episode_reward), 4) if (done and episode_reward is not None) else None,
-            })
+            records.append(
+                {
+                    "episode": episode,
+                    "step": step_in_episode,
+                    # Observation
+                    "f_mem": round(float(f_mem), 4),
+                    "request_waiting": int(req_waiting),
+                    "t_req": round(float(t_req), 4),
+                    "l1": round(float(l1), 4),
+                    "l2": round(float(l2), 4),
+                    "l3": round(float(l3), 4),
+                    # Entscheidung
+                    "action": action_name,
+                    # Probabilities
+                    "p_REPLACE": round(float(probs[0]), 4),
+                    "p_PROT_1": round(float(probs[1]), 4),
+                    "p_PROT_2": round(float(probs[2]), 4),
+                    "p_PROT_3": round(float(probs[3]), 4),
+                    # Purification-Kalkulation
+                    "keep_best_delta": round(float(keep_best_delta), 4)
+                    if keep_best_delta is not None
+                    else None,
+                    "prot1_gain": round(float(prot1_gain), 4) if prot1_gain is not None else None,
+                    "prot1_prob": round(float(prot1_prob), 4) if prot1_prob is not None else None,
+                    "prot3_gain": round(float(prot3_gain), 4) if prot3_gain is not None else None,
+                    "prot3_prob": round(float(prot3_prob), 4) if prot3_prob is not None else None,
+                    # Ergebnis
+                    "teleport_fidelity": round(float(episode_reward), 4)
+                    if (done and episode_reward is not None)
+                    else None,
+                }
+            )
             step_in_episode += 1
 
     df = pd.DataFrame(records)

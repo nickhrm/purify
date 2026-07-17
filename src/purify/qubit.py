@@ -11,17 +11,13 @@ logger = logging.getLogger(__name__)
 class Qubit:
     def __init__(self, time: Time, constants: ConstantsTuple) -> None:
         self._time = time
-        self.creationTime: float = time.get_current_time()
+        self.creation_time: float = time.get_current_time()
         self.constants: ConstantsTuple = constants
 
     def get_current_fidelity(self) -> float:
         current_time = self._time.get_current_time()
-        time_alive = (
-            current_time - self.creationTime
-        ) * self.constants.waiting_time_sensitivity
-        current_fidelity = (
-            np.exp(-time_alive / self.constants.coherence_time) + 2.0
-        ) / 3.0
+        time_alive = (current_time - self.creation_time) * self.constants.waiting_time_sensitivity
+        current_fidelity = (np.exp(-time_alive / self.constants.coherence_time) + 2.0) / 3.0
         return current_fidelity
 
     def teleportation_fidelity(self, entanglement_fidelity: float) -> float:
@@ -40,4 +36,4 @@ class Qubit:
         return float(np.clip(FT, 0.0, 1.0))
 
     def get_waiting_time(self):
-        return self._time.get_current_time() - self.creationTime
+        return self._time.get_current_time() - self.creation_time

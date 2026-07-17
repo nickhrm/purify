@@ -17,9 +17,8 @@ Ausgabe je Case Study:
   Spalten: coherence_time, time_since_last_req, replace_threshold_f_mem
 """
 
-import os
 import csv
-from pathlib import Path
+import os
 
 import numpy as np
 import torch
@@ -27,7 +26,7 @@ from stable_baselines3 import PPO
 
 from ppo.case_studies import CASE_STUDIES, CaseStudy
 from ppo.custom_env import TrainingEnv
-from ppo.trainer import coherence_time_folder, case_study_root
+from ppo.trainer import case_study_root, coherence_time_folder
 
 # ─── Konfiguration ────────────────────────────────────────────────────────────
 
@@ -45,6 +44,7 @@ MODEL_FILE = "best_model.zip"
 
 # ─── Kern-Funktion ────────────────────────────────────────────────────────────
 
+
 def find_replace_threshold(
     policy,
     lambdas: tuple[float, float, float],
@@ -59,16 +59,15 @@ def find_replace_threshold(
       - f_mem_values, p_replace_values: vollständige Sweepkurven (für Plots)
     """
     l1, l2, l3 = lambdas
-    f_mem_values    = np.linspace(0.5, 1.0, f_mem_steps)
-    p_replace_vals  = []
+    f_mem_values = np.linspace(0.5, 1.0, f_mem_steps)
+    p_replace_vals = []
     threshold_f_mem = None
-    threshold_p     = None
 
     for f_mem in f_mem_values:
         obs = np.array([f_mem, 0.0, t_req, l1, l2, l3], dtype=np.float32)
         obs_tensor = torch.as_tensor(obs).unsqueeze(0)
         with torch.no_grad():
-            dist  = policy.get_distribution(obs_tensor)
+            dist = policy.get_distribution(obs_tensor)
             probs = dist.distribution.probs.cpu().numpy()[0]
 
         p_replace = float(probs[0])
@@ -77,7 +76,6 @@ def find_replace_threshold(
         # Schwellwert: erstes f_mem, bei dem REPLACE die höchste prob hat
         if threshold_f_mem is None and int(np.argmax(probs)) == 0:
             threshold_f_mem = float(f_mem)
-            threshold_p     = p_replace
 
     return threshold_f_mem
 
@@ -97,6 +95,7 @@ def save_threshold_csv(case_study_id: int, rows: list[dict]) -> None:
 
 # ─── Haupt-Evaluierung ────────────────────────────────────────────────────────
 
+
 def evaluate_replace_threshold(case_study_id: int) -> None:
     case_study = CASE_STUDIES[case_study_id]
     lambdas = case_study.constants.lambdas  # (λ1, λ2, λ3)
@@ -109,7 +108,7 @@ def evaluate_replace_threshold(case_study_id: int) -> None:
 
     for coherence_time in case_study.coherence_times:
         ct_folder = coherence_time_folder(case_study_id, coherence_time)
-        ct_str    = CaseStudy.coherence_time_str(coherence_time)
+        ct_str = CaseStudy.coherence_time_str(coherence_time)
         model_path = os.path.join(ct_folder, MODEL_FILE)
         print(f"\n  T_coh = {coherence_time} ({ct_str})", end="")
 
@@ -119,7 +118,7 @@ def evaluate_replace_threshold(case_study_id: int) -> None:
 
         # Lade Modell + Policy (kein volles Env-Step nötig)
         constants = case_study.make_constants(coherence_time)
-        env       = TrainingEnv(constants)
+        env = TrainingEnv(constants)
         try:
             model = PPO.load(model_path, env=env, device="cpu")
         except (ValueError, Exception) as e:
@@ -138,11 +137,13 @@ def evaluate_replace_threshold(case_study_id: int) -> None:
             else:
                 print(f"    t_req={t_req:5.2f}  →  REPLACE nie dominant")
 
-            all_rows.append({
-                "coherence_time":          coherence_time,
-                "time_since_last_req":     t_req,
-                "replace_threshold_f_mem": th,
-            })
+            all_rows.append(
+                {
+                    "coherence_time": coherence_time,
+                    "time_since_last_req": t_req,
+                    "replace_threshold_f_mem": th,
+                }
+            )
 
     save_threshold_csv(case_study_id, all_rows)
     print(f"\n  ✅  Case Study {case_study_id} abgeschlossen.")

@@ -40,18 +40,17 @@ Konfiguration (unten anpassen)
   MODEL_FILE          – welches Modell geladen wird
 """
 
-import os
 import csv
+import os
 from collections import Counter
 from dataclasses import dataclass
 
 import numpy as np
-from stable_baselines3 import PPO
 
 from ppo.case_studies import CASE_STUDIES, CaseStudy
 from ppo.custom_env import TrainingEnv
 from ppo.policy_wrapper import SB3Agent
-from ppo.trainer import coherence_time_folder, case_study_root
+from ppo.trainer import case_study_root, coherence_time_folder
 
 # ─── Konfiguration ────────────────────────────────────────────────────────────
 
@@ -158,9 +157,7 @@ def run_rollouts(
         if teleportation_fidelities
         else 0.0,
         n_terminated=n_terminated,
-        avg_f_mem_at_decision=float(np.mean(f_mem_at_decisions))
-        if f_mem_at_decisions
-        else 0.0,
+        avg_f_mem_at_decision=float(np.mean(f_mem_at_decisions)) if f_mem_at_decisions else 0.0,
     )
 
 
@@ -236,9 +233,7 @@ def evaluate_replace_vs_wait_sensitivity() -> None:
 
         # Dominante Aktion bestimmen
         if result.action_counts:
-            dominant_key = max(
-                result.action_counts, key=lambda k: result.action_counts[k]
-            )
+            dominant_key = max(result.action_counts, key=lambda k: result.action_counts[k])
             dominant_name = dominant_key.name
         else:
             dominant_name = "None"
@@ -249,15 +244,11 @@ def evaluate_replace_vs_wait_sensitivity() -> None:
             threshold_sensitivity = sensitivity
 
         dom_marker = (
-            " ◀ THRESHOLD"
-            if (replace_is_dominant and threshold_sensitivity == sensitivity)
-            else ""
+            " ◀ THRESHOLD" if (replace_is_dominant and threshold_sensitivity == sensitivity) else ""
         )
 
         # Ausgabe
-        pct_strs = "  ".join(
-            f"{result.action_pcts.get(n, 0.0):>7.1f}%" for n in action_names
-        )
+        pct_strs = "  ".join(f"{result.action_pcts.get(n, 0.0):>7.1f}%" for n in action_names)
         print(
             f"  {sensitivity:>6.1f}  {pct_strs}"
             f"  {dominant_name:>16}  {result.avg_f_mem_at_decision:>9.4f}"
@@ -273,9 +264,7 @@ def evaluate_replace_vs_wait_sensitivity() -> None:
                 "dominant_action": dominant_name,
                 "replace_is_dominant": replace_is_dominant,
                 "avg_f_mem_at_decision": round(result.avg_f_mem_at_decision, 6),
-                "avg_teleportation_fidelity": round(
-                    result.avg_teleportation_fidelity, 6
-                ),
+                "avg_teleportation_fidelity": round(result.avg_teleportation_fidelity, 6),
                 "n_terminated": result.n_terminated,
                 "avg_reward": round(result.avg_reward, 6),
             }
@@ -290,12 +279,10 @@ def evaluate_replace_vs_wait_sensitivity() -> None:
             f"waiting_time_sensitivity = {threshold_sensitivity}"
         )
     else:
-        print(
-            "\n  ℹ️   REPLACE ist für keinen der getesteten Sensitivity-Werte dominant."
-        )
+        print("\n  ℹ️   REPLACE ist für keinen der getesteten Sensitivity-Werte dominant.")
 
     save_results_csv(CASE_STUDY_ID, COHERENCE_TIME, all_rows, action_names)
-    print(f"\n  ✅  Evaluation abgeschlossen.\n")
+    print("\n  ✅  Evaluation abgeschlossen.\n")
 
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────

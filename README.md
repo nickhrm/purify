@@ -1,50 +1,87 @@
-test
+# purify
 
-tes
+Implementierung meiner Bachelorarbeit: Ein PPO-Agent lernt, an einem
+Quantennetzwerk-Knoten zwischen **REPLACE** (besseres Entanglement behalten)
+und **Purification-Protokollen** (PROT_1/2/3, PMD) zu entscheiden, um
+Teleportations-Requests mit möglichst hoher Fidelity zu bedienen.
 
+## Setup
 
+Benötigt [uv](https://docs.astral.sh/uv/):
 
+```bash
+uv sync                        # Environment + Dependencies
+uv run pre-commit install      # Git-Hooks aktivieren (ruff + pytest bei jedem Commit)
+```
 
-test new enforce .5
+## Struktur
 
-0.001,0.7369562290505673,PPO AI
-0.002,0.7630577826804991,PPO AI
-0.003,0.7624452515906707,PPO AI
-0.004,0.7757244027563781,PPO AI
-0.005,0.7888787335275083,PPO AI
-0.006,0.797202980362833,PPO AI
-0.007,0.8178426246296796,PPO AI
-0.008,0.8060237456239546,PPO AI
-0.009,0.822971604135274,PPO AI
-0.01,0.8301053957406999,PPO AI
-0.02,0.8533854928342294,PPO AI
-0.03,0.8658704647637889,PPO AI
-0.04,0.8826895223049404,PPO AI
-0.05,0.8770994537990204,PPO AI
-0.06,0.8835911794108582,PPO AI
-0.07,0.9014339860594726,PPO AI
-0.08,0.8973151982380314,PPO AI
-0.09,0.9040009260641327,PPO AI
-0.1,0.8990548587015288,PPO AI
+```
+src/purify/     Simulations-Kern (Physik)
+  my_time.py         Event-Uhr: deterministische Entanglement-Slots, Gamma-verteilte Requests
+  entanglement.py    Bell-diagonaler Zustand (F, λ₁, λ₂, λ₃) + Decay + Erzeugungs-Strategien
+  node.py            Speicher-Logik: REPLACE / PUMP / Request bedienen
+  qubit.py           Wartender Request-Qubit + Teleportations-Fidelity
+  utils/purification_util.py   Jump-Funktionen & Erfolgswahrscheinlichkeiten der Protokolle
 
+src/ppo/        RL-Schicht
+  custom_env.py      Gymnasium-Env (seedbar über reset(seed=...))
+  case_studies.py    Alle Experiment-Konfigurationen (IDs ↔ results/case_study_{id})
+  trainer.py         Training (CLI: train)
+  evaluate.py        Evaluation + Generalisierungs-Test (CLI: evaluate)
 
-4gps_00_03_00, switched prot 2 und 3
-0.001,0.7341635546884718,PPO AI
-0.002,0.763485629964483,PPO AI
-0.003,0.7528703431645273,PPO AI
-0.004,0.7787008497475939,PPO AI
-0.005,0.7371189727931019,PPO AI
-0.006,0.7707878146386473,PPO AI
-0.007,0.783617628953542,PPO AI
-0.008,0.7842502758499887,PPO AI
-0.009,0.7607867670857834,PPO AI
-0.01,0.7487735099014713,PPO AI
-0.02,0.8462353898438666,PPO AI
-0.03,0.7633156893874339,PPO AI
-0.04,0.774452182718713,PPO AI
-0.05,0.8529965164574856,PPO AI
-0.06,0.8855620871596535,PPO AI
-0.07,0.8850306823094469,PPO AI
-0.08,0.7693384830090216,PPO AI
-0.09,0.7687297279739064,PPO AI
-0.1,0.7702575543622032,PPO AI
+tests/          pytest-Suite für Physik-Kern und Env
+```
+
+## Training
+
+```bash
+uv run train --case-study 1 --coherence-times 0.01 0.05 --cores 6 --seed 42
+```
+
+Ohne `--coherence-times` werden alle Kohärenzzeiten der Case Study trainiert.
+Modelle landen in `results/case_study_{id}/T{coherence_time}/`
+(`best_model.zip` vom EvalCallback, `end_model.zip` nach Trainingsende).
+
+## Evaluation
+
+```bash
+# Normale Evaluation (gleiche Umgebung wie im Training):
+uv run evaluate --case-study 1 --episodes 1200 --seed 42
+
+# Generalisierungs-Test: Modell wurde auf festen Lambdas trainiert
+# (z.B. λ=(0.3, 0, 0)), wird aber in einer Umgebung evaluiert, in der
+# die Fehlermasse zufällig auf λ₁, λ₂, λ₃ verteilt wird:
+uv run evaluate --case-study 1 --random-lambdas --episodes 1200 --seed 42
+
+# Dasselbe mit permutations-symmetrisierter Policy (λ werden kanonisch
+# sortiert, die PROT-Aktion zurückpermutiert — kein Retraining nötig):
+uv run evaluate --case-study 1 --random-lambdas --symmetrized --episodes 1200 --seed 42
+```
+
+Trainings-seitige Alternative: Case Study 21 (`PERMUTED_CONSTANTS`) trainiert
+mit λ=(0.3, 0, 0), die pro Entanglement zufällig auf die Positionen permutiert
+werden.
+
+Ergebnisse: `results/case_study_{id}/evaluation.csv` bzw.
+`evaluation_random_lambdas.csv`, Aktions-Verteilungen in
+`action_prob*.csv` im selben Ordner.
+
+## Tests & Linting
+
+```bash
+uv run pytest          # Unit-Tests (Physik-Invarianten, Env-Reproduzierbarkeit)
+uv run ruff check src/ # Lint
+uv run ruff format     # Formatierung
+```
+
+Die Pre-commit-Hooks führen ruff und pytest automatisch bei jedem Commit aus.
+
+## Physik-Notizen
+
+- Protokoll k ist **blind** für Fehler auf λ_k: PROT_1 kann einen reinen
+  λ₁-Fehler nicht purifizieren (verschlechtert die Fidelity sogar), PROT_2/3
+  dagegen schon — siehe `tests/test_purification.py`.
+- PMD ist nur für Zustände mit λ₂ = λ₃ = 0 definiert.
+- Nach erfolgreicher Purification wird der Speicher-Zustand als
+  Werner-Zustand modelliert (Twirling-Annahme).

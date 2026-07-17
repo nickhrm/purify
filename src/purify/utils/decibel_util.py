@@ -1,4 +1,3 @@
-
 import math
 
 
@@ -11,4 +10,3 @@ def linear_to_decibel(db_val):
         return -math.inf
 
     return 10 * math.log10(db_val)
-

@@ -1,7 +1,7 @@
 import logging
+
 from purify.entanglement import Entanglement
 from purify.my_enums import Action
-
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,6 @@ transformed into a Werner-State using twirling, the lambdas can just be ignored"
 
 
 class Purification:
-
     @staticmethod
     def _prot_1_jump_function(e_good: Entanglement, e_bad: Entanglement):
         oben = (
@@ -39,7 +38,6 @@ class Purification:
         )
         logger.info("Success probability is %s", base)
         return base
-
 
     @staticmethod
     def _prot_2_jump_function(e_good: Entanglement, e_bad: Entanglement):
@@ -103,7 +101,6 @@ class Purification:
         if e_bad.get_current_lambda_2() != 0 or e_bad.get_current_lambda_3() != 0:
             raise Exception("pmd can only be used if lambda 2 and 3 are equal to 0")
 
-
         return (
             e_bad.get_current_fidelity()
             * e_good.get_current_fidelity()
@@ -120,9 +117,10 @@ class Purification:
         ) * (1 - e_good.get_current_fidelity())
 
     @staticmethod
-    def success_probability_from_action(e_good: Entanglement, e_bad: Entanglement, action: Action) -> float:
+    def success_probability_from_action(
+        e_good: Entanglement, e_bad: Entanglement, action: Action
+    ) -> float:
         # 'self' wurde entfernt, da es eine @staticmethod ist
-
 
         # if fidelity <= 0.5, than purification is not possible
         if e_good.get_current_fidelity() <= 0.5 or e_bad.get_current_fidelity() <= 0.5:
@@ -139,7 +137,6 @@ class Purification:
                 return Purification._pmd_success_probability(e_good, e_bad)
             case _:
                 raise ValueError(f"Unknown action: {action}")
-
 
     @staticmethod
     def jump_function_from_action(e_good: Entanglement, e_bad: Entanglement, action: Action):

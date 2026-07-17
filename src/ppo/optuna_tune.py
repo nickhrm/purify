@@ -76,9 +76,7 @@ def make_objective(
         total_steps = n_steps * num_cpu
         batch_size_hint = trial.suggest_categorical("batch_size", _BATCH_CHOICES)
         # Find the largest valid divisor ≤ the suggested hint
-        valid = [
-            b for b in _BATCH_CHOICES if total_steps % b == 0 and b <= batch_size_hint
-        ]
+        valid = [b for b in _BATCH_CHOICES if total_steps % b == 0 and b <= batch_size_hint]
         batch_size = valid[-1] if valid else min(_BATCH_CHOICES[0], total_steps)
 
         n_epochs = trial.suggest_int("n_epochs", 3, 15)
@@ -132,7 +130,8 @@ def make_objective(
                 best_reward = mean_reward
                 model.save(best_model_path)
                 print(
-                    f"[Trial {trial.number}] Neues bestes Modell gespeichert ({mean_reward:.4f} > {best_reward:.4f})"
+                    f"[Trial {trial.number}] Neues bestes Modell gespeichert "
+                    f"({mean_reward:.4f} > {best_reward:.4f})"
                 )
         except Exception as e:
             print(f"[Trial {trial.number}] Fehler: {e}")
@@ -187,7 +186,7 @@ def run_study(
     )
 
     print(f"\n{'═' * 60}")
-    print(f"  Optuna Hyperparameter-Suche")
+    print("  Optuna Hyperparameter-Suche")
     print(f"  Case Study : {case_study_id}")
     print(f"  T_coh      : {coherence_time}")
     print(f"  Trials     : {n_trials}")
@@ -212,7 +211,7 @@ def run_study(
     cs = CASE_STUDIES[case_study_id]
     h = cs.hyperparams
     print("  📋 HyperparamsTuple-Snippet (zum Eintragen in case_studies.py):")
-    print(f"  HyperparamsTuple(")
+    print("  HyperparamsTuple(")
     print(f"      n_steps       = {p['n_steps']},")
     print(f"      batch_size    = {p['batch_size']},")
     print(f"      n_epochs      = {p['n_epochs']},")
@@ -225,7 +224,7 @@ def run_study(
     print(f"      max_grad_norm = {h.max_grad_norm},")
     print(f"      pi_layers     = {h.pi_layers},")
     print(f"      vf_layers     = {h.vf_layers},")
-    print(f"  )")
+    print("  )")
 
     # ── Optional: Ergebnisse als JSON speichern ────────────────────────────────
     import json
@@ -255,9 +254,7 @@ def run_study(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Optuna Hyperparameter-Tuning für PPO (purify)"
-    )
+    parser = argparse.ArgumentParser(description="Optuna Hyperparameter-Tuning für PPO (purify)")
     parser.add_argument(
         "--case-study",
         type=int,

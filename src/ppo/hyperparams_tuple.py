@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 
-@dataclass
+
+@dataclass(frozen=True)
 class HyperparamsTuple:
     """
     Definiert die Hyperparameter für das PPO-Training.
     """
+
     n_steps: int
     batch_size: int
     n_epochs: int
@@ -30,5 +32,8 @@ class HyperparamsTuple:
             "clip_range": self.clip_range,
             "vf_coef": self.vf_coef,
             "max_grad_norm": self.max_grad_norm,
-            "policy_kwargs": {"net_arch": {"pi": self.pi_layers, "vf": self.vf_layers}, "activation_fn": "Tanh"}
+            "policy_kwargs": {
+                "net_arch": {"pi": self.pi_layers, "vf": self.vf_layers},
+                "activation_fn": "Tanh",
+            },
         }

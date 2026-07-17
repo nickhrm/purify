@@ -6,14 +6,11 @@ readme = "README.md"
 requires-python = ">=3.13"
 
 dependencies = [
-    "argparse>=1.4.0",
     "gymnasium>=1.1.1",
-    "joblib>=1.5.3",
     "matplotlib>=3.10.7",
     "numpy>=2.3.4",
     "optuna>=4.7.0",
     "pandas>=2.3.3",
-    "ray[rllib]>=2.52.1",
     "seaborn>=0.13.2",
     "stable-baselines3[extra]>=2.7.0",
     "tensorboard>=2.20.0",
@@ -27,20 +24,28 @@ project-includes = [
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.0",
+    "pytest>=8.0",
     "ruff>=0.14.2",
     "ty>=0.0.11",
 ]
 
 
 [project.scripts]
-purify = "purify:main"
-plot = "plot:main"
+train = "ppo.trainer:main"
+evaluate = "ppo.evaluate:main"
 
 
 [build-system]
 requires = ["uv_build>=0.8.11,<0.9.0"]
 build-backend = "uv_build"
 
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
 
 [tool.ruff.lint]
 # Wähle die wichtigsten Regel-Sets aus. Ein guter Start:
